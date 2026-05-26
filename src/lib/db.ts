@@ -268,10 +268,37 @@ function recomputeGearScore(characterId: string) {
 }
 
 export function getGearScore(characterId: string): number {
-  const db = getDb();
   const equip = getEquipment(characterId);
   const slots: EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
   return slots.reduce((sum, s) => sum + (equip[s]?.gearScore ?? 0), 0);
+}
+
+// Returns base stats + all bonuses from equipped items
+export function getEffectiveStats(characterId: string) {
+  const char = getOrCreateCharacter();
+  const equip = getEquipment(characterId);
+  const slots: EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
+
+  const bonus: Record<string, number> = { pwr: 0, end: 0, lck: 0, spd: 0, ins: 0 };
+  for (const slot of slots) {
+    const item = equip[slot];
+    if (!item) continue;
+    bonus[item.primaryStat] = (bonus[item.primaryStat] ?? 0) + item.primaryValue;
+    for (const sec of item.secondaryStats) {
+      bonus[sec.stat] = (bonus[sec.stat] ?? 0) + sec.value;
+    }
+  }
+
+  const pwr = char.pwr + bonus.pwr;
+  const end = char.end + bonus.end;
+  return {
+    pwr,
+    end,
+    lck: char.lck + bonus.lck,
+    spd: char.spd + bonus.spd,
+    ins: char.ins + bonus.ins,
+    combatRating: Math.floor(pwr * 1.5 + end),
+  };
 }
 
 // ── Inventory ─────────────────────────────────────────────────────────────────

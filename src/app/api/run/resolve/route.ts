@@ -10,6 +10,7 @@ import {
   getPity,
   updatePity,
   recordClear,
+  getEffectiveStats,
 } from '@/lib/db';
 import { getDungeon } from '@/lib/data/dungeons';
 import { resolveRun } from '@/lib/engine/run-engine';
@@ -41,7 +42,11 @@ export async function POST() {
       endTime: runRow.end_time as number,
     };
 
-    const result = resolveRun(activeRun, char, {
+    // Use effective stats (base + gear) for combat resolution
+    const effective = getEffectiveStats(char.id);
+    const charWithGear = { ...char, ...effective };
+
+    const result = resolveRun(activeRun, charWithGear, {
       totalRuns: pity.total_runs,
       sinceLastUncommon: pity.since_last_uncommon,
       sinceLastRare: pity.since_last_rare,

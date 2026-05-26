@@ -6,6 +6,7 @@ import {
   getGearScore,
   getTier1Clears,
   getBuiltUpgrades,
+  getEffectiveStats,
 } from '@/lib/db';
 import { getDungeon, DUNGEONS } from '@/lib/data/dungeons';
 import { computeRunDuration } from '@/lib/engine/run-engine';
@@ -45,11 +46,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Already on a run.' }, { status: 400 });
     }
 
-    // Check shrine bonus
+    // Use effective stats (base + gear) for duration — SPD from items counts
+    const effective = getEffectiveStats(char.id);
+    const charWithGear = { ...char, ...effective };
+
     const built = getBuiltUpgrades(char.id);
     const shrineBonus = built.includes('the_shrine') ? 0.9 : 1;
 
-    const baseDuration = computeRunDuration(dungeon, char);
+    const baseDuration = computeRunDuration(dungeon, charWithGear);
     const duration = Math.max(1, Math.round(baseDuration * shrineBonus));
 
     const run = createRun(char.id, dungeonId, difficulty, duration);
