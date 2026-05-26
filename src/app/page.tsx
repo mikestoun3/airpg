@@ -7,10 +7,11 @@ import { InventoryTab } from '@/components/game/InventoryTab';
 import { CampTab } from '@/components/game/CampTab';
 import { CraftTab } from '@/components/game/CraftTab';
 import { MarketTab } from '@/components/game/MarketTab';
+import { WikiTab } from '@/components/game/WikiTab';
 import { ResultModal } from '@/components/game/ResultModal';
 import { LoginScreen } from '@/components/auth/LoginScreen';
 
-type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft' | 'market';
+type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft' | 'market' | 'wiki';
 
 const NAV = [
   { id: 'adventure' as Tab, label: 'Adventure', icon: '⚔️', section: 'Explore' },
@@ -19,6 +20,7 @@ const NAV = [
   { id: 'camp' as Tab, label: 'Base Camp', icon: '🏕️', section: 'Base' },
   { id: 'craft' as Tab, label: 'Forge', icon: '⚒️', section: null },
   { id: 'market' as Tab, label: 'Market', icon: '🏪', section: 'World' },
+  { id: 'wiki' as Tab, label: 'Wiki', icon: '📖', section: null },
 ];
 
 function shortAddr(addr: string) {
@@ -252,6 +254,9 @@ export default function GamePage() {
             )}
             {activeTab === 'market' && (
               <MarketTab state={state} onRefresh={fetchState} />
+            )}
+            {activeTab === 'wiki' && (
+              <WikiTab />
             )}
           </div>
         </main>
