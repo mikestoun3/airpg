@@ -53,7 +53,17 @@ export function resolveRun(
 
   const dc = dungeon.baseDC + DIFFICULTY_DC_BONUS[run.difficulty];
   const combatRating = computeCombatRating(char);
-  const roll = Math.floor(Math.random() * 100) + 1 + combatRating;
+
+  // Pure d100 + CR. Success threshold: dc+51 so P(success+) = (CR-DC+50)/100, matching the UI display.
+  // Thresholds (effective = roll + CR):
+  //   critical_success: effective >= dc+81   → P = max(0, CR-DC+20)/100
+  //   success:          effective >= dc+51   → P = max(0, CR-DC+50)/100  ← UI formula
+  //   partial:          effective >= dc+31
+  //   failure:          effective >= dc+16
+  //   critical_failure: else
+  const roll = Math.floor(Math.random() * 100) + 1;
+  const effective = roll + combatRating;
+  const successAt = dc + 51;
 
   // Check pity: 10 consecutive no-success → auto success
   const isForced = pityCounts.consecutiveNoSuccess >= 10;
@@ -61,13 +71,13 @@ export function resolveRun(
   let outcome: RunOutcome;
   if (isForced) {
     outcome = 'success';
-  } else if (roll >= dc + 15) {
+  } else if (effective >= successAt + 30) {
     outcome = 'critical_success';
-  } else if (roll >= dc) {
+  } else if (effective >= successAt) {
     outcome = 'success';
-  } else if (roll >= dc - 15) {
+  } else if (effective >= successAt - 20) {
     outcome = 'partial';
-  } else if (roll >= dc - 30) {
+  } else if (effective >= successAt - 35) {
     outcome = 'failure';
   } else {
     outcome = 'critical_failure';
@@ -103,12 +113,10 @@ export function resolveRun(
     if (forcedItem) items[0] = forcedItem;
   }
 
-  // Resources: gathered regardless unless critical_failure
-  const resourceMult = (outcome === 'critical_failure') ? 0 : 1;
-  const resourcesGained: ResourceStack[] = preRolled
-    ? preRolled.resources
-        .filter(() => resourceMult > 0)
-        .map((r) => ({ resourceId: r.resourceId, name: r.name, icon: r.icon, quantity: r.quantity }))
+  // Resources: only on partial/success/critical_success — failure burns everything (shown in log but not given)
+  const giveResources = outcome === 'success' || outcome === 'critical_success' || outcome === 'partial';
+  const resourcesGained: ResourceStack[] = (preRolled && giveResources)
+    ? preRolled.resources.map((r) => ({ resourceId: r.resourceId, name: r.name, icon: r.icon, quantity: r.quantity }))
     : [];
 
   if (outcome === 'partial') {
@@ -150,8 +158,8 @@ export function resolveRun(
     xpGained,
     injured,
     injuryDurationMinutes: injuryMinutes,
-    combatRoll: roll,
-    dc,
+    combatRoll: effective,  // roll + CR, compared against successAt
+    dc: successAt,          // the effective success threshold (DC+51)
     resourcesGained,
   };
 }

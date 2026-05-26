@@ -36,8 +36,8 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
               </h2>
             </div>
             <div className="text-right text-xs text-[#5050a0] mt-1">
-              <div>Roll: <span className="text-[#9090c0]">{result.combatRoll}</span></div>
-              <div>DC: <span className="text-[#9090c0]">{result.dc}</span></div>
+              <div>Roll: <span className={result.combatRoll >= result.dc ? 'text-emerald-400' : 'text-red-400'}>{result.combatRoll}</span></div>
+              <div>Need: <span className="text-[#9090c0]">{result.dc}</span></div>
             </div>
           </div>
         </div>
