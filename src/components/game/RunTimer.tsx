@@ -175,113 +175,47 @@ export function RunTimer({ run, onComplete }: Props) {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  // Hero position: within the current floor's section of the path
-  const pathStart = 0.04; // 4% from left (castle icon)
-  const pathEnd = 0.88;   // 88% to right (end icon)
-  const pathWidth = pathEnd - pathStart;
-  const floorWidth = pathWidth / floorsAttempted;
-  const heroLeftPct = pathStart + (currentFloorIdx + floorLocalProgress) * floorWidth;
-  const heroLeft = `${Math.min(88, heroLeftPct * 100)}%`;
+  // Time remaining for the current floor only
+  const floorDuration = total / floorsAttempted;
+  const floorSecondsLeft = completed ? 0
+    : Math.max(0, Math.round(floorDuration * (currentFloorIdx + 1) - (total - secondsLeft)));
 
   return (
     <div className="flex flex-col h-full gap-4">
       {/* ── Main dungeon scene card ── */}
-      <div className="relative bg-[#0d0d20] border border-[rgba(120,110,200,0.25)] rounded-2xl overflow-hidden flex-shrink-0"
-        style={{ minHeight: 280 }}>
+      <div className="relative bg-[#0d0d20] border border-[rgba(120,110,200,0.25)] rounded-2xl overflow-hidden flex-shrink-0">
 
         {/* Atmospheric background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1e] via-[#0f0f28] to-[#12122e] pointer-events-none" />
-
-        {/* Floating particles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {PARTICLES.map(p => (
-            <div key={p.id} className="absolute bottom-0 rounded-full bg-purple-400/50"
-              style={{
-                left: p.left, width: p.size, height: p.size,
-                animation: `particle-float ${p.dur} ${p.delay} ease-in infinite`,
-                '--dx': p.dx,
-              } as React.CSSProperties} />
-          ))}
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1e] to-[#0f0f28] pointer-events-none" />
 
         {/* Header */}
-        <div className="relative z-10 flex items-start justify-between px-5 pt-4">
+        <div className="relative z-10 flex items-center justify-between px-5 py-3">
           <div>
             <p className="text-[10px] text-[#6060a0] uppercase tracking-widest">On Expedition</p>
-            <h3 className="text-slate-100 font-bold text-lg mt-0.5">{run.dungeonName}</h3>
+            <h3 className="text-slate-100 font-bold text-base mt-0.5">{run.dungeonName}</h3>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Current floor badge — large and prominent */}
-            <div className="text-right">
-              <div className="text-[10px] text-[#6060a0] uppercase tracking-widest">
-                {completed ? 'Completed' : 'Current Floor'}
-              </div>
-              <div className="text-2xl font-bold text-violet-300 tabular-nums leading-tight">
-                {completed ? '🏆' : `${currentFloor}`}
+          <div className="text-right">
+            <p className="text-[10px] text-[#6060a0] uppercase tracking-widest">
+              {completed ? 'Completed' : 'Current Floor'}
+            </p>
+            <div className="flex items-baseline gap-2 justify-end mt-0.5">
+              <span className="text-2xl font-bold text-violet-300 tabular-nums leading-none">
+                {completed ? '🏆' : currentFloor}
                 {!completed && floorsAttempted > 1 && (
                   <span className="text-sm text-[#6060a0] font-normal ml-1">/ {startFloor + floorsAttempted - 1}</span>
                 )}
-              </div>
-            </div>
-            <span className="text-xl font-mono font-bold text-slate-100 tabular-nums w-14 text-right">
-              {completed ? '—' : fmt(secondsLeft)}
-            </span>
-          </div>
-        </div>
-
-        {/* ── Hero path ── */}
-        <div className="relative z-10 mx-5 mt-4 mb-2 h-14">
-          {/* Ground line */}
-          <div className="absolute top-8 left-4 right-4 h-px bg-gradient-to-r from-transparent via-[#3a3a70] to-transparent" />
-
-          {/* Start icon */}
-          <div className="absolute left-0 top-1/2 -translate-y-3">
-            <span className="text-lg">🏰</span>
-          </div>
-
-          {/* End icon */}
-          <div className={`absolute right-0 top-1/2 -translate-y-3 transition-all duration-500 ${
-            completed ? 'opacity-100 scale-125' : 'opacity-40'
-          }`}>
-            <span className="text-lg">{completed ? '🏆' : '⚔'}</span>
-          </div>
-
-          {/* Floor checkpoint markers on the path */}
-          {floorsAttempted > 1 && Array.from({ length: floorsAttempted - 1 }, (_, i) => {
-            const markerPct = ((i + 1) / floorsAttempted) * 84 + 4; // mapped to 4%–88%
-            const isCleared = progress >= (i + 1) / floorsAttempted;
-            return (
-              <div key={i}
-                className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center"
-                style={{ left: `${markerPct}%` }}>
-                <div className={`w-1.5 h-1.5 rounded-full border transition-all duration-500 ${
-                  isCleared
-                    ? 'bg-violet-400 border-violet-400 shadow-[0_0_4px_rgba(167,139,250,0.8)]'
-                    : 'bg-transparent border-[#3a3a70]'
-                }`} />
-              </div>
-            );
-          })}
-
-          {/* Trail */}
-          <div className="absolute top-8 left-4 right-4 h-px overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-violet-500 to-purple-400 transition-all duration-1000 rounded-full"
-              style={{ width: `${progress * 100}%` }} />
-          </div>
-
-          {/* Hero — outer: left position only; inner: bob animation; innermost: scale */}
-          <div className="absolute z-20"
-            style={{ left: heroLeft, top: '50%', transform: 'translateY(-50%)', transition: 'left 1s linear' }}>
-            <div style={{ animation: completed ? 'none' : 'hero-bob 1.2s ease-in-out infinite' }}>
-              <div className={`text-2xl drop-shadow-lg transition-transform duration-300 ${completed ? 'scale-125' : 'scale-100'}`}>
-                {completed ? '🎉' : '⚔️'}
-              </div>
+              </span>
+              {!completed && (
+                <span className="text-base font-mono font-bold text-slate-200 tabular-nums">
+                  {fmt(floorSecondsLeft)}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         {/* ── Segmented floor progress bar ── */}
-        <div className="relative z-10 mx-5 mb-4">
+        <div className="relative z-10 px-5 pb-3">
           {/* Floor labels */}
           <div className="flex mb-1">
             {Array.from({ length: floorsAttempted }, (_, i) => {
@@ -328,14 +262,14 @@ export function RunTimer({ run, onComplete }: Props) {
             })}
           </div>
 
-          {/* Progress text */}
+          {/* Progress text — floor progress left, total time right */}
           <div className="flex justify-between text-[10px] text-[#5050a0] mt-1">
             <span>
               {completed
                 ? `All ${floorsAttempted} floor${floorsAttempted > 1 ? 's' : ''} done`
                 : `Floor ${currentFloor} · ${Math.round(floorLocalProgress * 100)}%`}
             </span>
-            {!completed && <span>ETA {fmt(secondsLeft)}</span>}
+            {!completed && <span>Total {fmt(secondsLeft)}</span>}
           </div>
         </div>
       </div>
