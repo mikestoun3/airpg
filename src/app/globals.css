@@ -1,26 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-base:    #09091a;
+  --bg-surface: #0f0f22;
+  --bg-card:    #14142a;
+  --bg-raised:  #1a1a34;
+  --bg-hover:   #1f1f3d;
+  --border:     rgba(120,110,200,0.15);
+  --border-bright: rgba(140,120,220,0.30);
+  --purple:     #7c5ff0;
+  --purple-dim: #3d2e80;
+  --gold:       #f5be42;
+  --essence:    #a78bfa;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-base);
+  color: #ddd8f8;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
+
+/* Thin scrollbars */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a55; border-radius: 2px; }
+
+/* Glowing card */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.card-raised {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-bright);
+  border-radius: 12px;
+}
+
+/* Rarity glow effects */
+.rarity-legendary { box-shadow: 0 0 12px rgba(251,191,36,0.20); }
+.rarity-epic      { box-shadow: 0 0 10px rgba(168,85,247,0.20); }
+.rarity-rare      { box-shadow: 0 0 8px  rgba(96,165,250,0.15); }
