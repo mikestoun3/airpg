@@ -5,15 +5,17 @@ import { AdventureTab } from '@/components/game/AdventureTab';
 import { CharacterTab } from '@/components/game/CharacterTab';
 import { InventoryTab } from '@/components/game/InventoryTab';
 import { CampTab } from '@/components/game/CampTab';
+import { CraftTab } from '@/components/game/CraftTab';
 import { ResultModal } from '@/components/game/ResultModal';
 
-type Tab = 'adventure' | 'character' | 'inventory' | 'camp';
+type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft';
 
 const NAV = [
   { id: 'adventure' as Tab, label: 'Adventure', icon: '⚔️', section: 'Explore' },
   { id: 'character' as Tab, label: 'Character', icon: '🛡️', section: null },
   { id: 'inventory' as Tab, label: 'Inventory', icon: '🎒', section: null },
   { id: 'camp' as Tab, label: 'Base Camp', icon: '🏕️', section: 'Base' },
+  { id: 'craft' as Tab, label: 'Forge', icon: '⚒️', section: null },
 ];
 
 export default function GamePage() {
@@ -215,6 +217,9 @@ export default function GamePage() {
             )}
             {activeTab === 'camp' && (
               <CampTab state={state} onRefresh={fetchState} />
+            )}
+            {activeTab === 'craft' && (
+              <CraftTab state={state} onRefresh={fetchState} />
             )}
           </div>
         </main>

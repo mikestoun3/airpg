@@ -1,7 +1,8 @@
-import type { Character, Difficulty, RunOutcome, RunResult, ActiveRun } from '@/types/game';
+import type { Character, Difficulty, RunOutcome, RunResult, ActiveRun, ResourceStack } from '@/types/game';
 import { getDungeon } from '@/lib/data/dungeons';
 import { getLootTable } from '@/lib/data/loot-tables';
 import { rollLoot, rollItem } from '@/lib/engine/loot-roller';
+import type { PreRolledData } from '@/lib/engine/loot-roller';
 
 const DIFFICULTY_DC_BONUS: Record<Difficulty, number> = {
   normal: 0,
@@ -41,7 +42,8 @@ export function computeRunDuration(dungeon: ReturnType<typeof getDungeon>, char:
 export function resolveRun(
   run: ActiveRun,
   char: Character,
-  pityCounts: { totalRuns: number; sinceLastUncommon: number; sinceLastRare: number; sinceLastEpic: number; consecutiveNoSuccess: number }
+  pityCounts: { totalRuns: number; sinceLastUncommon: number; sinceLastRare: number; sinceLastEpic: number; consecutiveNoSuccess: number },
+  preRolled?: PreRolledData
 ): RunResult {
   const dungeon = getDungeon(run.dungeonId);
   if (!dungeon) throw new Error(`Unknown dungeon: ${run.dungeonId}`);
@@ -81,17 +83,35 @@ export function resolveRun(
     if (pityCounts.sinceLastEpic >= 74) pityForcedRarity = 'epic';
   }
 
-  let { items, gold, essence } = rollLoot(table, char.lck, lootRolls);
+  let items: import('@/types/game').ItemInstance[];
+  let gold: number;
+  let essence: number;
+
+  if (preRolled) {
+    items = preRolled.items.slice(0, lootRolls);
+    gold = preRolled.gold;
+    essence = preRolled.essence;
+  } else {
+    const rolled = rollLoot(table, char.lck, lootRolls);
+    items = rolled.items;
+    gold = rolled.gold;
+    essence = rolled.essence;
+  }
 
   if (pityForcedRarity && lootRolls > 0 && items.length > 0) {
     const forcedItem = rollItem(table, char.lck, pityForcedRarity);
-    if (forcedItem) {
-      items[0] = forcedItem;
-    }
+    if (forcedItem) items[0] = forcedItem;
   }
 
+  // Resources: gathered regardless unless critical_failure
+  const resourceMult = (outcome === 'critical_failure') ? 0 : 1;
+  const resourcesGained: ResourceStack[] = preRolled
+    ? preRolled.resources
+        .filter(() => resourceMult > 0)
+        .map((r) => ({ resourceId: r.resourceId, name: r.name, icon: r.icon, quantity: r.quantity }))
+    : [];
+
   if (outcome === 'partial') {
-    // Filter to only common/uncommon
     items = items.filter((i) => i.rarity === 'common' || i.rarity === 'uncommon');
     gold = Math.floor(gold * 0.5);
     essence = Math.floor(essence * 0.5);
@@ -132,6 +152,7 @@ export function resolveRun(
     injuryDurationMinutes: injuryMinutes,
     combatRoll: roll,
     dc,
+    resourcesGained,
   };
 }
 

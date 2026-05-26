@@ -10,6 +10,8 @@ import {
 } from '@/lib/db';
 import { getDungeon, DUNGEONS } from '@/lib/data/dungeons';
 import { computeRunDuration } from '@/lib/engine/run-engine';
+import { getLootTable } from '@/lib/data/loot-tables';
+import { preRollRun } from '@/lib/engine/loot-roller';
 import type { Difficulty } from '@/types/game';
 
 export async function POST(req: NextRequest) {
@@ -56,7 +58,11 @@ export async function POST(req: NextRequest) {
     const baseDuration = computeRunDuration(dungeon, charWithGear);
     const duration = Math.max(1, Math.round(baseDuration * shrineBonus));
 
-    const run = createRun(char.id, dungeonId, difficulty, duration);
+    // Pre-roll loot + resources so they can be revealed in the journey log
+    const table = getLootTable(dungeonId);
+    const preRolled = table ? preRollRun(table, dungeonId, charWithGear.lck, difficulty) : null;
+
+    const run = createRun(char.id, dungeonId, difficulty, duration, preRolled ? JSON.stringify(preRolled) : undefined);
     const dungeonMeta = DUNGEONS.find((d) => d.id === dungeonId)!;
 
     return NextResponse.json({
@@ -68,6 +74,7 @@ export async function POST(req: NextRequest) {
         difficulty,
         startTime: run.startTime,
         endTime: run.endTime,
+        previewEvents: preRolled?.previewEvents ?? [],
       },
     });
   } catch (err) {

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import type { ActiveRun } from '@/types/game';
-import { DIFFICULTY_LABELS } from '@/types/game';
+import type { ActiveRun, RunPreviewEvent } from '@/types/game';
+import { DIFFICULTY_LABELS, RARITY_COLORS } from '@/types/game';
 
 interface Props {
   run: ActiveRun;
@@ -38,14 +38,20 @@ export function RunTimer({ run, onComplete }: Props) {
   const calcSecondsLeft = () => Math.max(0, run.endTime - Math.floor(Date.now() / 1000));
   const [secondsLeft, setSecondsLeft] = useState(calcSecondsLeft);
   const [completed, setCompleted] = useState(secondsLeft === 0);
-  const [visibleEvents, setVisibleEvents] = useState<string[]>([]);
+  const [visibleEvents, setVisibleEvents] = useState<{ text: string; preview?: RunPreviewEvent }[]>([]);
   const triggeredRef = useRef<Set<number>>(new Set());
 
   const progress = total > 0 ? Math.min(1, 1 - secondsLeft / total) : 1;
 
-  const events = DUNGEON_EVENTS[run.dungeonId] ?? GENERIC_EVENTS;
-  // Thresholds at which each event fires
-  const thresholds = events.map((_, i) => (i + 1) / (events.length + 1));
+  const flavourEvents = DUNGEON_EVENTS[run.dungeonId] ?? GENERIC_EVENTS;
+  const thresholds = flavourEvents.map((_, i) => (i + 1) / (flavourEvents.length + 1));
+
+  // Combined sorted stream: flavour text + loot/resource reveals
+  type CombinedEvent = { revealAt: number; text: string; preview?: RunPreviewEvent };
+  const allEvents: CombinedEvent[] = [
+    ...flavourEvents.map((text, i) => ({ revealAt: thresholds[i], text })),
+    ...(run.previewEvents ?? []).map((e) => ({ revealAt: e.revealAt, text: e.label, preview: e })),
+  ].sort((a, b) => a.revealAt - b.revealAt);
 
   useEffect(() => {
     if (secondsLeft <= 0) { setCompleted(true); return; }
@@ -58,12 +64,12 @@ export function RunTimer({ run, onComplete }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run.endTime]);
 
-  // Fire events at milestones
+  // Fire all events (flavour + preview) at their revealAt thresholds
   useEffect(() => {
-    thresholds.forEach((threshold, i) => {
-      if (progress >= threshold && !triggeredRef.current.has(i)) {
+    allEvents.forEach((ev, i) => {
+      if (progress >= ev.revealAt && !triggeredRef.current.has(i)) {
         triggeredRef.current.add(i);
-        setVisibleEvents(prev => [events[i], ...prev].slice(0, 4));
+        setVisibleEvents((prev) => [{ text: ev.text, preview: ev.preview }, ...prev].slice(0, 5));
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,16 +191,34 @@ export function RunTimer({ run, onComplete }: Props) {
           <p className="text-[#4040a0] text-sm italic">Preparing to depart...</p>
         ) : (
           <div className="space-y-2">
-            {visibleEvents.map((event, i) => (
-              <div key={`${event}-${i}`}
-                className={`flex items-start gap-2.5 transition-all ${i === 0 ? 'opacity-100' : i === 1 ? 'opacity-60' : 'opacity-30'}`}
-                style={i === 0 ? { animation: 'event-slide-in 0.4s ease-out' } : {}}>
-                <span className={`mt-0.5 text-xs shrink-0 ${i === 0 ? 'text-purple-400' : 'text-[#4040a0]'}`}>
-                  {i === 0 ? '▸' : '·'}
-                </span>
-                <span className={`text-sm ${i === 0 ? 'text-slate-300' : 'text-[#5555a0]'}`}>{event}</span>
-              </div>
-            ))}
+            {visibleEvents.map((ev, i) => {
+              const isLoot = ev.preview?.type === 'item';
+              const isResource = ev.preview?.type === 'resource';
+              const isEssence = ev.preview?.type === 'essence';
+              const rarityColor = isLoot && ev.preview?.rarity
+                ? RARITY_COLORS[ev.preview.rarity]
+                : null;
+              return (
+                <div key={`${ev.text}-${i}`}
+                  className={`flex items-start gap-2.5 transition-all ${i === 0 ? 'opacity-100' : i === 1 ? 'opacity-65' : i === 2 ? 'opacity-35' : 'opacity-20'}`}
+                  style={i === 0 ? { animation: 'event-slide-in 0.4s ease-out' } : {}}>
+                  <span className={`mt-0.5 text-xs shrink-0 ${
+                    i === 0
+                      ? isLoot ? '' : isResource ? 'text-emerald-400' : isEssence ? 'text-purple-400' : 'text-purple-400'
+                      : 'text-[#4040a0]'
+                  }`}
+                    style={i === 0 && rarityColor ? { color: rarityColor } : undefined}>
+                    {i === 0 ? (isLoot ? '◆' : isResource ? '⬡' : '▸') : '·'}
+                  </span>
+                  <span className="text-sm" style={i === 0 && rarityColor ? { color: rarityColor } : undefined}>
+                    <span className={i > 0 ? 'text-[#5555a0]' : isResource ? 'text-emerald-300' : isEssence ? 'text-purple-300' : 'text-slate-300'}>
+                      {ev.preview?.icon && <span className="mr-1">{ev.preview.icon}</span>}
+                      {ev.text}
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -99,7 +99,17 @@ function initSchema(db: Database.Database) {
       PRIMARY KEY (character_id, dungeon_id, cleared_at),
       FOREIGN KEY (character_id) REFERENCES characters(id)
     );
+
+    CREATE TABLE IF NOT EXISTS materials (
+      character_id TEXT NOT NULL,
+      resource_id TEXT NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (character_id, resource_id),
+      FOREIGN KEY (character_id) REFERENCES characters(id)
+    );
   `);
+
+  try { db.exec('ALTER TABLE runs ADD COLUMN pre_rolled_json TEXT'); } catch { /* already exists */ }
 }
 
 // ── Character ─────────────────────────────────────────────────────────────────
@@ -348,7 +358,8 @@ export function createRun(
   characterId: string,
   dungeonId: string,
   difficulty: string,
-  durationMinutes: number
+  durationMinutes: number,
+  preRolledJson?: string
 ) {
   const db = getDb();
   const id = uuidv4();
@@ -356,9 +367,9 @@ export function createRun(
   const endTime = now + durationMinutes * 60;
 
   db.prepare(`
-    INSERT INTO runs (id, character_id, dungeon_id, difficulty, start_time, end_time)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, characterId, dungeonId, difficulty, now, endTime);
+    INSERT INTO runs (id, character_id, dungeon_id, difficulty, start_time, end_time, pre_rolled_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(id, characterId, dungeonId, difficulty, now, endTime, preRolledJson ?? null);
 
   updateCharacterStatus(characterId, 'on_run');
   return { id, startTime: now, endTime };
@@ -454,6 +465,44 @@ export function getBuiltUpgrades(characterId: string): string[] {
 export function buildUpgrade(characterId: string, upgradeId: string) {
   const db = getDb();
   db.prepare('INSERT OR IGNORE INTO camp (character_id, upgrade_id) VALUES (?, ?)').run(characterId, upgradeId);
+}
+
+// ── Materials (craft resources) ───────────────────────────────────────────────
+
+export function getMaterials(characterId: string): { resource_id: string; quantity: number }[] {
+  const db = getDb();
+  return db.prepare('SELECT resource_id, quantity FROM materials WHERE character_id = ? AND quantity > 0')
+    .all(characterId) as { resource_id: string; quantity: number }[];
+}
+
+export function addMaterials(characterId: string, stacks: { resourceId: string; quantity: number }[]) {
+  const db = getDb();
+  const upsert = db.prepare(`
+    INSERT INTO materials (character_id, resource_id, quantity)
+    VALUES (?, ?, ?)
+    ON CONFLICT (character_id, resource_id) DO UPDATE SET quantity = quantity + excluded.quantity
+  `);
+  for (const s of stacks) {
+    upsert.run(characterId, s.resourceId, s.quantity);
+  }
+}
+
+export function spendMaterials(
+  characterId: string,
+  ingredients: { resourceId: string; quantity: number }[]
+): boolean {
+  const db = getDb();
+  const rows = db.prepare('SELECT resource_id, quantity FROM materials WHERE character_id = ?')
+    .all(characterId) as { resource_id: string; quantity: number }[];
+  const stock = Object.fromEntries(rows.map((r) => [r.resource_id, r.quantity]));
+  for (const ing of ingredients) {
+    if ((stock[ing.resourceId] ?? 0) < ing.quantity) return false;
+  }
+  for (const ing of ingredients) {
+    db.prepare('UPDATE materials SET quantity = quantity - ? WHERE character_id = ? AND resource_id = ?')
+      .run(ing.quantity, characterId, ing.resourceId);
+  }
+  return true;
 }
 
 export function spendGold(characterId: string, amount: number): boolean {

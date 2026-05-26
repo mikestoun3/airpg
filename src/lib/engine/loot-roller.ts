@@ -1,8 +1,18 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { ItemInstance, Rarity, StatKey, SpecialEffect } from '@/types/game';
+import type { ItemInstance, Rarity, StatKey, SpecialEffect, Difficulty, RunPreviewEvent } from '@/types/game';
 import { RARITY_ORDER } from '@/types/game';
 import { getTemplate } from '@/lib/data/items';
 import type { DungeonLootTable, LootTableEntry, RarityWeights } from '@/lib/data/loot-tables';
+import { DUNGEON_RESOURCE_DROPS, getResource } from '@/lib/data/resources';
+import type { ResourceStack } from '@/types/game';
+
+export interface PreRolledData {
+  items: ItemInstance[];
+  gold: number;
+  essence: number;
+  resources: (ResourceStack & { revealAt: number })[];
+  previewEvents: RunPreviewEvent[];
+}
 
 const RARITY_STAT_RANGES: Record<Rarity, [number, number]> = {
   common: [1, 4],
@@ -148,6 +158,81 @@ export function rollItem(
     specialEffects,
     gearScore: RARITY_GEAR_SCORE[rarity],
   };
+}
+
+const DIFF_LOOT_BONUS: Record<Difficulty, number> = { normal: 0, hardened: 1, nightmare: 2 };
+
+export function preRollRun(
+  table: DungeonLootTable,
+  dungeonId: string,
+  luck: number,
+  difficulty: Difficulty
+): PreRolledData {
+  const maxRolls = 3 + DIFF_LOOT_BONUS[difficulty];
+
+  const items: ItemInstance[] = [];
+  for (let i = 0; i < maxRolls; i++) {
+    const item = rollItem(table, luck);
+    if (item) items.push(item);
+  }
+
+  const [goldMin, goldMax] = table.baseGold;
+  const gold = Math.round(rand(goldMin, goldMax) * table.goldMultiplier);
+  let essence = 0;
+  if (Math.random() < table.essenceChance) {
+    essence = rand(table.essenceAmount[0], table.essenceAmount[1]);
+  }
+
+  const drops = DUNGEON_RESOURCE_DROPS[dungeonId] ?? [];
+  const resources: (ResourceStack & { revealAt: number })[] = [];
+  for (const drop of drops) {
+    if (Math.random() < drop.chance) {
+      const qty = rand(drop.minQty, drop.maxQty);
+      const def = getResource(drop.resourceId);
+      if (def) {
+        resources.push({
+          resourceId: drop.resourceId,
+          name: def.name,
+          icon: def.icon,
+          quantity: qty,
+          revealAt: Math.random() * 0.75 + 0.12,
+        });
+      }
+    }
+  }
+
+  const previewEvents: RunPreviewEvent[] = [];
+
+  for (const item of items) {
+    previewEvents.push({
+      type: 'item',
+      revealAt: Math.random() * 0.68 + 0.10,
+      label: `Found: ${item.name}`,
+      rarity: item.rarity,
+    });
+  }
+
+  for (const res of resources) {
+    previewEvents.push({
+      type: 'resource',
+      revealAt: res.revealAt,
+      label: `Gathered: ${res.name} ×${res.quantity}`,
+      icon: res.icon,
+    });
+  }
+
+  if (essence > 0) {
+    previewEvents.push({
+      type: 'essence',
+      revealAt: Math.random() * 0.25 + 0.65,
+      label: `Collected: ${essence} Essence`,
+      icon: '✦',
+    });
+  }
+
+  previewEvents.sort((a, b) => a.revealAt - b.revealAt);
+
+  return { items, gold, essence, resources, previewEvents };
 }
 
 export function rollLoot(

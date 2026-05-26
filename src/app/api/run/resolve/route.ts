@@ -11,7 +11,9 @@ import {
   updatePity,
   recordClear,
   getEffectiveStats,
+  addMaterials,
 } from '@/lib/db';
+import type { PreRolledData } from '@/lib/engine/loot-roller';
 import { getDungeon } from '@/lib/data/dungeons';
 import { resolveRun } from '@/lib/engine/run-engine';
 import type { ActiveRun, Difficulty } from '@/types/game';
@@ -42,9 +44,12 @@ export async function POST() {
       endTime: runRow.end_time as number,
     };
 
-    // Use effective stats (base + gear) for combat resolution
     const effective = getEffectiveStats(char.id);
     const charWithGear = { ...char, ...effective };
+
+    const preRolled: PreRolledData | undefined = runRow.pre_rolled_json
+      ? JSON.parse(runRow.pre_rolled_json as string)
+      : undefined;
 
     const result = resolveRun(activeRun, charWithGear, {
       totalRuns: pity.total_runs,
@@ -52,7 +57,7 @@ export async function POST() {
       sinceLastRare: pity.since_last_rare,
       sinceLastEpic: pity.since_last_epic,
       consecutiveNoSuccess: pity.consecutive_no_success,
-    });
+    }, preRolled);
 
     // Persist result
     resolveRunInDb(runRow.id as string, result.outcome, JSON.stringify(result));
@@ -62,9 +67,14 @@ export async function POST() {
       addItemToInventory(char.id, item);
     }
 
-    // Add resources
+    // Add gold + essence
     if (result.goldGained > 0 || result.essenceGained > 0) {
       addResources(char.id, result.goldGained, result.essenceGained);
+    }
+
+    // Add gathered materials
+    if (result.resourcesGained.length > 0) {
+      addMaterials(char.id, result.resourcesGained);
     }
 
     // Add XP

@@ -10,7 +10,10 @@ import {
   getGearScore,
   getTier1Clears,
   updateCharacterStatus,
+  getMaterials,
 } from '@/lib/db';
+import { RESOURCES } from '@/lib/data/resources';
+import type { ResourceStack } from '@/types/game';
 import { DUNGEONS } from '@/lib/data/dungeons';
 import { getCampUpgradesWithState } from '@/lib/data/camp';
 import type { GameState } from '@/types/game';
@@ -38,7 +41,7 @@ export async function GET() {
     char.gearScore = gearScore;
     char.combatRating = Math.floor(char.pwr * 1.5 + char.end);
 
-    // Active run
+    // Active run (include pre-rolled preview events for journey log)
     const activeRunRow = getActiveRun(char.id);
     const activeRun = activeRunRow
       ? {
@@ -48,6 +51,9 @@ export async function GET() {
           difficulty: activeRunRow.difficulty as import('@/types/game').Difficulty,
           startTime: activeRunRow.start_time as number,
           endTime: activeRunRow.end_time as number,
+          previewEvents: activeRunRow.pre_rolled_json
+            ? (JSON.parse(activeRunRow.pre_rolled_json as string) as { previewEvents: import('@/types/game').RunPreviewEvent[] }).previewEvents ?? []
+            : [],
         }
       : null;
 
@@ -67,6 +73,13 @@ export async function GET() {
 
     const campUpgrades = getCampUpgradesWithState(builtUpgrades);
 
+    // Build resource stacks with names + icons
+    const rawMaterials = getMaterials(char.id);
+    const resources: ResourceStack[] = rawMaterials.map((m) => {
+      const def = RESOURCES.find((r) => r.id === m.resource_id);
+      return { resourceId: m.resource_id, name: def?.name ?? m.resource_id, icon: def?.icon ?? '?', quantity: m.quantity };
+    });
+
     const state: GameState = {
       character: char,
       equipment,
@@ -76,6 +89,7 @@ export async function GET() {
       campUpgrades,
       unlockedDungeons,
       tier1Clears,
+      resources,
     };
 
     return NextResponse.json({ ok: true, state, hasCompletedRun: !!completedRun });

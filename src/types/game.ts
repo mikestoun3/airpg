@@ -78,6 +78,38 @@ export interface Character {
   statPoints: number;
 }
 
+export interface ResourceStack {
+  resourceId: string;
+  name: string;
+  icon: string;
+  quantity: number;
+}
+
+export interface RunPreviewEvent {
+  type: 'item' | 'resource' | 'essence';
+  revealAt: number;
+  label: string;
+  rarity?: Rarity;
+  icon?: string;
+}
+
+export interface CraftRecipe {
+  id: string;
+  name: string;
+  slot: EquipmentSlot;
+  rarity: Rarity;
+  description: string;
+  ingredients: { resourceId: string; name: string; quantity: number }[];
+  outputItem: {
+    templateId: string;
+    name: string;
+    primaryStat: StatKey;
+    primaryValue: number;
+    secondaryStats: Array<{ stat: StatKey; value: number }>;
+    gearScore: number;
+  };
+}
+
 export interface ActiveRun {
   id: string;
   dungeonId: string;
@@ -85,6 +117,7 @@ export interface ActiveRun {
   difficulty: Difficulty;
   startTime: number;
   endTime: number;
+  previewEvents?: RunPreviewEvent[];
   consumableUsed?: string;
 }
 
@@ -102,6 +135,7 @@ export interface RunResult {
   injuryDurationMinutes?: number;
   combatRoll: number;
   dc: number;
+  resourcesGained: ResourceStack[];
 }
 
 export interface Equipment {
@@ -133,6 +167,7 @@ export interface GameState {
   campUpgrades: CampUpgrade[];
   unlockedDungeons: string[];
   tier1Clears: number;
+  resources: ResourceStack[];
 }
 
 export const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];

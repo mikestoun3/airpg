@@ -91,9 +91,25 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
               </div>
             </div>
           ) : (
-            <div className="text-center py-8 text-[#5050a0]">
+            <div className="text-center py-6 text-[#5050a0]">
               <p className="text-3xl mb-2">—</p>
               <p className="text-sm">No loot this time</p>
+            </div>
+          )}
+
+          {result.resourcesGained && result.resourcesGained.length > 0 && (
+            <div>
+              <p className="text-[11px] text-[#7070b0] uppercase tracking-widest mb-2">Materials Gathered</p>
+              <div className="flex flex-wrap gap-2">
+                {result.resourcesGained.map((r) => (
+                  <div key={r.resourceId}
+                    className="flex items-center gap-1.5 bg-[#0f0f22] border border-[rgba(120,110,200,0.15)] rounded-lg px-3 py-1.5 text-sm">
+                    <span>{r.icon}</span>
+                    <span className="text-slate-300">{r.name}</span>
+                    <span className="text-emerald-400 font-bold">×{r.quantity}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
