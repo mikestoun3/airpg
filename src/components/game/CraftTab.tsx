@@ -4,6 +4,7 @@ import type { GameState } from '@/types/game';
 import { RARITY_COLORS } from '@/types/game';
 import { CRAFT_RECIPES } from '@/lib/data/recipes';
 import { RESOURCES } from '@/lib/data/resources';
+import { ResIcon } from '@/components/ui/ResIcon';
 
 interface Props {
   state: GameState;
@@ -69,7 +70,7 @@ export function CraftTab({ state, onRefresh }: Props) {
               <div key={res.id}
                 className="flex items-center justify-between bg-[#14142a] border border-[rgba(120,110,200,0.12)] rounded-lg px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">{res.icon}</span>
+                  <ResIcon resourceId={res.id} fallback={res.icon} size={20} />
                   <div>
                     <p className="text-xs text-slate-300">{res.name}</p>
                     <p className="text-[10px]" style={{ color: rarityColor }}>{res.rarity}</p>
@@ -157,7 +158,7 @@ export function CraftTab({ state, onRefresh }: Props) {
                       return (
                         <div key={ing.resourceId} className="flex items-center justify-between text-xs">
                           <span className="flex items-center gap-1 text-[#8080a0]">
-                            <span>{def?.icon}</span>
+                            <ResIcon resourceId={ing.resourceId} fallback={def?.icon ?? '?'} size={16} />
                             <span>{ing.name}</span>
                           </span>
                           <span className={`font-semibold tabular-nums ${ok ? 'text-emerald-400' : 'text-red-400'}`}>

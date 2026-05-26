@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getSessionWallet } from '@/lib/auth';
 import {
   getOrCreateCharacter,
   getEquipment,
@@ -11,6 +12,7 @@ import {
   getTier1Clears,
   updateCharacterStatus,
   getMaterials,
+  getFloorProgress,
 } from '@/lib/db';
 import { RESOURCES } from '@/lib/data/resources';
 import type { ResourceStack } from '@/types/game';
@@ -18,9 +20,10 @@ import { DUNGEONS } from '@/lib/data/dungeons';
 import { getCampUpgradesWithState } from '@/lib/data/camp';
 import type { GameState } from '@/types/game';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const char = getOrCreateCharacter();
+    const wallet = getSessionWallet(req);
+    const char = getOrCreateCharacter(wallet ?? undefined);
     const equipment = getEquipment(char.id);
     const inventory = getInventory(char.id);
     const builtUpgrades = getBuiltUpgrades(char.id);
@@ -41,20 +44,27 @@ export async function GET() {
     char.gearScore = gearScore;
     char.combatRating = Math.floor(char.pwr * 1.5 + char.end);
 
+    // Floor progress
+    const savedFloors = getFloorProgress(char.id);
+
     // Active run (include pre-rolled preview events for journey log)
     const activeRunRow = getActiveRun(char.id);
     const activeRun = activeRunRow
-      ? {
-          id: activeRunRow.id as string,
-          dungeonId: activeRunRow.dungeon_id as string,
-          dungeonName: DUNGEONS.find((d) => d.id === activeRunRow.dungeon_id)?.name ?? '',
-          difficulty: activeRunRow.difficulty as import('@/types/game').Difficulty,
-          startTime: activeRunRow.start_time as number,
-          endTime: activeRunRow.end_time as number,
-          previewEvents: activeRunRow.pre_rolled_json
-            ? (JSON.parse(activeRunRow.pre_rolled_json as string) as { previewEvents: import('@/types/game').RunPreviewEvent[] }).previewEvents ?? []
-            : [],
-        }
+      ? (() => {
+          const preRolledRaw = activeRunRow.pre_rolled_json as string | null;
+          const preRolledData = preRolledRaw ? JSON.parse(preRolledRaw) as { previewEvents?: import('@/types/game').RunPreviewEvent[]; startFloor?: number; floorsAttempted?: number } : null;
+          return {
+            id: activeRunRow.id as string,
+            dungeonId: activeRunRow.dungeon_id as string,
+            dungeonName: DUNGEONS.find((d) => d.id === activeRunRow.dungeon_id)?.name ?? '',
+            difficulty: activeRunRow.difficulty as import('@/types/game').Difficulty,
+            startTime: activeRunRow.start_time as number,
+            endTime: activeRunRow.end_time as number,
+            previewEvents: preRolledData?.previewEvents ?? [],
+            startFloor: preRolledData?.startFloor,
+            floorsAttempted: preRolledData?.floorsAttempted,
+          };
+        })()
       : null;
 
     // Pending result (completed but not yet seen)
@@ -90,6 +100,8 @@ export async function GET() {
       unlockedDungeons,
       tier1Clears,
       resources,
+      walletAddress: wallet,
+      savedFloors,
     };
 
     return NextResponse.json({ ok: true, state, hasCompletedRun: !!completedRun });

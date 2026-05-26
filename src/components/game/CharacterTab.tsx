@@ -13,6 +13,15 @@ const STAT_ICONS: Record<StatKey, string> = {
   pwr: '⚔', end: '🛡', lck: '✦', spd: '💨', ins: '👁',
 };
 
+const SLOT_SPRITE: Record<string, string> = {
+  weapon:  '/icons/slot_weapon.png',
+  helmet:  '/icons/slot_head.png',
+  chest:   '/icons/slot_chest.png',
+  boots:   '/icons/slot_boots.png',
+  ring:    '/icons/slot_accessory.png',
+  trinket: '/icons/slot_accessory.png',
+};
+
 const STAT_DESC: Record<StatKey, string> = {
   pwr: 'Increases success chance & loot quality',
   end: 'Reduces failure & injury chance',
@@ -22,7 +31,8 @@ const STAT_DESC: Record<StatKey, string> = {
 };
 
 export function CharacterTab({ state, onRefresh }: Props) {
-  const { character, equipment } = state;
+  const { character, equipment, activeRun } = state;
+  const onRun = !!activeRun;
   const [spending, setSpending] = useState(false);
   const [tooltip, setTooltip] = useState<StatKey | null>(null);
 
@@ -95,6 +105,7 @@ export function CharacterTab({ state, onRefresh }: Props) {
         <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4 flex-1">
           <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3 flex items-center gap-2">
             <span className="text-purple-500">◆</span> Equipment
+            {onRun && <span className="ml-auto text-[10px] text-violet-400/70">⚔ on run</span>}
           </p>
           <div className="space-y-2">
             {slots.map((slot) => {
@@ -102,7 +113,12 @@ export function CharacterTab({ state, onRefresh }: Props) {
               return (
                 <div key={slot}
                   className="flex items-center gap-2 p-2.5 rounded-lg bg-[#0f0f22] border border-[rgba(120,110,200,0.10)]">
-                  <span className="text-[#5050a0] text-[11px] w-12 shrink-0">{SLOT_LABELS[slot]}</span>
+                  <div className="w-7 h-7 shrink-0 flex items-center justify-center opacity-60">
+                    {SLOT_SPRITE[slot]
+                      ? <img src={SLOT_SPRITE[slot]} alt={slot} width={24} height={24} style={{ imageRendering: 'pixelated' }} />
+                      : <span className="text-[#5050a0] text-[11px]">{SLOT_LABELS[slot]}</span>
+                    }
+                  </div>
                   {item ? (
                     <>
                       <div className="flex-1 min-w-0">
@@ -113,8 +129,9 @@ export function CharacterTab({ state, onRefresh }: Props) {
                           +{item.primaryValue} {STAT_LABELS[item.primaryStat]} · GS {item.gearScore}
                         </span>
                       </div>
-                      <button onClick={() => handleUnequip(slot)}
-                        className="text-[#4040a0] hover:text-[#8080b0] transition-colors shrink-0 text-xs">
+                      <button onClick={() => !onRun && handleUnequip(slot)}
+                        disabled={onRun}
+                        className="text-[#4040a0] hover:text-[#8080b0] transition-colors shrink-0 text-xs disabled:opacity-20 disabled:cursor-not-allowed">
                         ✕
                       </button>
                     </>

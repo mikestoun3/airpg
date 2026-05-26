@@ -14,10 +14,13 @@ type Filter = 'all' | Rarity;
 export function InventoryTab({ state, onRefresh }: Props) {
   const [pendingEquip, setPendingEquip] = useState<string | null>(null);
   const [pendingSalvage, setPendingSalvage] = useState<string | null>(null);
+  const [pendingSalvageRarity, setPendingSalvageRarity] = useState<Rarity | null>(null);
+  const [confirmRarity, setConfirmRarity] = useState<Rarity | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
   const [toast, setToast] = useState<string | null>(null);
 
-  const { inventory } = state;
+  const { inventory, activeRun } = state;
+  const onRun = !!activeRun;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -47,15 +50,36 @@ export function InventoryTab({ state, onRefresh }: Props) {
     setPendingSalvage(null);
   };
 
+  const handleSalvageRarity = async (rarity: Rarity) => {
+    setConfirmRarity(null);
+    setPendingSalvageRarity(rarity);
+    const res = await fetch('/api/inventory', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'salvage_rarity', rarity }),
+    });
+    const data = await res.json();
+    if (data.ok) showToast(`Salvaged ${data.count} items for ${data.goldGained}g${data.essenceGained > 0 ? ` + ${data.essenceGained} essence` : ''}`);
+    await onRefresh();
+    setPendingSalvageRarity(null);
+  };
+
   const filtered = filter === 'all' ? inventory : inventory.filter(i => i.rarity === filter);
 
   const FILTERS: { id: Filter; label: string; color: string }[] = [
-    { id: 'all', label: 'All', color: 'text-slate-300' },
-    { id: 'common', label: 'Common', color: 'text-slate-400' },
-    { id: 'uncommon', label: 'Uncommon', color: 'text-emerald-400' },
-    { id: 'rare', label: 'Rare', color: 'text-blue-400' },
-    { id: 'epic', label: 'Epic', color: 'text-purple-400' },
-    { id: 'legendary', label: 'Legendary', color: 'text-amber-400' },
+    { id: 'all',       label: 'All',       color: 'text-slate-300'  },
+    { id: 'common',    label: 'Common',    color: 'text-slate-400'  },
+    { id: 'uncommon',  label: 'Uncommon',  color: 'text-emerald-400'},
+    { id: 'rare',      label: 'Rare',      color: 'text-blue-400'   },
+    { id: 'epic',      label: 'Epic',      color: 'text-purple-400' },
+    { id: 'legendary', label: 'Legendary', color: 'text-amber-400'  },
+  ];
+
+  const SALVAGE_RARITIES: { rarity: Rarity; label: string; color: string; borderColor: string }[] = [
+    { rarity: 'common',    label: 'Common',    color: 'text-slate-400',   borderColor: 'border-slate-600/40'  },
+    { rarity: 'uncommon',  label: 'Uncommon',  color: 'text-emerald-400', borderColor: 'border-emerald-700/40'},
+    { rarity: 'rare',      label: 'Rare',      color: 'text-blue-400',    borderColor: 'border-blue-700/40'   },
+    { rarity: 'epic',      label: 'Epic',      color: 'text-purple-400',  borderColor: 'border-purple-700/40' },
+    { rarity: 'legendary', label: 'Legendary', color: 'text-amber-400',   borderColor: 'border-amber-700/40'  },
   ];
 
   const rarityCount = (r: Rarity) => inventory.filter(i => i.rarity === r).length;
@@ -99,10 +123,62 @@ export function InventoryTab({ state, onRefresh }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Salvage by rarity */}
+        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
+          <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3 flex items-center gap-2">
+            <span className="text-red-500">⚒</span> Salvage All
+          </p>
+          <div className="space-y-1.5">
+            {SALVAGE_RARITIES.map(({ rarity, label, color, borderColor }) => {
+              const count = rarityCount(rarity);
+              const isPending = pendingSalvageRarity === rarity;
+              const isConfirming = confirmRarity === rarity;
+              if (count === 0) return null;
+              return (
+                <div key={rarity}>
+                  {isConfirming ? (
+                    <div className={`rounded-lg border ${borderColor} bg-[#0f0f22] p-2`}>
+                      <p className={`text-xs ${color} mb-1.5`}>Salvage {count} {label}?</p>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleSalvageRarity(rarity)}
+                          className="flex-1 py-1 text-xs bg-red-900/50 hover:bg-red-900/70 text-red-300 rounded transition-colors">
+                          Yes
+                        </button>
+                        <button
+                          onClick={() => setConfirmRarity(null)}
+                          className="flex-1 py-1 text-xs bg-[#1a1a30] hover:bg-[#222240] text-[#7070a0] rounded transition-colors">
+                          No
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      disabled={isPending}
+                      onClick={() => setConfirmRarity(rarity)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs border ${borderColor} bg-[#0f0f22] hover:bg-[#141428] transition-all disabled:opacity-50`}>
+                      <span className={color}>{isPending ? '...' : label}</span>
+                      <span className="text-[#5050a0] font-mono">×{count}</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {SALVAGE_RARITIES.every(({ rarity }) => rarityCount(rarity) === 0) && (
+              <p className="text-xs text-[#4040a0] text-center py-1">Nothing to salvage</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* RIGHT: item grid */}
       <div className="flex-1 overflow-y-auto">
+        {onRun && (
+          <div className="mb-3 px-4 py-2.5 bg-[#14142a] border border-violet-700/30 rounded-xl text-violet-400 text-sm text-center">
+            ⚔ Hero is on a run — equipment is locked
+          </div>
+        )}
         {toast && (
           <div className="mb-3 px-4 py-2 bg-emerald-900/30 border border-emerald-700/30 rounded-xl text-emerald-400 text-sm text-center">
             {toast}
@@ -125,7 +201,7 @@ export function InventoryTab({ state, onRefresh }: Props) {
               <ItemCard
                 key={item.id}
                 item={item}
-                onEquip={pendingEquip === item.id ? undefined : () => handleEquip(item.id)}
+                onEquip={onRun || pendingEquip === item.id ? undefined : () => handleEquip(item.id)}
                 onSalvage={pendingSalvage === item.id ? undefined : () => handleSalvage(item.id)}
               />
             ))}

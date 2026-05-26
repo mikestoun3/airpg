@@ -6,9 +6,11 @@ import { CharacterTab } from '@/components/game/CharacterTab';
 import { InventoryTab } from '@/components/game/InventoryTab';
 import { CampTab } from '@/components/game/CampTab';
 import { CraftTab } from '@/components/game/CraftTab';
+import { MarketTab } from '@/components/game/MarketTab';
 import { ResultModal } from '@/components/game/ResultModal';
+import { LoginScreen } from '@/components/auth/LoginScreen';
 
-type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft';
+type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft' | 'market';
 
 const NAV = [
   { id: 'adventure' as Tab, label: 'Adventure', icon: '⚔️', section: 'Explore' },
@@ -16,7 +18,12 @@ const NAV = [
   { id: 'inventory' as Tab, label: 'Inventory', icon: '🎒', section: null },
   { id: 'camp' as Tab, label: 'Base Camp', icon: '🏕️', section: 'Base' },
   { id: 'craft' as Tab, label: 'Forge', icon: '⚒️', section: null },
+  { id: 'market' as Tab, label: 'Market', icon: '🏪', section: 'World' },
 ];
+
+function shortAddr(addr: string) {
+  return addr.slice(0, 6) + '…' + addr.slice(-4);
+}
 
 export default function GamePage() {
   const [state, setState] = useState<GameState | null>(null);
@@ -60,6 +67,15 @@ export default function GamePage() {
 
   const handleResultClose = () => { setPendingResult(null); setActiveTab('inventory'); };
 
+  const handleLogin = async (_wallet: string) => {
+    await fetchState();
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetchState();
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-[#09091a]">
@@ -69,6 +85,11 @@ export default function GamePage() {
         </div>
       </div>
     );
+  }
+
+  // No wallet = show login screen
+  if (!state?.walletAddress) {
+    return <LoginScreen onLogin={handleLogin} />;
   }
 
   if (!state) {
@@ -136,8 +157,8 @@ export default function GamePage() {
           })}
         </nav>
 
-        {/* Bottom: hero status */}
-        <div className="px-3 py-4 border-t border-[rgba(120,110,200,0.10)]">
+        {/* Bottom: hero status + wallet */}
+        <div className="px-3 py-3 border-t border-[rgba(120,110,200,0.10)] space-y-2">
           <div className="flex items-center gap-2 px-2 py-2 rounded-xl bg-[#101025]">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-700 to-purple-900 flex items-center justify-center text-sm shrink-0">
               ⚔
@@ -154,6 +175,14 @@ export default function GamePage() {
               </div>
               <p className="text-[#5050a0] text-[10px]">Lv.{character.level} Wanderer</p>
             </div>
+          </div>
+
+          {/* Wallet */}
+          <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-[#0c0c1e] border border-[rgba(120,110,200,0.08)]">
+            <span className="text-[10px] text-[#4040a0] font-mono">{shortAddr(state.walletAddress)}</span>
+            <button onClick={handleLogout} className="text-[10px] text-[#3a3a6a] hover:text-[#7070a0] transition-colors">
+              out
+            </button>
           </div>
         </div>
       </aside>
@@ -182,7 +211,7 @@ export default function GamePage() {
           {/* Resources */}
           <div className="flex items-center gap-1">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#101025] rounded-xl border border-[rgba(120,110,200,0.12)]">
-              <span className="text-sm">💰</span>
+              <img src="/icons/res_gold.png" alt="gold" width={18} height={18} style={{ imageRendering: 'pixelated' }} />
               <span className="text-amber-400 font-bold text-sm">{character.gold}</span>
             </div>
             {character.essence > 0 && (
@@ -220,6 +249,9 @@ export default function GamePage() {
             )}
             {activeTab === 'craft' && (
               <CraftTab state={state} onRefresh={fetchState} />
+            )}
+            {activeTab === 'market' && (
+              <MarketTab state={state} onRefresh={fetchState} />
             )}
           </div>
         </main>

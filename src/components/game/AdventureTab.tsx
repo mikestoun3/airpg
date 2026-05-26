@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
-import type { GameState, Difficulty } from '@/types/game';
+import type { GameState } from '@/types/game';
 import { DUNGEONS } from '@/lib/data/dungeons';
-import { DIFFICULTY_LABELS } from '@/types/game';
 import { RunTimer } from './RunTimer';
 
 interface Props {
@@ -12,17 +11,16 @@ interface Props {
   onRefresh: () => void;
 }
 
-const DC_BONUS: Record<Difficulty, number> = { normal: 0, hardened: 15, nightmare: 30 };
 const TIER_COLORS = ['', 'from-slate-700 to-slate-600', 'from-indigo-800 to-blue-700', 'from-violet-800 to-purple-700', 'from-rose-900 to-red-800'];
 const TIER_LABELS = ['', 'Tier I', 'Tier II', 'Tier III', 'Tier IV'];
 
 export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
   const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
-  const [selectedDiff, setSelectedDiff] = useState<Difficulty>('normal');
+  const [floorsToAttempt, setFloorsToAttempt] = useState<number>(3);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { character, activeRun, unlockedDungeons } = state;
+  const { character, activeRun, unlockedDungeons, savedFloors } = state;
   const isIdle = character.status === 'idle';
   const isInjured = character.status === 'injured';
 
@@ -37,7 +35,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
     const res = await fetch('/api/run/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dungeonId: selectedDungeon, difficulty: selectedDiff }),
+      body: JSON.stringify({ dungeonId: selectedDungeon, floorsToAttempt }),
     });
     const data = await res.json();
     if (data.ok) onRunStart(data.run);
@@ -48,9 +46,28 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
   const dungeonList = DUNGEONS.filter(d => unlockedDungeons.includes(d.id));
   const lockedDungeons = DUNGEONS.filter(d => !unlockedDungeons.includes(d.id));
   const selected = selectedDungeon ? DUNGEONS.find(d => d.id === selectedDungeon) : null;
-  const dc = selected ? selected.baseDC + DC_BONUS[selectedDiff] : 0;
   const cr = character.combatRating;
-  const successOdds = selected ? Math.min(95, Math.max(5, Math.round(((cr - dc + 50) / 100) * 100))) : 0;
+
+  // Floor-based computations
+  const savedFloor = selected ? (savedFloors?.[selected.id] ?? 0) : 0;
+  const startFloor = savedFloor + 1;
+  const endFloor = startFloor + floorsToAttempt - 1;
+
+  // DC for the first floor of this run
+  const firstFloorDC = selected ? Math.round(selected.baseDC + (startFloor - 1) * selected.floorDCStep) : 0;
+  const lastFloorDC = selected ? Math.round(selected.baseDC + (endFloor - 1) * selected.floorDCStep) : 0;
+  const successAt = firstFloorDC + 51;
+  const firstFloorOdds = selected ? Math.min(95, Math.max(5, Math.round(((cr - firstFloorDC + 50) / 100) * 100))) : 0;
+
+  // Duration estimate
+  const spdReduction = Math.min(character.spd * 0.02, 0.4);
+  const estimatedDuration = Math.max(1, Math.round(floorsToAttempt * 2 * (1 - spdReduction)));
+
+  // Check if any floor in the range is a boss (multiple of 10)
+  const bossFloors: number[] = [];
+  for (let f = startFloor; f <= endFloor; f++) {
+    if (f % 10 === 0) bossFloors.push(f);
+  }
 
   return (
     <div className="flex gap-6 h-full">
@@ -72,8 +89,10 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
           <div className="space-y-2">
             {dungeonList.map((dungeon) => {
               const isSel = selectedDungeon === dungeon.id;
-              const tierDC = dungeon.baseDC + DC_BONUS[isSel ? selectedDiff : 'normal'];
-              const odds = Math.min(95, Math.max(5, Math.round(((cr - tierDC + 50) / 100) * 100)));
+              const dungeonSavedFloor = savedFloors?.[dungeon.id] ?? 0;
+              const dungeonStartFloor = dungeonSavedFloor + 1;
+              const floorDC = Math.round(dungeon.baseDC + (dungeonStartFloor - 1) * dungeon.floorDCStep);
+              const odds = Math.min(95, Math.max(5, Math.round(((cr - floorDC + 50) / 100) * 100)));
               return (
                 <button key={dungeon.id} onClick={() => setSelectedDungeon(dungeon.id)}
                   className={`w-full text-left rounded-xl border transition-all overflow-hidden ${
@@ -86,11 +105,16 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-slate-100 font-semibold">{dungeon.name}</span>
                         <span className="text-[10px] text-[#6060a0] bg-[#0f0f22] px-1.5 py-0.5 rounded">{TIER_LABELS[dungeon.tier]}</span>
+                        {dungeonSavedFloor > 0 && (
+                          <span className="text-[10px] text-violet-400 bg-violet-900/30 border border-violet-700/30 px-1.5 py-0.5 rounded">
+                            Fl.{dungeonSavedFloor + 1}
+                          </span>
+                        )}
                       </div>
                       <p className="text-[12px] text-[#7070a0] truncate">{dungeon.lootFocus}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[#8080a0] text-xs">{dungeon.durationMinutes}m</p>
+                      <p className="text-[#8080a0] text-xs">Fl.{dungeonStartFloor}</p>
                       <p className={`text-sm font-bold ${odds >= 70 ? 'text-emerald-400' : odds >= 45 ? 'text-amber-400' : 'text-red-400'}`}>
                         ~{odds}%
                       </p>
@@ -132,16 +156,41 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
                 <div>
                   <p className="text-white/60 text-xs">{TIER_LABELS[selected.tier]}</p>
                   <h3 className="text-white font-bold text-lg">{selected.name}</h3>
+                  {savedFloor > 0 && (
+                    <p className="text-white/50 text-xs mt-0.5">Checkpoint: Floor {savedFloor}</p>
+                  )}
                 </div>
               </div>
               <div className="p-4">
                 <p className="text-[#8080b0] text-sm mb-4">{selected.description}</p>
+
+                {/* Floor range info */}
+                <div className="bg-[#0f0f22] rounded-lg p-3 mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[#6060a0] text-xs">Floor Range</span>
+                    <span className="text-slate-200 font-bold text-sm">
+                      {startFloor === endFloor ? `Floor ${startFloor}` : `Floors ${startFloor}–${endFloor}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#6060a0] text-xs">DC Range</span>
+                    <span className="text-slate-300 text-xs">
+                      {startFloor === endFloor ? firstFloorDC : `${firstFloorDC}–${lastFloorDC}`}
+                    </span>
+                  </div>
+                  {savedFloor > 0 ? (
+                    <p className="text-violet-400/70 text-[11px] mt-1.5">Starting from saved floor {startFloor}</p>
+                  ) : (
+                    <p className="text-[#5050a0] text-[11px] mt-1.5">Starting from Floor 1</p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
-                    { label: 'Duration', value: `${selected.durationMinutes} min` },
-                    { label: 'Base DC', value: String(selected.baseDC) },
-                    { label: 'Success', value: `~${successOdds}%`, color: successOdds >= 70 ? 'text-emerald-400' : successOdds >= 45 ? 'text-amber-400' : 'text-red-400' },
+                    { label: 'Duration', value: `~${estimatedDuration} min` },
                     { label: 'Your CR', value: String(cr) },
+                    { label: 'Floor 1 Odds', value: `~${firstFloorOdds}%`, color: firstFloorOdds >= 70 ? 'text-emerald-400' : firstFloorOdds >= 45 ? 'text-amber-400' : 'text-red-400' },
+                    { label: 'Entry DC', value: String(firstFloorDC) },
                   ].map(({ label, value, color }) => (
                     <div key={label} className="bg-[#0f0f22] rounded-lg p-2.5">
                       <p className="text-[#6060a0]">{label}</p>
@@ -149,31 +198,42 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
                     </div>
                   ))}
                 </div>
+
+                {bossFloors.length > 0 && (
+                  <div className="mt-3 bg-amber-900/20 border border-amber-700/30 rounded-lg p-2.5">
+                    {bossFloors.map(f => (
+                      <p key={f} className="text-amber-400 text-[11px] font-semibold">
+                        ⚠ Floor {f}: {selected.bossTitle} (Boss)
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Floor depth selector */}
             <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
-              <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3">Difficulty</p>
-              <div className="flex gap-2">
-                {(['normal', 'hardened', 'nightmare'] as Difficulty[]).map((d) => (
-                  <button key={d} onClick={() => setSelectedDiff(d)}
-                    className={`flex-1 py-2 px-1 rounded-lg text-xs font-semibold border transition-all ${
-                      selectedDiff === d
-                        ? d === 'nightmare' ? 'border-red-500/50 bg-red-900/30 text-red-300'
-                          : d === 'hardened' ? 'border-amber-500/50 bg-amber-900/20 text-amber-300'
-                          : 'border-emerald-500/50 bg-emerald-900/20 text-emerald-300'
-                        : 'border-[rgba(120,110,200,0.15)] bg-transparent text-[#7070a0] hover:border-[rgba(120,110,200,0.3)]'
+              <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3">Floor Depth</p>
+              <div className="grid grid-cols-5 gap-1.5 mb-2">
+                {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setFloorsToAttempt(n)}
+                    className={`aspect-square rounded-lg text-xs font-bold border transition-all ${
+                      floorsToAttempt === n
+                        ? 'border-violet-500/60 bg-violet-900/40 text-violet-200'
+                        : 'border-[rgba(120,110,200,0.15)] bg-transparent text-[#7070a0] hover:border-[rgba(120,110,200,0.35)] hover:text-slate-300'
                     }`}>
-                    {DIFFICULTY_LABELS[d]}
+                    {n}
                   </button>
                 ))}
               </div>
-              {selectedDiff !== 'normal' && (
-                <p className="text-[11px] text-[#6060a0] mt-2.5 leading-relaxed">
-                  {selectedDiff === 'hardened' && '+1 loot roll · +25% XP · DC +15'}
-                  {selectedDiff === 'nightmare' && '+2 loot rolls · +75% XP · DC +30 · ×2 injury risk'}
-                </p>
-              )}
+              <p className="text-[11px] text-[#6060a0] leading-relaxed">
+                {floorsToAttempt} floor{floorsToAttempt > 1 ? 's' : ''} · ~{estimatedDuration} min · deeper floors get harder
+                {endFloor > startFloor && (
+                  <span className="text-amber-400/70"> · last floor DC {lastFloorDC}</span>
+                )}
+              </p>
             </div>
 
             {error && (

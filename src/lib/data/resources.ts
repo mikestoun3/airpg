@@ -3,16 +3,21 @@ export interface ResourceDef {
   name: string;
   rarity: 'common' | 'uncommon' | 'rare';
   icon: string;
+  sprite: string;
 }
 
 export const RESOURCES: ResourceDef[] = [
-  { id: 'iron_ore',       name: 'Iron Ore',       rarity: 'common',   icon: '⛏' },
-  { id: 'rough_leather',  name: 'Rough Leather',  rarity: 'common',   icon: '🟫' },
-  { id: 'arcane_dust',    name: 'Arcane Dust',    rarity: 'common',   icon: '✦' },
-  { id: 'quality_ore',    name: 'Quality Ore',    rarity: 'uncommon', icon: '💎' },
-  { id: 'spirit_thread',  name: 'Spirit Thread',  rarity: 'uncommon', icon: '🔮' },
-  { id: 'mithril_shard',  name: 'Mithril Shard',  rarity: 'rare',     icon: '💠' },
+  { id: 'iron_ore',       name: 'Iron Ore',       rarity: 'common',   icon: '⛏', sprite: '/icons/res_iron.png'     },
+  { id: 'rough_leather',  name: 'Rough Leather',  rarity: 'common',   icon: '🟫', sprite: '/icons/res_leather.png'  },
+  { id: 'arcane_dust',    name: 'Arcane Dust',    rarity: 'common',   icon: '✦', sprite: '/icons/res_mystic.png'   },
+  { id: 'quality_ore',    name: 'Quality Ore',    rarity: 'uncommon', icon: '💎', sprite: '/icons/res_gems.png'     },
+  { id: 'spirit_thread',  name: 'Spirit Thread',  rarity: 'uncommon', icon: '🔮', sprite: '/icons/res_energy.png'  },
+  { id: 'mithril_shard',  name: 'Mithril Shard',  rarity: 'rare',     icon: '💠', sprite: '/icons/res_crystals.png'},
 ];
+
+export function getResourceSprite(resourceId: string): string | undefined {
+  return RESOURCES.find((r) => r.id === resourceId)?.sprite;
+}
 
 export const getResource = (id: string) => RESOURCES.find((r) => r.id === id);
 

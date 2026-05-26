@@ -1,8 +1,8 @@
-import type { Character, Difficulty, RunOutcome, RunResult, ActiveRun, ResourceStack } from '@/types/game';
+import type { Character, Difficulty, RunOutcome, RunResult, ActiveRun, ResourceStack, FloorResult } from '@/types/game';
 import { getDungeon } from '@/lib/data/dungeons';
 import { getLootTable } from '@/lib/data/loot-tables';
 import { rollLoot, rollItem } from '@/lib/engine/loot-roller';
-import type { PreRolledData } from '@/lib/engine/loot-roller';
+import type { PreRolledData, FloorRunData } from '@/lib/engine/loot-roller';
 
 const DIFFICULTY_DC_BONUS: Record<Difficulty, number> = {
   normal: 0,
@@ -184,6 +184,94 @@ function injuryProbability(outcome: RunOutcome): number {
 
 export function xpToNextLevel(level: number): number {
   return Math.round(100 * Math.pow(level, 1.6));
+}
+
+export function resolveFloorRun(
+  floorData: FloorRunData,
+  char: Character,
+  runId: string,
+  dungeonId: string
+): RunResult {
+  const dungeon = getDungeon(dungeonId);
+  if (!dungeon) throw new Error(`Unknown dungeon: ${dungeonId}`);
+
+  const completedFloors = floorData.floors.filter(f => f.outcome !== 'failure');
+  const lastFloor = floorData.floors[floorData.floors.length - 1];
+  const hadFailure = lastFloor?.outcome === 'failure';
+
+  // Determine overall outcome
+  let outcome: RunOutcome;
+  if (floorData.floors.length === 0) {
+    outcome = 'failure';
+  } else if (hadFailure) {
+    outcome = 'failure';
+  } else if (lastFloor?.outcome === 'partial') {
+    outcome = 'partial';
+  } else {
+    outcome = 'success';
+  }
+
+  // Aggregate loot from completed floors
+  const allItems = completedFloors.flatMap(f => f.items);
+  const totalGold = completedFloors.reduce((sum, f) => sum + f.gold, 0);
+  const totalEssence = completedFloors.reduce((sum, f) => sum + f.essence, 0);
+
+  // Aggregate resources, merging stacks by resourceId
+  const resourceMap = new Map<string, ResourceStack>();
+  for (const floor of completedFloors) {
+    for (const res of floor.resources) {
+      const existing = resourceMap.get(res.resourceId);
+      if (existing) {
+        existing.quantity += res.quantity;
+      } else {
+        resourceMap.set(res.resourceId, { ...res });
+      }
+    }
+  }
+  const totalResources: ResourceStack[] = Array.from(resourceMap.values());
+
+  // XP: base = dungeon.tier * 60 per completed floor + insight bonus
+  const floorsCompleted = completedFloors.length;
+  const baseXP = dungeon.tier * 60 * Math.max(1, floorsCompleted);
+  let xpMult = 1 + char.ins * 0.02;
+  if (outcome === 'partial') xpMult *= 0.5;
+  if (outcome === 'failure') xpMult *= 0.25;
+  const xpGained = Math.round(baseXP * xpMult);
+
+  // Injury: 30% on failure, 100% if floor was badly failed (effective much lower than DC)
+  let injuryChance = 0;
+  if (hadFailure && lastFloor) {
+    const successAt = lastFloor.dc + 51;
+    const criticalFail = lastFloor.effective < successAt - 35;
+    injuryChance = criticalFail ? 1.0 : 0.3;
+  }
+  const injured = Math.random() < injuryChance;
+  const injuryMinutes = injured ? Math.round(30 + dungeon.tier * 15) : 0;
+
+  // Use last floor's combat values for display
+  const displayFloor = lastFloor ?? floorData.floors[0];
+  const combatRoll = displayFloor?.effective ?? 0;
+  const dc = displayFloor ? displayFloor.dc + 51 : dungeon.baseDC + 51;
+
+  return {
+    runId,
+    dungeonId,
+    dungeonName: dungeon.name,
+    difficulty: 'normal',
+    outcome,
+    loot: allItems,
+    goldGained: totalGold,
+    essenceGained: totalEssence,
+    xpGained,
+    injured,
+    injuryDurationMinutes: injuryMinutes,
+    combatRoll,
+    dc,
+    resourcesGained: totalResources,
+    startFloor: floorData.startFloor,
+    floorsCompleted,
+    floorResults: floorData.floors,
+  };
 }
 
 export function checkLevelUp(char: Character): { leveled: boolean; newLevel: number; newXp: number } {

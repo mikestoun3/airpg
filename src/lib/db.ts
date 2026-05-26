@@ -107,15 +107,141 @@ function initSchema(db: Database.Database) {
       PRIMARY KEY (character_id, resource_id),
       FOREIGN KEY (character_id) REFERENCES characters(id)
     );
+
+    CREATE TABLE IF NOT EXISTS wallets (
+      address TEXT PRIMARY KEY,
+      character_id TEXT,
+      nonce TEXT NOT NULL DEFAULT ''
+    );
+
+    CREATE TABLE IF NOT EXISTS market_listings (
+      id TEXT PRIMARY KEY,
+      seller_id TEXT NOT NULL,
+      seller_wallet TEXT NOT NULL,
+      item_json TEXT NOT NULL,
+      price_wei TEXT NOT NULL,
+      listed_at INTEGER DEFAULT (unixepoch()),
+      status TEXT DEFAULT 'active',
+      buyer_id TEXT,
+      buyer_wallet TEXT,
+      tx_hash TEXT,
+      sold_at INTEGER,
+      FOREIGN KEY (seller_id) REFERENCES characters(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS promo_codes (
+      code TEXT PRIMARY KEY,
+      reward_json TEXT NOT NULL,
+      max_uses INTEGER NOT NULL DEFAULT 1,
+      uses INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER DEFAULT (unixepoch()),
+      expires_at INTEGER,
+      active INTEGER NOT NULL DEFAULT 1
+    );
+
+    CREATE TABLE IF NOT EXISTS promo_redemptions (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL,
+      character_id TEXT NOT NULL,
+      redeemed_at INTEGER DEFAULT (unixepoch()),
+      UNIQUE(code, character_id)
+    );
   `);
 
   try { db.exec('ALTER TABLE runs ADD COLUMN pre_rolled_json TEXT'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE characters ADD COLUMN wallet_address TEXT'); } catch { /* already exists */ }
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS dungeon_floor_progress (
+        character_id TEXT NOT NULL,
+        dungeon_id TEXT NOT NULL,
+        saved_floor INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (character_id, dungeon_id)
+      );
+    `);
+  } catch { /* already exists */ }
+
+  // Migrate wallets table to allow nullable character_id (for pre-auth nonce storage)
+  try {
+    const info = db.prepare("PRAGMA table_info(wallets)").all() as { name: string; notnull: number }[];
+    const charIdCol = info.find(c => c.name === 'character_id');
+    if (charIdCol && charIdCol.notnull === 1) {
+      db.exec(`
+        CREATE TABLE wallets_new (
+          address TEXT PRIMARY KEY,
+          character_id TEXT,
+          nonce TEXT NOT NULL DEFAULT ''
+        );
+        INSERT INTO wallets_new SELECT address, NULLIF(character_id, ''), nonce FROM wallets;
+        DROP TABLE wallets;
+        ALTER TABLE wallets_new RENAME TO wallets;
+      `);
+    }
+  } catch { /* already migrated */ }
+}
+
+// ── Auth / Wallet ──────────────────────────────────────────────────────────────
+
+export function getOrSetNonce(address: string): string {
+  const db = getDb();
+  const wallet = db.prepare('SELECT nonce FROM wallets WHERE address = ?').get(address) as { nonce: string } | undefined;
+  if (wallet) return wallet.nonce;
+  // No wallet row yet — generate a nonce (character created on verify)
+  const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  // We can't insert without character_id yet; store in a temp way — just return nonce, save on verify
+  return nonce;
+}
+
+export function saveNonce(address: string, nonce: string): void {
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO wallets (address, character_id, nonce) VALUES (?, NULL, ?)
+    ON CONFLICT(address) DO UPDATE SET nonce = excluded.nonce
+  `).run(address, nonce);
+}
+
+export function getNonce(address: string): string | null {
+  const db = getDb();
+  const row = db.prepare('SELECT nonce FROM wallets WHERE address = ?').get(address) as { nonce: string } | undefined;
+  return row?.nonce ?? null;
+}
+
+export function getCharacterIdByWallet(address: string): string | null {
+  const db = getDb();
+  const row = db.prepare('SELECT character_id FROM wallets WHERE address = ? AND character_id IS NOT NULL').get(address) as { character_id: string } | undefined;
+  return row?.character_id ?? null;
 }
 
 // ── Character ─────────────────────────────────────────────────────────────────
 
-export function getOrCreateCharacter() {
+export function getOrCreateCharacter(walletAddress?: string) {
   const db = getDb();
+
+  if (walletAddress) {
+    const addr = walletAddress.toLowerCase();
+    const charId = getCharacterIdByWallet(addr);
+    if (charId) {
+      const row = db.prepare('SELECT * FROM characters WHERE id = ?').get(charId) as Record<string, unknown> | undefined;
+      if (row) return rowToCharacter(row);
+    }
+    // Create new character for this wallet
+    const id = uuidv4();
+    db.prepare(`
+      INSERT INTO characters (id, name, level, xp, pwr, end_stat, lck, spd, ins, stat_points, gold, wallet_address)
+      VALUES (?, ?, 1, 0, 5, 5, 3, 3, 3, 0, 50, ?)
+    `).run(id, 'Wanderer', addr);
+    db.prepare('INSERT INTO equipment (character_id) VALUES (?)').run(id);
+    db.prepare('INSERT INTO pity (character_id) VALUES (?)').run(id);
+    // Link wallet → character (preserve existing nonce if row was pre-inserted for auth)
+    db.prepare(`
+      INSERT INTO wallets (address, character_id, nonce) VALUES (?, ?, '')
+      ON CONFLICT(address) DO UPDATE SET character_id = excluded.character_id
+    `).run(addr, id);
+
+    return rowToCharacter(db.prepare('SELECT * FROM characters WHERE id = ?').get(id) as Record<string, unknown>);
+  }
+
+  // Legacy: no wallet, grab first character (backwards compat for dev)
   const existing = db.prepare('SELECT * FROM characters LIMIT 1').get() as Record<string, unknown> | undefined;
   if (existing) return rowToCharacter(existing);
 
@@ -124,10 +250,8 @@ export function getOrCreateCharacter() {
     INSERT INTO characters (id, name, level, xp, pwr, end_stat, lck, spd, ins, stat_points, gold)
     VALUES (?, ?, 1, 0, 5, 5, 3, 3, 3, 0, 50)
   `).run(id, 'Wanderer');
-
   db.prepare('INSERT INTO equipment (character_id) VALUES (?)').run(id);
   db.prepare('INSERT INTO pity (character_id) VALUES (?)').run(id);
-
   return rowToCharacter(db.prepare('SELECT * FROM characters WHERE id = ?').get(id) as Record<string, unknown>);
 }
 
@@ -325,6 +449,14 @@ export function addItemToInventory(characterId: string, item: ItemInstance) {
     .run(item.id, characterId, JSON.stringify(item));
 }
 
+const SALVAGE_VALUES: Record<string, { gold: number; essenceChance: number; essenceAmt: number }> = {
+  common:    { gold: 8,   essenceChance: 0,   essenceAmt: 0  },
+  uncommon:  { gold: 20,  essenceChance: 0.1, essenceAmt: 1  },
+  rare:      { gold: 50,  essenceChance: 0.5, essenceAmt: 3  },
+  epic:      { gold: 120, essenceChance: 1,   essenceAmt: 8  },
+  legendary: { gold: 300, essenceChance: 1,   essenceAmt: 20 },
+};
+
 export function salvageItem(characterId: string, itemId: string): { gold: number; essence: number } {
   const db = getDb();
   const row = db.prepare('SELECT item_json FROM inventory WHERE id = ? AND character_id = ?')
@@ -333,16 +465,7 @@ export function salvageItem(characterId: string, itemId: string): { gold: number
   if (!row) return { gold: 0, essence: 0 };
 
   const item: ItemInstance = JSON.parse(row.item_json);
-
-  const salvageValues: Record<string, { gold: number; essenceChance: number; essenceAmt: number }> = {
-    common: { gold: 8, essenceChance: 0, essenceAmt: 0 },
-    uncommon: { gold: 20, essenceChance: 0.1, essenceAmt: 1 },
-    rare: { gold: 50, essenceChance: 0.5, essenceAmt: 3 },
-    epic: { gold: 120, essenceChance: 1, essenceAmt: 8 },
-    legendary: { gold: 300, essenceChance: 1, essenceAmt: 20 },
-  };
-
-  const sv = salvageValues[item.rarity];
+  const sv = SALVAGE_VALUES[item.rarity];
   const gold = sv.gold + Math.floor(Math.random() * sv.gold * 0.3);
   const essence = Math.random() < sv.essenceChance ? sv.essenceAmt : 0;
 
@@ -350,6 +473,38 @@ export function salvageItem(characterId: string, itemId: string): { gold: number
   addResources(characterId, gold, essence);
 
   return { gold, essence };
+}
+
+export function salvageByRarity(
+  characterId: string,
+  rarity: string
+): { gold: number; essence: number; count: number } {
+  const db = getDb();
+  const rows = db.prepare('SELECT id, item_json FROM inventory WHERE character_id = ?')
+    .all(characterId) as { id: string; item_json: string }[];
+
+  let totalGold = 0;
+  let totalEssence = 0;
+  let count = 0;
+
+  const sv = SALVAGE_VALUES[rarity];
+  if (!sv) return { gold: 0, essence: 0, count: 0 };
+
+  const deleteStmt = db.prepare('DELETE FROM inventory WHERE id = ? AND character_id = ?');
+
+  for (const row of rows) {
+    const item: ItemInstance = JSON.parse(row.item_json);
+    if (item.rarity !== rarity) continue;
+    const gold = sv.gold + Math.floor(Math.random() * sv.gold * 0.3);
+    const essence = Math.random() < sv.essenceChance ? sv.essenceAmt : 0;
+    totalGold += gold;
+    totalEssence += essence;
+    count++;
+    deleteStmt.run(row.id, characterId);
+  }
+
+  if (count > 0) addResources(characterId, totalGold, totalEssence);
+  return { gold: totalGold, essence: totalEssence, count };
 }
 
 // ── Runs ──────────────────────────────────────────────────────────────────────
@@ -519,4 +674,305 @@ export function spendEssence(characterId: string, amount: number): boolean {
   if (!char || char.essence < amount) return false;
   db.prepare('UPDATE characters SET essence = essence - ? WHERE id = ?').run(amount, characterId);
   return true;
+}
+
+// ── Market ─────────────────────────────────────────────────────────────────────
+
+export interface MarketListing {
+  id: string;
+  sellerId: string;
+  sellerWallet: string;
+  item: import('@/types/game').ItemInstance;
+  priceWei: string;
+  listedAt: number;
+  status: 'active' | 'sold' | 'cancelled';
+  buyerWallet?: string;
+  txHash?: string;
+  soldAt?: number;
+}
+
+function rowToListing(row: Record<string, unknown>): MarketListing {
+  return {
+    id: row.id as string,
+    sellerId: row.seller_id as string,
+    sellerWallet: row.seller_wallet as string,
+    item: JSON.parse(row.item_json as string),
+    priceWei: row.price_wei as string,
+    listedAt: row.listed_at as number,
+    status: row.status as 'active' | 'sold' | 'cancelled',
+    buyerWallet: row.buyer_wallet as string | undefined,
+    txHash: row.tx_hash as string | undefined,
+    soldAt: row.sold_at as number | undefined,
+  };
+}
+
+export function listItem(
+  characterId: string,
+  walletAddress: string,
+  itemId: string,
+  priceWei: string
+): MarketListing | null {
+  const db = getDb();
+  const row = db.prepare('SELECT item_json FROM inventory WHERE id = ? AND character_id = ?')
+    .get(itemId, characterId) as { item_json: string } | undefined;
+  if (!row) return null;
+
+  const item = JSON.parse(row.item_json);
+  db.prepare('DELETE FROM inventory WHERE id = ? AND character_id = ?').run(itemId, characterId);
+
+  const id = uuidv4();
+  db.prepare(`
+    INSERT INTO market_listings (id, seller_id, seller_wallet, item_json, price_wei)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(id, characterId, walletAddress.toLowerCase(), row.item_json, priceWei);
+
+  return rowToListing(
+    db.prepare('SELECT * FROM market_listings WHERE id = ?').get(id) as Record<string, unknown>
+  );
+}
+
+export function getActiveListings(): MarketListing[] {
+  const db = getDb();
+  const rows = db.prepare("SELECT * FROM market_listings WHERE status = 'active' ORDER BY listed_at DESC")
+    .all() as Record<string, unknown>[];
+  return rows.map(rowToListing);
+}
+
+export function getListingById(id: string): MarketListing | null {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM market_listings WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+  return row ? rowToListing(row) : null;
+}
+
+export function completeSale(
+  listingId: string,
+  buyerCharId: string,
+  buyerWallet: string,
+  txHash: string
+): boolean {
+  const db = getDb();
+  const listing = getListingById(listingId);
+  if (!listing || listing.status !== 'active') return false;
+  if (listing.sellerId === buyerCharId) return false;
+
+  db.prepare(`
+    UPDATE market_listings
+    SET status = 'sold', buyer_id = ?, buyer_wallet = ?, tx_hash = ?, sold_at = unixepoch()
+    WHERE id = ? AND status = 'active'
+  `).run(buyerCharId, buyerWallet.toLowerCase(), txHash, listingId);
+
+  // Transfer item to buyer's inventory
+  const itemId = uuidv4();
+  db.prepare('INSERT INTO inventory (id, character_id, item_json) VALUES (?, ?, ?)')
+    .run(itemId, buyerCharId, JSON.stringify(listing.item));
+
+  return true;
+}
+
+export function cancelListing(listingId: string, characterId: string): boolean {
+  const db = getDb();
+  const listing = getListingById(listingId);
+  if (!listing || listing.status !== 'active') return false;
+  if (listing.sellerId !== characterId) return false;
+
+  db.prepare("UPDATE market_listings SET status = 'cancelled' WHERE id = ?").run(listingId);
+
+  // Return item to seller's inventory
+  const itemId = uuidv4();
+  db.prepare('INSERT INTO inventory (id, character_id, item_json) VALUES (?, ?, ?)')
+    .run(itemId, characterId, JSON.stringify(listing.item));
+
+  return true;
+}
+
+export function getSellerListings(characterId: string): MarketListing[] {
+  const db = getDb();
+  const rows = db.prepare("SELECT * FROM market_listings WHERE seller_id = ? AND status = 'active' ORDER BY listed_at DESC")
+    .all(characterId) as Record<string, unknown>[];
+  return rows.map(rowToListing);
+}
+
+// ── Admin ──────────────────────────────────────────────────────────────────────
+
+export function adminGetAllCharacters(search?: string) {
+  const db = getDb();
+  const like = search ? `%${search}%` : null;
+  const rows = (like
+    ? db.prepare(`
+        SELECT c.*, w.address as w_addr FROM characters c
+        LEFT JOIN wallets w ON w.character_id = c.id
+        WHERE c.name LIKE ? OR w.address LIKE ?
+        ORDER BY c.level DESC, c.gold DESC
+      `).all(like, like)
+    : db.prepare(`
+        SELECT c.*, w.address as w_addr FROM characters c
+        LEFT JOIN wallets w ON w.character_id = c.id
+        ORDER BY c.level DESC, c.gold DESC
+      `).all()
+  ) as Record<string, unknown>[];
+  return rows.map(row => ({ ...rowToCharacter(row), walletAddress: (row.w_addr as string | null) ?? null }));
+}
+
+export function adminGetCharacter(id: string) {
+  const db = getDb();
+  const row = db.prepare(`
+    SELECT c.*, w.address as w_addr FROM characters c
+    LEFT JOIN wallets w ON w.character_id = c.id
+    WHERE c.id = ?
+  `).get(id) as Record<string, unknown> | undefined;
+  if (!row) return null;
+  return { ...rowToCharacter(row), walletAddress: (row.w_addr as string | null) ?? null };
+}
+
+export function adminUpdateCharacter(id: string, fields: Partial<{
+  name: string; level: number; xp: number; gold: number; essence: number;
+  pwr: number; end_stat: number; lck: number; spd: number; ins: number; stat_points: number;
+}>): void {
+  const db = getDb();
+  const allowed = ['name', 'level', 'xp', 'gold', 'essence', 'pwr', 'end_stat', 'lck', 'spd', 'ins', 'stat_points'];
+  const entries = Object.entries(fields).filter(([k]) => allowed.includes(k));
+  if (entries.length === 0) return;
+  const sets = entries.map(([k]) => `${k} = ?`).join(', ');
+  db.prepare(`UPDATE characters SET ${sets} WHERE id = ?`).run([...entries.map(([, v]) => v), id]);
+}
+
+export interface AdminListing extends MarketListing {
+  sellerName: string;
+  buyerName?: string;
+}
+
+export function adminGetAllListings(): AdminListing[] {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT m.*, cs.name as seller_name, cb.name as buyer_name
+    FROM market_listings m
+    LEFT JOIN characters cs ON cs.id = m.seller_id
+    LEFT JOIN characters cb ON cb.id = m.buyer_id
+    ORDER BY m.listed_at DESC LIMIT 500
+  `).all() as Record<string, unknown>[];
+  return rows.map(row => ({
+    ...rowToListing(row),
+    sellerName: (row.seller_name as string) ?? '?',
+    buyerName: row.buyer_name as string | undefined,
+  }));
+}
+
+// ── Promo Codes ────────────────────────────────────────────────────────────────
+
+export type PromoReward =
+  | { type: 'gold'; amount: number }
+  | { type: 'essence'; amount: number }
+  | { type: 'item'; slot: import('@/types/game').EquipmentSlot; rarity: import('@/types/game').Rarity };
+
+export interface PromoCode {
+  code: string;
+  reward: PromoReward;
+  maxUses: number;
+  uses: number;
+  createdAt: number;
+  expiresAt: number | null;
+  active: boolean;
+}
+
+function rowToPromo(row: Record<string, unknown>): PromoCode {
+  return {
+    code: row.code as string,
+    reward: JSON.parse(row.reward_json as string) as PromoReward,
+    maxUses: row.max_uses as number,
+    uses: row.uses as number,
+    createdAt: row.created_at as number,
+    expiresAt: (row.expires_at as number | null) ?? null,
+    active: (row.active as number) === 1,
+  };
+}
+
+export function adminCreatePromoCode(
+  code: string,
+  reward: PromoReward,
+  maxUses: number,
+  expiresAt?: number
+): void {
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO promo_codes (code, reward_json, max_uses, expires_at)
+    VALUES (?, ?, ?, ?)
+  `).run(code.toUpperCase().trim(), JSON.stringify(reward), maxUses, expiresAt ?? null);
+}
+
+export function adminGetAllPromoCodes(): PromoCode[] {
+  const db = getDb();
+  return (db.prepare('SELECT * FROM promo_codes ORDER BY created_at DESC').all() as Record<string, unknown>[])
+    .map(rowToPromo);
+}
+
+export function adminDeactivatePromoCode(code: string): void {
+  const db = getDb();
+  db.prepare('UPDATE promo_codes SET active = 0 WHERE code = ?').run(code.toUpperCase().trim());
+}
+
+export type RedeemResult =
+  | { ok: true; reward: PromoReward; item?: import('@/types/game').ItemInstance }
+  | { ok: false; error: string };
+
+// ── Floor Progress ────────────────────────────────────────────────────────────
+
+export function getFloorProgress(characterId: string): Record<string, number> {
+  const db = getDb();
+  const rows = db.prepare(
+    'SELECT dungeon_id, saved_floor FROM dungeon_floor_progress WHERE character_id = ?'
+  ).all(characterId) as { dungeon_id: string; saved_floor: number }[];
+  const result: Record<string, number> = {};
+  for (const row of rows) {
+    result[row.dungeon_id] = row.saved_floor;
+  }
+  return result;
+}
+
+export function saveFloorCheckpoint(characterId: string, dungeonId: string, floor: number): void {
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO dungeon_floor_progress (character_id, dungeon_id, saved_floor) VALUES (?, ?, ?)
+    ON CONFLICT (character_id, dungeon_id) DO UPDATE SET saved_floor = CASE WHEN excluded.saved_floor > saved_floor THEN excluded.saved_floor ELSE saved_floor END
+  `).run(characterId, dungeonId, floor);
+}
+
+export function redeemPromoCode(code: string, characterId: string): RedeemResult {
+  const db = getDb();
+  const normalized = code.toUpperCase().trim();
+  const row = db.prepare('SELECT * FROM promo_codes WHERE code = ?').get(normalized) as Record<string, unknown> | undefined;
+  if (!row) return { ok: false, error: 'Invalid code' };
+
+  const promo = rowToPromo(row);
+  if (!promo.active) return { ok: false, error: 'Code is no longer active' };
+  if (promo.expiresAt && promo.expiresAt < Math.floor(Date.now() / 1000)) return { ok: false, error: 'Code has expired' };
+  if (promo.maxUses > 0 && promo.uses >= promo.maxUses) return { ok: false, error: 'Code has reached its usage limit' };
+
+  // Check this character hasn't already redeemed it
+  const already = db.prepare('SELECT 1 FROM promo_redemptions WHERE code = ? AND character_id = ?').get(normalized, characterId);
+  if (already) return { ok: false, error: 'You have already redeemed this code' };
+
+  // Apply reward in a transaction
+  const grant = db.transaction(() => {
+    db.prepare('UPDATE promo_codes SET uses = uses + 1 WHERE code = ?').run(normalized);
+    db.prepare('INSERT INTO promo_redemptions (id, code, character_id) VALUES (?, ?, ?)').run(uuidv4(), normalized, characterId);
+
+    if (promo.reward.type === 'gold') {
+      addResources(characterId, promo.reward.amount, 0);
+      return { ok: true as const, reward: promo.reward };
+    }
+    if (promo.reward.type === 'essence') {
+      addResources(characterId, 0, promo.reward.amount);
+      return { ok: true as const, reward: promo.reward };
+    }
+    if (promo.reward.type === 'item') {
+      const { rollFreeItem } = require('@/lib/engine/loot-roller') as typeof import('@/lib/engine/loot-roller');
+      const item = rollFreeItem(promo.reward.slot, promo.reward.rarity);
+      if (!item) return { ok: false as const, error: 'Could not generate item reward' };
+      addItemToInventory(characterId, item);
+      return { ok: true as const, reward: promo.reward, item };
+    }
+    return { ok: false as const, error: 'Unknown reward type' };
+  });
+
+  return grant();
 }

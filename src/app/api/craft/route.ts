@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionWallet } from '@/lib/auth';
 import { getOrCreateCharacter, spendMaterials, addItemToInventory } from '@/lib/db';
 import { CRAFT_RECIPES } from '@/lib/data/recipes';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +14,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Unknown recipe.' }, { status: 400 });
     }
 
-    const char = getOrCreateCharacter();
+    const wallet = getSessionWallet(req);
+    const char = getOrCreateCharacter(wallet ?? undefined);
 
     const spent = spendMaterials(char.id, recipe.ingredients);
     if (!spent) {

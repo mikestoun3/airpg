@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionWallet } from '@/lib/auth';
 import {
   getOrCreateCharacter,
   getBuiltUpgrades,
@@ -15,7 +16,8 @@ export async function POST(req: NextRequest) {
     const upgrade = CAMP_UPGRADES.find((u) => u.id === upgradeId);
     if (!upgrade) return NextResponse.json({ ok: false, error: 'Unknown upgrade.' }, { status: 400 });
 
-    const char = getOrCreateCharacter();
+    const wallet = getSessionWallet(req);
+    const char = getOrCreateCharacter(wallet ?? undefined);
     const built = getBuiltUpgrades(char.id);
 
     if (built.includes(upgradeId)) {

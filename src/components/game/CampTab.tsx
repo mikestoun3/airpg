@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { GameState } from '@/types/game';
+import type { GameState, ItemInstance } from '@/types/game';
 
 interface Props {
   state: GameState;
@@ -23,12 +23,45 @@ const UPGRADE_COLORS: Record<string, string> = {
   armory:       'from-slate-700 to-gray-600',
 };
 
+const RARITY_COLOR: Record<string, string> = {
+  common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa',
+  epic: '#c084fc', legendary: '#fbbf24',
+};
+
 export function CampTab({ state, onRefresh }: Props) {
   const [building, setBuilding] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoState, setPromoState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [promoResult, setPromoResult] = useState<{ msg: string; item?: ItemInstance } | null>(null);
 
   const { campUpgrades, character } = state;
   const builtIds = campUpgrades.filter(u => u.built).map(u => u.id);
+
+  const handlePromoRedeem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promoCode.trim()) return;
+    setPromoState('loading');
+    setPromoResult(null);
+    const res = await fetch('/api/promo/redeem', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: promoCode.trim() }),
+    });
+    const data = await res.json() as { ok: boolean; error?: string; reward?: { type: string; amount?: number; slot?: string; rarity?: string }; item?: ItemInstance };
+    if (data.ok) {
+      setPromoState('success');
+      let msg = 'Code redeemed!';
+      if (data.reward?.type === 'gold') msg = `+${data.reward.amount} Gold!`;
+      else if (data.reward?.type === 'essence') msg = `+${data.reward.amount} Essence!`;
+      else if (data.item) msg = `Got: ${data.item.name}`;
+      setPromoResult({ msg, item: data.item });
+      setPromoCode('');
+      await onRefresh();
+    } else {
+      setPromoState('error');
+      setPromoResult({ msg: data.error ?? 'Invalid code' });
+    }
+  };
 
   const handleBuild = async (upgradeId: string) => {
     setBuilding(upgradeId); setMessage(null);
@@ -83,6 +116,39 @@ export function CampTab({ state, onRefresh }: Props) {
             </div>
             <span className="text-[#6060a0] text-xs">{builtIds.length}/{campUpgrades.length}</span>
           </div>
+        </div>
+
+        {/* Promo code */}
+        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
+          <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3 flex items-center gap-2">
+            <span className="text-purple-500">◆</span> Promo Code
+          </p>
+          <form onSubmit={handlePromoRedeem} className="flex gap-2">
+            <input
+              value={promoCode}
+              onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoState('idle'); setPromoResult(null); }}
+              placeholder="ENTER CODE"
+              className="flex-1 bg-[#0c0c20] border border-[rgba(120,110,200,0.2)] rounded-lg px-3 py-2 text-slate-200 text-xs font-mono uppercase tracking-wider outline-none focus:border-purple-600 placeholder:text-[#3535a0] placeholder:normal-case placeholder:tracking-normal"
+            />
+            <button type="submit" disabled={promoState === 'loading' || !promoCode.trim()}
+              className="px-3 py-2 rounded-lg bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 disabled:opacity-40 text-white text-xs font-bold transition-all">
+              {promoState === 'loading' ? '…' : '→'}
+            </button>
+          </form>
+          {promoResult && (
+            <div className={`mt-2 rounded-lg px-3 py-2 text-xs text-center ${
+              promoState === 'success'
+                ? 'bg-emerald-900/20 border border-emerald-700/30 text-emerald-400'
+                : 'bg-red-950/20 border border-red-700/25 text-red-400'
+            }`}>
+              {promoResult.msg}
+              {promoResult.item && (
+                <div className="mt-0.5 font-medium" style={{ color: RARITY_COLOR[promoResult.item.rarity] }}>
+                  {promoResult.item.name}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {message && (

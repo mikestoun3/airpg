@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionWallet } from '@/lib/auth';
 import {
   getOrCreateCharacter,
   getActiveRun,
@@ -7,21 +8,23 @@ import {
   getTier1Clears,
   getBuiltUpgrades,
   getEffectiveStats,
+  getFloorProgress,
 } from '@/lib/db';
 import { getDungeon, DUNGEONS } from '@/lib/data/dungeons';
-import { computeRunDuration } from '@/lib/engine/run-engine';
 import { getLootTable } from '@/lib/data/loot-tables';
-import { preRollRun } from '@/lib/engine/loot-roller';
-import type { Difficulty } from '@/types/game';
+import { preRollFloors } from '@/lib/engine/loot-roller';
 
 export async function POST(req: NextRequest) {
   try {
-    const { dungeonId, difficulty = 'normal' } = await req.json() as {
+    const body = await req.json() as {
       dungeonId: string;
-      difficulty: Difficulty;
+      floorsToAttempt?: number;
     };
+    const { dungeonId } = body;
+    const floorsToAttempt = Math.min(10, Math.max(1, body.floorsToAttempt ?? 3));
 
-    const char = getOrCreateCharacter();
+    const wallet = getSessionWallet(req);
+    const char = getOrCreateCharacter(wallet ?? undefined);
 
     if (char.status !== 'idle') {
       return NextResponse.json({ ok: false, error: 'Character is not available.' }, { status: 400 });
@@ -48,21 +51,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Already on a run.' }, { status: 400 });
     }
 
-    // Use effective stats (base + gear) for duration — SPD from items counts
+    // Use effective stats (base + gear) for combat and SPD
     const effective = getEffectiveStats(char.id);
     const charWithGear = { ...char, ...effective };
 
     const built = getBuiltUpgrades(char.id);
     const shrineBonus = built.includes('the_shrine') ? 0.9 : 1;
 
-    const baseDuration = computeRunDuration(dungeon, charWithGear);
-    const duration = Math.max(1, Math.round(baseDuration * shrineBonus));
+    // Floor-based duration: 2 min per floor, then apply SPD reduction and shrine bonus
+    const spdReduction = Math.min(charWithGear.spd * 0.02, 0.4);
+    const rawDuration = floorsToAttempt * 2;
+    const duration = Math.max(1, Math.round(rawDuration * (1 - spdReduction) * shrineBonus));
 
-    // Pre-roll loot + resources so they can be revealed in the journey log
+    // Get saved floor progress to determine startFloor
+    const savedFloors = getFloorProgress(char.id);
+    const savedFloor = savedFloors[dungeonId] ?? 0;
+    const startFloor = savedFloor + 1;
+
+    // Pre-roll floors
     const table = getLootTable(dungeonId);
-    const preRolled = table ? preRollRun(table, dungeonId, charWithGear.lck, difficulty) : null;
+    if (!table) {
+      return NextResponse.json({ ok: false, error: 'No loot table for dungeon.' }, { status: 400 });
+    }
 
-    const run = createRun(char.id, dungeonId, difficulty, duration, preRolled ? JSON.stringify(preRolled) : undefined);
+    const floorRunData = preRollFloors(
+      dungeon,
+      startFloor,
+      floorsToAttempt,
+      charWithGear.combatRating,
+      charWithGear.lck,
+      table
+    );
+
+    const run = createRun(char.id, dungeonId, 'normal', duration, JSON.stringify(floorRunData));
     const dungeonMeta = DUNGEONS.find((d) => d.id === dungeonId)!;
 
     return NextResponse.json({
@@ -71,10 +92,12 @@ export async function POST(req: NextRequest) {
         id: run.id,
         dungeonId,
         dungeonName: dungeonMeta.name,
-        difficulty,
+        difficulty: 'normal',
         startTime: run.startTime,
         endTime: run.endTime,
-        previewEvents: preRolled?.previewEvents ?? [],
+        previewEvents: floorRunData.previewEvents,
+        startFloor,
+        floorsAttempted: floorsToAttempt,
       },
     });
   } catch (err) {

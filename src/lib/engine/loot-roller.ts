@@ -1,10 +1,20 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { ItemInstance, Rarity, StatKey, SpecialEffect, Difficulty, RunPreviewEvent } from '@/types/game';
+import type { ItemInstance, Rarity, StatKey, SpecialEffect, Difficulty, RunPreviewEvent, FloorResult } from '@/types/game';
 import { RARITY_ORDER } from '@/types/game';
-import { getTemplate } from '@/lib/data/items';
+import { getTemplate, ITEM_TEMPLATES } from '@/lib/data/items';
+import type { EquipmentSlot } from '@/types/game';
 import type { DungeonLootTable, LootTableEntry, RarityWeights } from '@/lib/data/loot-tables';
 import { DUNGEON_RESOURCE_DROPS, getResource } from '@/lib/data/resources';
 import type { ResourceStack } from '@/types/game';
+
+// Minimal dungeon info needed for floor pre-rolling (avoids circular import)
+export interface FloorDungeonInfo {
+  id: string;
+  baseDC: number;
+  floorDCStep: number;
+  monsters: string[];
+  bossTitle: string;
+}
 
 export interface PreRolledData {
   items: ItemInstance[];
@@ -218,6 +228,7 @@ export function preRollRun(
       revealAt: res.revealAt,
       label: `Gathered: ${res.name} ×${res.quantity}`,
       icon: res.icon,
+      resourceId: res.resourceId,
     });
   }
 
@@ -256,4 +267,181 @@ export function rollLoot(
   }
 
   return { items, gold, essence };
+}
+
+
+export interface FloorRunData {
+  startFloor: number;
+  floorsAttempted: number;
+  combatRating: number;
+  floors: FloorResult[];
+  previewEvents: RunPreviewEvent[];
+}
+
+export function preRollFloors(
+  dungeon: FloorDungeonInfo,
+  startFloor: number,
+  floorsToAttempt: number,
+  combatRating: number,
+  luck: number,
+  table: DungeonLootTable
+): FloorRunData {
+  const floors: FloorResult[] = [];
+  const previewEvents: RunPreviewEvent[] = [];
+
+  for (let fi = 0; fi < floorsToAttempt; fi++) {
+    const floor = startFloor + fi;
+    const isBoss = floor % 10 === 0;
+    const monsterTier = Math.min(Math.floor((floor - 1) / 5), dungeon.monsters.length - 1);
+    const monsterName = isBoss ? dungeon.bossTitle : dungeon.monsters[monsterTier];
+    const dc = Math.round(dungeon.baseDC + (floor - 1) * dungeon.floorDCStep);
+    const roll = Math.floor(Math.random() * 100) + 1;
+    const effective = roll + combatRating;
+    const successAt = dc + 51;
+
+    let outcome: 'success' | 'partial' | 'failure';
+    if (effective >= successAt + 30) {
+      outcome = 'success'; // critical maps to success for simplicity
+    } else if (effective >= successAt) {
+      outcome = 'success';
+    } else if (effective >= successAt - 20) {
+      outcome = 'partial';
+    } else {
+      outcome = 'failure';
+    }
+
+    // Loot per floor (scale by floor tier)
+    const floorTier = Math.floor((floor - 1) / 10);
+    const adjustedWeights = { ...table.rarityWeights };
+    const commonReduction = floorTier * 8;
+    const actualReduction = Math.min(commonReduction, adjustedWeights.common - 5);
+    if (actualReduction > 0) {
+      adjustedWeights.common -= actualReduction;
+      // Distribute the reduced weight proportionally to higher rarities
+      const total = adjustedWeights.uncommon + adjustedWeights.rare + adjustedWeights.epic + adjustedWeights.legendary;
+      if (total > 0) {
+        adjustedWeights.uncommon += actualReduction * (adjustedWeights.uncommon / total);
+        adjustedWeights.rare += actualReduction * (adjustedWeights.rare / total);
+        adjustedWeights.epic += actualReduction * (adjustedWeights.epic / total);
+        adjustedWeights.legendary += actualReduction * (adjustedWeights.legendary / total);
+      }
+    }
+
+    const floorTableWithAdjustedWeights: DungeonLootTable = { ...table, rarityWeights: adjustedWeights };
+    const lootCount = outcome === 'partial' ? 1 : isBoss ? 3 : 2;
+
+    let items: ItemInstance[] = [];
+    let gold = 0;
+    let essence = 0;
+    const resources: ResourceStack[] = [];
+
+    if (outcome !== 'failure') {
+      const goldBase = rand(table.baseGold[0], table.baseGold[1]) * table.goldMultiplier;
+      const floorGoldMult = 1 + (floor - 1) * 0.08;
+      const outcomeMult = outcome === 'partial' ? 0.5 : 1;
+      gold = Math.round(goldBase * floorGoldMult * outcomeMult);
+
+      if (Math.random() < table.essenceChance) {
+        essence = rand(table.essenceAmount[0], table.essenceAmount[1]);
+        if (outcome === 'partial') essence = Math.floor(essence * 0.5);
+      }
+
+      for (let li = 0; li < lootCount; li++) {
+        const item = rollItem(floorTableWithAdjustedWeights, luck);
+        if (item) {
+          if (outcome === 'partial' && item.rarity !== 'common' && item.rarity !== 'uncommon') {
+            // Filter to common/uncommon only on partial
+            const rerolled = rollItem(floorTableWithAdjustedWeights, luck, 'common');
+            if (rerolled) items.push(rerolled);
+          } else {
+            items.push(item);
+          }
+        }
+      }
+
+      // Resource drops
+      const drops = DUNGEON_RESOURCE_DROPS[dungeon.id] ?? [];
+      for (const drop of drops) {
+        if (Math.random() < drop.chance) {
+          const qty = rand(drop.minQty, drop.maxQty);
+          const def = getResource(drop.resourceId);
+          if (def) {
+            resources.push({
+              resourceId: drop.resourceId,
+              name: def.name,
+              icon: def.icon,
+              quantity: qty,
+            });
+          }
+        }
+      }
+    }
+
+    const floorResult: FloorResult = { floor, monsterName, isBoss, dc, roll, effective, outcome, items, gold, essence, resources };
+    floors.push(floorResult);
+
+    // Add preview events for this floor
+    const floorProgress = (fi / floorsToAttempt) * 0.9;
+    const bossIcon = isBoss ? '👹' : '⚔';
+    previewEvents.push({
+      type: 'item',
+      revealAt: floorProgress,
+      label: `Floor ${floor}: ${monsterName} ${bossIcon}`,
+    });
+
+    for (const item of items) {
+      previewEvents.push({
+        type: 'item',
+        revealAt: floorProgress + 0.02,
+        label: `Found: ${item.name}`,
+        rarity: item.rarity,
+      });
+    }
+
+    for (const res of resources) {
+      previewEvents.push({
+        type: 'resource',
+        revealAt: floorProgress + 0.03,
+        label: `Gathered: ${res.name} ×${res.quantity}`,
+        icon: res.icon,
+        resourceId: res.resourceId,
+      });
+    }
+
+    // Stop processing further floors on failure
+    if (outcome === 'failure') break;
+  }
+
+  previewEvents.sort((a, b) => a.revealAt - b.revealAt);
+
+  return {
+    startFloor,
+    floorsAttempted: floorsToAttempt,
+    combatRating,
+    floors,
+    previewEvents,
+  };
+}
+
+export function rollFreeItem(slot: EquipmentSlot, rarity: Rarity): ItemInstance | null {
+  const templates = ITEM_TEMPLATES.filter(t => t.slot === slot);
+  if (templates.length === 0) return null;
+  const template = templates[Math.floor(Math.random() * templates.length)];
+  const [min, max] = RARITY_STAT_RANGES[rarity];
+  const primaryValue = rand(min, max);
+  const secondaryStats = rollSecondaryStats(template.primaryStat, rarity);
+  const specialEffects = rollSpecialEffects(rarity);
+  const name = rarity === 'common' ? template.name : `${rarityPrefix(rarity)} ${template.name}`;
+  return {
+    id: uuidv4(),
+    templateId: template.id,
+    name,
+    slot: template.slot,
+    rarity,
+    primaryStat: template.primaryStat,
+    primaryValue,
+    secondaryStats,
+    specialEffects,
+    gearScore: RARITY_GEAR_SCORE[rarity],
+  };
 }

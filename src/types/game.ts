@@ -40,6 +40,20 @@ export interface ItemInstance {
   gearScore: number;
 }
 
+export interface FloorResult {
+  floor: number;
+  monsterName: string;
+  isBoss: boolean;
+  dc: number;
+  roll: number;
+  effective: number;
+  outcome: 'success' | 'partial' | 'failure';
+  items: ItemInstance[];
+  gold: number;
+  essence: number;
+  resources: ResourceStack[];
+}
+
 export interface DungeonConfig {
   id: string;
   name: string;
@@ -55,6 +69,9 @@ export interface DungeonConfig {
     minLevel?: number;
     minGearScore?: number;
   };
+  floorDCStep: number;
+  monsters: string[];
+  bossTitle: string;
 }
 
 export interface Character {
@@ -91,6 +108,7 @@ export interface RunPreviewEvent {
   label: string;
   rarity?: Rarity;
   icon?: string;
+  resourceId?: string;
 }
 
 export interface CraftRecipe {
@@ -119,6 +137,8 @@ export interface ActiveRun {
   endTime: number;
   previewEvents?: RunPreviewEvent[];
   consumableUsed?: string;
+  startFloor?: number;
+  floorsAttempted?: number;
 }
 
 export interface RunResult {
@@ -136,6 +156,9 @@ export interface RunResult {
   combatRoll: number;
   dc: number;
   resourcesGained: ResourceStack[];
+  startFloor?: number;
+  floorsCompleted?: number;
+  floorResults?: FloorResult[];
 }
 
 export interface Equipment {
@@ -168,6 +191,8 @@ export interface GameState {
   unlockedDungeons: string[];
   tier1Clears: number;
   resources: ResourceStack[];
+  walletAddress: string | null;
+  savedFloors: Record<string, number>;
 }
 
 export const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];

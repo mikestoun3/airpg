@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getSessionWallet } from '@/lib/auth';
 import {
   getOrCreateCharacter,
   getCompletedUnresolvedRun,
@@ -12,55 +13,48 @@ import {
   recordClear,
   getEffectiveStats,
   addMaterials,
+  saveFloorCheckpoint,
 } from '@/lib/db';
-import type { PreRolledData } from '@/lib/engine/loot-roller';
+import type { FloorRunData } from '@/lib/engine/loot-roller';
 import { getDungeon } from '@/lib/data/dungeons';
-import { resolveRun } from '@/lib/engine/run-engine';
-import type { ActiveRun, Difficulty } from '@/types/game';
+import { resolveFloorRun } from '@/lib/engine/run-engine';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
-    const char = getOrCreateCharacter();
+    const wallet = getSessionWallet(req);
+    const char = getOrCreateCharacter(wallet ?? undefined);
     const runRow = getCompletedUnresolvedRun(char.id);
 
     if (!runRow) {
       return NextResponse.json({ ok: false, error: 'No completed run to resolve.' }, { status: 400 });
     }
 
-    const pity = getPity(char.id) ?? {
-      total_runs: 0,
-      since_last_uncommon: 0,
-      since_last_rare: 0,
-      since_last_epic: 0,
-      consecutive_no_success: 0,
-    };
-
-    const activeRun: ActiveRun = {
-      id: runRow.id as string,
-      dungeonId: runRow.dungeon_id as string,
-      dungeonName: '',
-      difficulty: runRow.difficulty as Difficulty,
-      startTime: runRow.start_time as number,
-      endTime: runRow.end_time as number,
-    };
-
     const effective = getEffectiveStats(char.id);
     const charWithGear = { ...char, ...effective };
 
-    const preRolled: PreRolledData | undefined = runRow.pre_rolled_json
+    const dungeonId = runRow.dungeon_id as string;
+    const runId = runRow.id as string;
+
+    const floorData: FloorRunData | undefined = runRow.pre_rolled_json
       ? JSON.parse(runRow.pre_rolled_json as string)
       : undefined;
 
-    const result = resolveRun(activeRun, charWithGear, {
-      totalRuns: pity.total_runs,
-      sinceLastUncommon: pity.since_last_uncommon,
-      sinceLastRare: pity.since_last_rare,
-      sinceLastEpic: pity.since_last_epic,
-      consecutiveNoSuccess: pity.consecutive_no_success,
-    }, preRolled);
+    if (!floorData || !floorData.floors) {
+      return NextResponse.json({ ok: false, error: 'No pre-rolled floor data found for this run.' }, { status: 400 });
+    }
+
+    const result = resolveFloorRun(floorData, charWithGear, runId, dungeonId);
+
+    // Save floor checkpoint: find the highest completed floor that's a multiple of 10
+    const completedFloors = (result.floorResults ?? []).filter(f => f.outcome !== 'failure');
+    const checkpointFloors = completedFloors.filter(f => f.floor % 10 === 0);
+    if (checkpointFloors.length > 0) {
+      const highestCheckpoint = Math.max(...checkpointFloors.map(f => f.floor));
+      saveFloorCheckpoint(char.id, dungeonId, highestCheckpoint);
+    }
 
     // Persist result
-    resolveRunInDb(runRow.id as string, result.outcome, JSON.stringify(result));
+    resolveRunInDb(runId, result.outcome, JSON.stringify(result));
 
     // Add loot to inventory
     for (const item of result.loot) {
@@ -84,13 +78,15 @@ export async function POST() {
     if (result.injured && result.injuryDurationMinutes) {
       const injuredUntil = Math.floor(Date.now() / 1000) + result.injuryDurationMinutes * 60;
       updateCharacterStatus(char.id, 'injured', injuredUntil);
-      result.injuryDurationMinutes = result.injuryDurationMinutes;
     } else {
       updateCharacterStatus(char.id, 'idle');
     }
 
-    // Update pity counters
-    updatePity(char.id, result.outcome, result.loot);
+    // Update pity counters (loot quality pity only, not combat pity)
+    const pity = getPity(char.id);
+    if (pity) {
+      updatePity(char.id, result.outcome, result.loot);
+    }
 
     // Record tier clear
     const dungeon = getDungeon(result.dungeonId);
