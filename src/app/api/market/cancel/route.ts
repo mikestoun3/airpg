@@ -11,8 +11,17 @@ export async function POST(req: NextRequest) {
     if (!listingId) return NextResponse.json({ ok: false, error: 'Missing listingId' }, { status: 400 });
 
     const char = getOrCreateCharacter(wallet);
-    const ok = cancelListing(listingId, char.id);
-    if (!ok) {
+    const result = cancelListing(listingId, char.id);
+
+    if (!result.ok) {
+      if (result.lockedFor) {
+        const mins = Math.ceil(result.lockedFor / 60);
+        return NextResponse.json({
+          ok: false,
+          error: `Listing cannot be cancelled yet. Wait ${mins} more minute${mins !== 1 ? 's' : ''}.`,
+          lockedFor: result.lockedFor,
+        }, { status: 400 });
+      }
       return NextResponse.json({ ok: false, error: 'Listing not found or not yours' }, { status: 404 });
     }
 

@@ -121,12 +121,25 @@ function initSchema(db: Database.Database) {
       item_json TEXT NOT NULL,
       price_wei TEXT NOT NULL,
       listed_at INTEGER DEFAULT (unixepoch()),
+      cancel_lock_until INTEGER,
       status TEXT DEFAULT 'active',
       buyer_id TEXT,
       buyer_wallet TEXT,
-      tx_hash TEXT,
+      tx_hash TEXT UNIQUE,
       sold_at INTEGER,
       FOREIGN KEY (seller_id) REFERENCES characters(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS pending_payouts (
+      id TEXT PRIMARY KEY,
+      seller_id TEXT NOT NULL,
+      seller_wallet TEXT NOT NULL,
+      listing_id TEXT NOT NULL,
+      price_wei TEXT NOT NULL,
+      payout_wei TEXT NOT NULL,
+      fee_wei TEXT NOT NULL,
+      created_at INTEGER DEFAULT (unixepoch()),
+      status TEXT DEFAULT 'pending'
     );
 
     CREATE TABLE IF NOT EXISTS promo_codes (
@@ -150,6 +163,29 @@ function initSchema(db: Database.Database) {
 
   try { db.exec('ALTER TABLE runs ADD COLUMN pre_rolled_json TEXT'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN wallet_address TEXT'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE market_listings ADD COLUMN cancel_lock_until INTEGER'); } catch { /* already exists */ }
+  // Migrate tx_hash to be unique — rebuild table if needed
+  try {
+    const idxRows = db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='market_listings' AND name='idx_market_tx_hash'").get();
+    if (!idxRows) {
+      db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_market_tx_hash ON market_listings(tx_hash) WHERE tx_hash IS NOT NULL");
+    }
+  } catch { /* ignore */ }
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS pending_payouts (
+        id TEXT PRIMARY KEY,
+        seller_id TEXT NOT NULL,
+        seller_wallet TEXT NOT NULL,
+        listing_id TEXT NOT NULL,
+        price_wei TEXT NOT NULL,
+        payout_wei TEXT NOT NULL,
+        fee_wei TEXT NOT NULL,
+        created_at INTEGER DEFAULT (unixepoch()),
+        status TEXT DEFAULT 'pending'
+      );
+    `);
+  } catch { /* already exists */ }
   try {
     db.exec(`
       CREATE TABLE IF NOT EXISTS dungeon_floor_progress (
@@ -685,11 +721,27 @@ export interface MarketListing {
   item: import('@/types/game').ItemInstance;
   priceWei: string;
   listedAt: number;
+  cancelLockUntil: number;
   status: 'active' | 'sold' | 'cancelled';
   buyerWallet?: string;
   txHash?: string;
   soldAt?: number;
 }
+
+export interface PendingPayout {
+  id: string;
+  sellerId: string;
+  sellerWallet: string;
+  listingId: string;
+  priceWei: string;
+  payoutWei: string;
+  feeWei: string;
+  createdAt: number;
+  status: 'pending' | 'paid';
+}
+
+const CANCEL_LOCK_SECONDS = 3600; // 1 hour
+export const MARKET_FEE_BPS = 500; // 5%
 
 function rowToListing(row: Record<string, unknown>): MarketListing {
   return {
@@ -699,6 +751,7 @@ function rowToListing(row: Record<string, unknown>): MarketListing {
     item: JSON.parse(row.item_json as string),
     priceWei: row.price_wei as string,
     listedAt: row.listed_at as number,
+    cancelLockUntil: (row.cancel_lock_until as number) ?? 0,
     status: row.status as 'active' | 'sold' | 'cancelled',
     buyerWallet: row.buyer_wallet as string | undefined,
     txHash: row.tx_hash as string | undefined,
@@ -721,10 +774,11 @@ export function listItem(
   db.prepare('DELETE FROM inventory WHERE id = ? AND character_id = ?').run(itemId, characterId);
 
   const id = uuidv4();
+  const cancelLockUntil = Math.floor(Date.now() / 1000) + CANCEL_LOCK_SECONDS;
   db.prepare(`
-    INSERT INTO market_listings (id, seller_id, seller_wallet, item_json, price_wei)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(id, characterId, walletAddress.toLowerCase(), row.item_json, priceWei);
+    INSERT INTO market_listings (id, seller_id, seller_wallet, item_json, price_wei, cancel_lock_until)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(id, characterId, walletAddress.toLowerCase(), row.item_json, priceWei, cancelLockUntil);
 
   return rowToListing(
     db.prepare('SELECT * FROM market_listings WHERE id = ?').get(id) as Record<string, unknown>
@@ -751,38 +805,84 @@ export function completeSale(
   txHash: string
 ): boolean {
   const db = getDb();
-  const listing = getListingById(listingId);
-  if (!listing || listing.status !== 'active') return false;
-  if (listing.sellerId === buyerCharId) return false;
 
-  db.prepare(`
-    UPDATE market_listings
-    SET status = 'sold', buyer_id = ?, buyer_wallet = ?, tx_hash = ?, sold_at = unixepoch()
-    WHERE id = ? AND status = 'active'
-  `).run(buyerCharId, buyerWallet.toLowerCase(), txHash, listingId);
+  return db.transaction(() => {
+    // Recheck inside transaction to prevent race conditions
+    const listing = db.prepare("SELECT * FROM market_listings WHERE id = ? AND status = 'active'")
+      .get(listingId) as Record<string, unknown> | undefined;
+    if (!listing) return false;
+    if ((listing.seller_id as string) === buyerCharId) return false;
 
-  // Transfer item to buyer's inventory
-  const itemId = uuidv4();
-  db.prepare('INSERT INTO inventory (id, character_id, item_json) VALUES (?, ?, ?)')
-    .run(itemId, buyerCharId, JSON.stringify(listing.item));
+    // Prevent tx hash reuse across any listing
+    const existingTx = db.prepare('SELECT id FROM market_listings WHERE tx_hash = ?').get(txHash);
+    if (existingTx) return false;
 
-  return true;
+    const priceWei = BigInt(listing.price_wei as string);
+    const feeWei = priceWei * BigInt(MARKET_FEE_BPS) / BigInt(10000);
+    const payoutWei = priceWei - feeWei;
+
+    db.prepare(`
+      UPDATE market_listings
+      SET status = 'sold', buyer_id = ?, buyer_wallet = ?, tx_hash = ?, sold_at = unixepoch()
+      WHERE id = ? AND status = 'active'
+    `).run(buyerCharId, buyerWallet.toLowerCase(), txHash, listingId);
+
+    // Transfer item to buyer's inventory
+    const itemId = uuidv4();
+    db.prepare('INSERT INTO inventory (id, character_id, item_json) VALUES (?, ?, ?)')
+      .run(itemId, buyerCharId, JSON.stringify(JSON.parse(listing.item_json as string)));
+
+    // Record seller payout (95% of sale price owed to seller)
+    const payoutId = uuidv4();
+    db.prepare(`
+      INSERT INTO pending_payouts (id, seller_id, seller_wallet, listing_id, price_wei, payout_wei, fee_wei)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(payoutId, listing.seller_id, listing.seller_wallet, listingId,
+        priceWei.toString(), payoutWei.toString(), feeWei.toString());
+
+    return true;
+  })();
 }
 
-export function cancelListing(listingId: string, characterId: string): boolean {
+export function cancelListing(listingId: string, characterId: string): { ok: boolean; lockedFor?: number } {
   const db = getDb();
   const listing = getListingById(listingId);
-  if (!listing || listing.status !== 'active') return false;
-  if (listing.sellerId !== characterId) return false;
+  if (!listing || listing.status !== 'active') return { ok: false };
+  if (listing.sellerId !== characterId) return { ok: false };
+
+  const now = Math.floor(Date.now() / 1000);
+  if (listing.cancelLockUntil && now < listing.cancelLockUntil) {
+    return { ok: false, lockedFor: listing.cancelLockUntil - now };
+  }
 
   db.prepare("UPDATE market_listings SET status = 'cancelled' WHERE id = ?").run(listingId);
 
-  // Return item to seller's inventory
   const itemId = uuidv4();
   db.prepare('INSERT INTO inventory (id, character_id, item_json) VALUES (?, ?, ?)')
     .run(itemId, characterId, JSON.stringify(listing.item));
 
-  return true;
+  return { ok: true };
+}
+
+export function getPendingPayouts(): PendingPayout[] {
+  const db = getDb();
+  const rows = db.prepare("SELECT * FROM pending_payouts ORDER BY created_at DESC").all() as Record<string, unknown>[];
+  return rows.map(r => ({
+    id: r.id as string,
+    sellerId: r.seller_id as string,
+    sellerWallet: r.seller_wallet as string,
+    listingId: r.listing_id as string,
+    priceWei: r.price_wei as string,
+    payoutWei: r.payout_wei as string,
+    feeWei: r.fee_wei as string,
+    createdAt: r.created_at as number,
+    status: r.status as 'pending' | 'paid',
+  }));
+}
+
+export function markPayoutPaid(payoutId: string): void {
+  const db = getDb();
+  db.prepare("UPDATE pending_payouts SET status = 'paid' WHERE id = ?").run(payoutId);
 }
 
 export function getSellerListings(characterId: string): MarketListing[] {

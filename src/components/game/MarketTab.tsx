@@ -19,6 +19,8 @@ const RARITY_BORDER: Record<Rarity, string> = {
 };
 
 const POLYGON_CHAIN_ID = '0x89'; // 137
+const TREASURY_WALLET = '0x4eEb11f1E1f543d9fAf056Bd9eA728668fFd7579';
+const MARKET_FEE_PCT = 5;
 
 function formatPol(wei: string): string {
   try {
@@ -147,9 +149,10 @@ export function MarketTab({ state, onRefresh }: Props) {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
       const from = accounts[0];
 
+      // Payment goes to treasury; server records 95% as owed to seller
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
-        params: [{ from, to: l.sellerWallet, value: '0x' + BigInt(l.priceWei).toString(16) }],
+        params: [{ from, to: TREASURY_WALLET, value: '0x' + BigInt(l.priceWei).toString(16) }],
       }) as string;
 
       showToast('Transaction sent — waiting for confirmation…');
@@ -250,7 +253,7 @@ export function MarketTab({ state, onRefresh }: Props) {
             <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-3">
               <p className="text-[10px] text-[#5050a0] mb-1">Your wallet</p>
               <p className="text-slate-300 text-xs font-mono">{shortAddr(state.walletAddress)}</p>
-              <p className="text-[10px] text-[#4040a0] mt-1">Buyers send POL directly to you on Polygon</p>
+              <p className="text-[10px] text-[#4040a0] mt-1">Marketplace fee: <span className="text-amber-400/70">{MARKET_FEE_PCT}%</span> · Your payout: <span className="text-emerald-400/70">{100 - MARKET_FEE_PCT}%</span></p>
             </div>
 
             <p className="text-[11px] text-[#6060a0] uppercase tracking-widest">Select item to list</p>
@@ -278,7 +281,11 @@ export function MarketTab({ state, onRefresh }: Props) {
               <>
                 <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mt-2">Your listings</p>
                 <div className="space-y-1.5">
-                  {myListings.map((l) => (
+                  {myListings.map((l) => {
+                    const now = Math.floor(Date.now() / 1000);
+                    const locked = l.cancelLockUntil && now < l.cancelLockUntil;
+                    const lockedMins = locked ? Math.ceil((l.cancelLockUntil - now) / 60) : 0;
+                    return (
                     <div key={l.id}
                       className={`flex items-center gap-2 p-2.5 rounded-lg bg-[#0f0f22] border ${RARITY_BORDER[l.item.rarity]}`}>
                       <div className="flex-1 min-w-0">
@@ -286,15 +293,20 @@ export function MarketTab({ state, onRefresh }: Props) {
                           {l.item.name}
                         </p>
                         <p className="text-[10px] text-amber-400">{formatPol(l.priceWei)}</p>
+                        {locked && (
+                          <p className="text-[9px] text-[#5050a0]">🔒 cancel in {lockedMins}m</p>
+                        )}
                       </div>
                       <button
                         onClick={() => handleCancel(l.id)}
-                        disabled={cancellingId === l.id}
-                        className="text-[10px] text-[#5050a0] hover:text-red-400 transition-colors shrink-0">
+                        disabled={cancellingId === l.id || !!locked}
+                        title={locked ? `Locked for ${lockedMins} more minutes` : 'Cancel listing'}
+                        className="text-[10px] text-[#5050a0] hover:text-red-400 transition-colors shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
                         {cancellingId === l.id ? '…' : '✕'}
                       </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -463,7 +475,7 @@ export function MarketTab({ state, onRefresh }: Props) {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-amber-400 font-bold text-sm">{formatPol(l.priceWei)}</p>
-                        <p className="text-[10px] text-[#4040a0]">from {shortAddr(l.sellerWallet)}</p>
+                        <p className="text-[10px] text-[#4040a0]">{shortAddr(l.sellerWallet)} · {MARKET_FEE_PCT}% fee</p>
                       </div>
                       <button
                         onClick={() => handleBuy(l)}
