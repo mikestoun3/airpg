@@ -167,6 +167,7 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
   const [giveSlot, setGiveSlot] = useState<EquipmentSlot>('weapon');
   const [giveRarity, setGiveRarity] = useState<Rarity>('rare');
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/admin/character/${charId}`);
@@ -205,6 +206,17 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
     if (d.ok) { toast(`+${amount} gold given`); setGiveGold(''); load(); }
   };
 
+  const resetCharacter = async () => {
+    setResetting(true);
+    await fetch(`/api/admin/character/${charId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset' }),
+    });
+    setResetting(false);
+    toast('Character reset to idle');
+    load();
+  };
+
   const giveItemFn = async () => {
     const r = await fetch(`/api/admin/character/${charId}/give`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -239,8 +251,18 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
           </div>
         </div>
 
+        {/* Actions */}
+        <div className="mt-3 flex items-center gap-2">
+          {detail.status === 'on_run' && (
+            <button onClick={resetCharacter} disabled={resetting}
+              className="px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-600/40 text-red-400 text-xs hover:bg-red-900/50 disabled:opacity-50 transition-colors">
+              {resetting ? 'Resetting…' : '⚠ Reset (unstick from dungeon)'}
+            </button>
+          )}
+        </div>
+
         {/* Give tools */}
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-3 flex flex-wrap gap-3">
           <div className="flex items-center gap-2">
             <input value={giveGold} onChange={e => setGiveGold(e.target.value)} placeholder="Gold amount"
               className="w-28 bg-[#0f0f25] border border-[rgba(120,110,200,0.25)] rounded-lg px-3 py-1.5 text-slate-200 text-xs outline-none focus:border-purple-600" />
@@ -617,7 +639,7 @@ function PromoPanel({ toast }: { toast: (m: string) => void }) {
 
 // ── Payouts panel ──────────────────────────────────────────────────────────────
 
-interface Payout { id: string; sellerWallet: string; listingId: string; priceWei: string; payoutWei: string; feeWei: string; createdAt: number; status: string }
+interface Payout { id: string; sellerWallet: string; listingId: string; txHash: string; priceWei: string; payoutWei: string; feeWei: string; createdAt: number; status: string }
 
 function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
   const [payouts, setPayouts] = useState<Payout[]>([]);
@@ -673,7 +695,7 @@ function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
             <table className="w-full text-xs">
               <thead className="text-[#5050a0] border-b border-[rgba(120,110,200,0.1)]">
                 <tr>
-                  {['Seller Wallet', 'Full Price', 'Payout (95%)', 'Fee (5%)', 'Status', 'Date', ''].map(h => (
+                  {['Seller Wallet', 'Full Price', 'Payout (95%)', 'Fee (5%)', 'TX', 'Status', 'Date', ''].map(h => (
                     <th key={h} className="text-left px-4 py-2">{h}</th>
                   ))}
                 </tr>
@@ -685,6 +707,14 @@ function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
                     <td className="px-4 py-2 text-amber-400">{fmt(p.priceWei)}</td>
                     <td className="px-4 py-2 text-emerald-400">{fmt(p.payoutWei)}</td>
                     <td className="px-4 py-2 text-purple-400">{fmt(p.feeWei)}</td>
+                    <td className="px-4 py-2">
+                      {p.txHash ? (
+                        <a href={`https://polygonscan.com/tx/${p.txHash}`} target="_blank" rel="noreferrer"
+                          className="text-[10px] text-blue-400 hover:text-blue-300 font-mono transition-colors">
+                          {p.txHash.slice(0, 8)}…
+                        </a>
+                      ) : <span className="text-[#4040a0]">—</span>}
+                    </td>
                     <td className="px-4 py-2">
                       <span className={`px-1.5 py-0.5 rounded text-[10px] ${p.status === 'pending' ? 'bg-red-900/30 text-red-400' : 'bg-emerald-900/30 text-emerald-400'}`}>
                         {p.status}
@@ -702,7 +732,7 @@ function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
                   </tr>
                 ))}
                 {payouts.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-6 text-center text-[#4040a0]">No payouts yet</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-6 text-center text-[#4040a0]">No payouts yet</td></tr>
                 )}
               </tbody>
             </table>
