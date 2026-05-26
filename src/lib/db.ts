@@ -135,6 +135,7 @@ function initSchema(db: Database.Database) {
       seller_id TEXT NOT NULL,
       seller_wallet TEXT NOT NULL,
       listing_id TEXT NOT NULL,
+      tx_hash TEXT NOT NULL,
       price_wei TEXT NOT NULL,
       payout_wei TEXT NOT NULL,
       fee_wei TEXT NOT NULL,
@@ -178,6 +179,7 @@ function initSchema(db: Database.Database) {
         seller_id TEXT NOT NULL,
         seller_wallet TEXT NOT NULL,
         listing_id TEXT NOT NULL,
+        tx_hash TEXT NOT NULL,
         price_wei TEXT NOT NULL,
         payout_wei TEXT NOT NULL,
         fee_wei TEXT NOT NULL,
@@ -186,6 +188,7 @@ function initSchema(db: Database.Database) {
       );
     `);
   } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE pending_payouts ADD COLUMN tx_hash TEXT NOT NULL DEFAULT ""'); } catch { /* already exists */ }
   try {
     db.exec(`
       CREATE TABLE IF NOT EXISTS dungeon_floor_progress (
@@ -733,6 +736,7 @@ export interface PendingPayout {
   sellerId: string;
   sellerWallet: string;
   listingId: string;
+  txHash: string;
   priceWei: string;
   payoutWei: string;
   feeWei: string;
@@ -817,10 +821,6 @@ export function completeSale(
     const existingTx = db.prepare('SELECT id FROM market_listings WHERE tx_hash = ?').get(txHash);
     if (existingTx) return false;
 
-    const priceWei = BigInt(listing.price_wei as string);
-    const feeWei = priceWei * BigInt(MARKET_FEE_BPS) / BigInt(10000);
-    const payoutWei = priceWei - feeWei;
-
     db.prepare(`
       UPDATE market_listings
       SET status = 'sold', buyer_id = ?, buyer_wallet = ?, tx_hash = ?, sold_at = unixepoch()
@@ -832,14 +832,7 @@ export function completeSale(
     db.prepare('INSERT INTO inventory (id, character_id, item_json) VALUES (?, ?, ?)')
       .run(itemId, buyerCharId, JSON.stringify(JSON.parse(listing.item_json as string)));
 
-    // Record seller payout (95% of sale price owed to seller)
-    const payoutId = uuidv4();
-    db.prepare(`
-      INSERT INTO pending_payouts (id, seller_id, seller_wallet, listing_id, price_wei, payout_wei, fee_wei)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(payoutId, listing.seller_id, listing.seller_wallet, listingId,
-        priceWei.toString(), payoutWei.toString(), feeWei.toString());
-
+    // Payment split (seller 95%, treasury 5%) was handled atomically by the smart contract
     return true;
   })();
 }
@@ -872,6 +865,7 @@ export function getPendingPayouts(): PendingPayout[] {
     sellerId: r.seller_id as string,
     sellerWallet: r.seller_wallet as string,
     listingId: r.listing_id as string,
+    txHash: (r.tx_hash as string) ?? '',
     priceWei: r.price_wei as string,
     payoutWei: r.payout_wei as string,
     feeWei: r.fee_wei as string,
@@ -883,6 +877,22 @@ export function getPendingPayouts(): PendingPayout[] {
 export function markPayoutPaid(payoutId: string): void {
   const db = getDb();
   db.prepare("UPDATE pending_payouts SET status = 'paid' WHERE id = ?").run(payoutId);
+}
+
+// Reset a stuck character: cancel active run, set status to idle, clear injury
+export function adminResetCharacter(characterId: string): void {
+  const db = getDb();
+  db.transaction(() => {
+    // Cancel any active run (mark as resolved with failure outcome)
+    db.prepare(`
+      UPDATE runs SET outcome = 'failure', resolved_at = unixepoch()
+      WHERE character_id = ? AND resolved_at IS NULL
+    `).run(characterId);
+    // Reset character status and clear injury
+    db.prepare(`
+      UPDATE characters SET status = 'idle', injured_until = NULL WHERE id = ?
+    `).run(characterId);
+  })();
 }
 
 export function getSellerListings(characterId: string): MarketListing[] {

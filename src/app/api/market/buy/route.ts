@@ -2,17 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import { getSessionWallet } from '@/lib/auth';
 import { getOrCreateCharacter, getListingById, completeSale } from '@/lib/db';
+import { AIRPG_MARKET_ABI } from '@/lib/market-contract';
 
-const POLYGON_RPC = process.env.POLYGON_RPC_URL ?? process.env.ETH_RPC_URL ?? 'https://polygon-bor-rpc.publicnode.com';
+const POLYGON_RPC      = process.env.POLYGON_RPC_URL ?? 'https://polygon-bor-rpc.publicnode.com';
 const POLYGON_CHAIN_ID = 137;
-
-// All market payments route through this wallet; 5% stays, 95% owed to seller
-export const TREASURY_WALLET = (process.env.TREASURY_WALLET ?? '0x4eEb11f1E1f543d9fAf056Bd9eA728668fFd7579').toLowerCase();
+const CONTRACT_ADDRESS = (process.env.CONTRACT_ADDRESS ?? '').toLowerCase();
 
 export async function POST(req: NextRequest) {
   try {
     const wallet = getSessionWallet(req);
     if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
+
+    if (!CONTRACT_ADDRESS) {
+      return NextResponse.json({ ok: false, error: 'Marketplace contract not configured on server' }, { status: 503 });
+    }
 
     const { listingId, txHash } = await req.json() as { listingId: string; txHash: string };
     if (!listingId || !txHash) {
@@ -29,37 +32,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Cannot buy your own listing' }, { status: 400 });
     }
 
-    // Verify on-chain transaction on Polygon
+    // Fetch receipt and verify on-chain
     const provider = new ethers.JsonRpcProvider(POLYGON_RPC, POLYGON_CHAIN_ID);
-
-    const [receipt, tx] = await Promise.all([
-      provider.getTransactionReceipt(txHash),
-      provider.getTransaction(txHash),
-    ]);
+    const receipt = await provider.getTransactionReceipt(txHash);
 
     if (!receipt || receipt.status !== 1) {
       return NextResponse.json({ ok: false, error: 'Transaction not confirmed or failed on Polygon' }, { status: 400 });
     }
-    if (!tx) {
-      return NextResponse.json({ ok: false, error: 'Transaction not found on Polygon' }, { status: 400 });
+
+    // Verify the tx called our contract (not some other address)
+    if (receipt.to?.toLowerCase() !== CONTRACT_ADDRESS) {
+      return NextResponse.json({ ok: false, error: 'Transaction did not call the marketplace contract' }, { status: 400 });
     }
 
-    // Verify sender matches the authenticated buyer
-    if (tx.from.toLowerCase() !== wallet.toLowerCase()) {
-      return NextResponse.json({ ok: false, error: 'Transaction sender does not match your wallet' }, { status: 400 });
+    // Parse the Purchase event from logs
+    const contractInterface = new ethers.Interface(AIRPG_MARKET_ABI);
+    let purchaseEvent: ethers.LogDescription | null = null;
+
+    for (const log of receipt.logs) {
+      try {
+        const parsed = contractInterface.parseLog({ topics: [...log.topics], data: log.data });
+        if (parsed?.name === 'Purchase') { purchaseEvent = parsed; break; }
+      } catch { /* not this event */ }
     }
 
-    // Verify payment went to the treasury wallet (not directly to seller)
-    if (tx.to?.toLowerCase() !== TREASURY_WALLET) {
-      return NextResponse.json({ ok: false, error: 'Payment must be sent to the marketplace treasury wallet' }, { status: 400 });
+    if (!purchaseEvent) {
+      return NextResponse.json({ ok: false, error: 'No Purchase event found in transaction' }, { status: 400 });
     }
 
-    // Verify full price was paid
-    if (tx.value < BigInt(listing.priceWei)) {
-      return NextResponse.json({ ok: false, error: 'Transaction value too low' }, { status: 400 });
+    const [evListingId, evBuyer, evSeller, evTotal] = purchaseEvent.args as unknown as [string, string, string, bigint];
+
+    if (evListingId !== listingId) {
+      return NextResponse.json({ ok: false, error: 'Purchase event listing ID mismatch' }, { status: 400 });
+    }
+    if (evBuyer.toLowerCase() !== wallet.toLowerCase()) {
+      return NextResponse.json({ ok: false, error: 'Purchase event buyer does not match your wallet' }, { status: 400 });
+    }
+    if (evSeller.toLowerCase() !== listing.sellerWallet.toLowerCase()) {
+      return NextResponse.json({ ok: false, error: 'Purchase event seller does not match listing' }, { status: 400 });
+    }
+    if (evTotal < BigInt(listing.priceWei)) {
+      return NextResponse.json({ ok: false, error: 'Purchase amount too low' }, { status: 400 });
     }
 
-    // completeSale is atomic: checks tx_hash uniqueness and race conditions inside a transaction
+    // Finalise in DB — payment already happened on-chain, no pending payout needed
     const ok = completeSale(listingId, buyer.id, wallet, txHash);
     if (!ok) {
       return NextResponse.json({ ok: false, error: 'Sale could not be completed (already sold or tx hash reused)' }, { status: 409 });

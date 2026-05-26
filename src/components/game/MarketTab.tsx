@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import type { GameState, ItemInstance, Rarity, EquipmentSlot } from '@/types/game';
 import { RARITY_COLORS, RARITY_ORDER, SLOT_LABELS } from '@/types/game';
 import type { MarketListing } from '@/lib/db';
+import { AIRPG_MARKET_ABI } from '@/lib/market-contract';
 
 interface Props {
   state: GameState;
@@ -19,7 +20,7 @@ const RARITY_BORDER: Record<Rarity, string> = {
 };
 
 const POLYGON_CHAIN_ID = '0x89'; // 137
-const TREASURY_WALLET = '0x4eEb11f1E1f543d9fAf056Bd9eA728668fFd7579';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? '';
 const MARKET_FEE_PCT = 5;
 
 function formatPol(wei: string): string {
@@ -142,27 +143,24 @@ export function MarketTab({ state, onRefresh }: Props) {
 
   const handleBuy = async (l: MarketListing) => {
     if (!window.ethereum) { showToast('MetaMask not found', false); return; }
+    if (!CONTRACT_ADDRESS) { showToast('Contract not configured — contact support', false); return; }
     setBuyingId(l.id);
     try {
       await switchToPolygon();
 
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
-      const from = accounts[0];
-
-      // Payment goes to treasury; server records 95% as owed to seller
-      const txHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [{ from, to: TREASURY_WALLET, value: '0x' + BigInt(l.priceWei).toString(16) }],
-      }) as string;
-
-      showToast('Transaction sent — waiting for confirmation…');
-
-      // Wait for confirmation using ethers
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const provider = new ethers.BrowserProvider(window.ethereum as any);
-      await provider.waitForTransaction(txHash);
+      const signer = await provider.getSigner();
 
-      // Notify server
+      // Call contract.buy — it splits 95% to seller and 5% to treasury in one tx
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, AIRPG_MARKET_ABI, signer);
+      const tx = await contract.buy(l.id, l.sellerWallet, { value: BigInt(l.priceWei) });
+      const txHash = tx.hash as string;
+
+      showToast('Transaction sent — waiting for confirmation…');
+      await tx.wait();
+
+      // Notify server to verify event and finalise DB record
       const res = await fetch('/api/market/buy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -178,7 +176,7 @@ export function MarketTab({ state, onRefresh }: Props) {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (!msg.includes('user rejected')) showToast(msg, false);
+      if (!msg.includes('user rejected') && !msg.includes('ACTION_REJECTED')) showToast(msg, false);
     } finally {
       setBuyingId(null);
     }
