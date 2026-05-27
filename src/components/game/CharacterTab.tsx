@@ -61,14 +61,25 @@ export function CharacterTab({ state, onRefresh }: Props) {
       <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-4">
         {/* Portrait card */}
         <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl overflow-hidden">
-          <div className="bg-gradient-to-b from-[#1a1a40] to-[#0f0f28] h-28 md:h-36 flex items-center justify-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-violet-700 to-purple-900 flex items-center justify-center text-4xl border-2 border-violet-500/40">
+          <div className="bg-gradient-to-b from-[#1a1a40] to-[#0f0f28] pt-6 pb-5 flex flex-col items-center gap-3">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-violet-700 to-purple-900 flex items-center justify-center text-4xl border-2 border-violet-500/40 shadow-lg shadow-violet-900/40">
               ⚔
+            </div>
+            <div className="text-center">
+              <h2 className="text-slate-100 font-black text-lg leading-tight">{character.name}</h2>
+              <div className="flex items-center justify-center gap-1.5 mt-1">
+                <span className="text-[10px] font-bold text-violet-300 bg-violet-900/50 border border-violet-700/40 px-2 py-0.5 rounded-full tracking-wide">LVL {character.level}</span>
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+                  character.status === 'on_run'  ? 'text-indigo-300 bg-indigo-900/40 border-indigo-700/40' :
+                  character.status === 'injured' ? 'text-red-300 bg-red-900/40 border-red-700/40' :
+                                                   'text-emerald-300 bg-emerald-900/40 border-emerald-700/40'
+                }`}>
+                  {character.status === 'on_run' ? '⚔ In Dungeon' : character.status === 'injured' ? '✖ Injured' : '● Idle'}
+                </span>
+              </div>
             </div>
           </div>
           <div className="p-4">
-            <h2 className="text-slate-100 font-bold text-xl text-center">{character.name}</h2>
-            <p className="text-[#7070b0] text-sm text-center mb-3">Level {character.level} · Wanderer</p>
             <div className="mb-1 flex justify-between text-[11px] text-[#6060a0]">
               <span>XP</span>
               <span>{character.xp} / {character.xpToNext}</span>
