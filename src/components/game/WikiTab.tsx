@@ -54,9 +54,25 @@ export function WikiTab() {
   const [section, setSection] = useState<Section>('overview');
 
   return (
-    <div className="flex gap-6 h-full">
-      {/* Sidebar */}
-      <div className="w-48 flex-shrink-0">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-full">
+
+      {/* Mobile: horizontal scrollable section chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1 md:hidden flex-shrink-0">
+        {SECTIONS.map(s => (
+          <button key={s.id} onClick={() => setSection(s.id)}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all ${
+              section === s.id
+                ? 'bg-[#1e1e40] text-slate-100 border-[rgba(120,110,200,0.35)]'
+                : 'text-[#6060a0] border-[rgba(120,110,200,0.15)] bg-[#14142a]'
+            }`}>
+            <span>{s.icon}</span>
+            <span className="whitespace-nowrap">{s.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop: sidebar */}
+      <div className="hidden md:block w-48 flex-shrink-0">
         <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-2 space-y-0.5 sticky top-0">
           {SECTIONS.map(s => (
             <button key={s.id} onClick={() => setSection(s.id)}
@@ -73,8 +89,8 @@ export function WikiTab() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pr-1">
-        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-6 max-w-3xl">
+      <div className="flex-1 overflow-y-auto pr-0 md:pr-1">
+        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4 md:p-6 max-w-3xl">
 
           {/* ── Overview ── */}
           {section === 'overview' && (
@@ -307,7 +323,52 @@ export function WikiTab() {
           {/* ── Items ── */}
           {section === 'items' && (
             <div>
-              <H2>⚙️ Items & Gear Score</H2>
+              <H2>⚙️ Gear Progression</H2>
+              <P>Dungeons drop <strong className="text-slate-200">resources only</strong> — no random gear. All equipment is crafted at The Forge from materials you gather.</P>
+
+              <H3>Gear Tiers</H3>
+              <div className="space-y-2">
+                {[
+                  { tier: 1, name: 'Iron',   color: 'text-slate-400',   gs: 15, primary: '7–10', secondary: '1', forge: 'The Forge',         req: '—' },
+                  { tier: 2, name: 'Steel',  color: 'text-blue-400',    gs: 30, primary: '14–18', secondary: '2', forge: 'Reinforced Forge', req: 'Tempered T1 (5 runs)' },
+                  { tier: 3, name: 'Mithril',color: 'text-purple-400',  gs: 50, primary: '20–24', secondary: '3', forge: 'Master Forge',     req: 'Tempered T2 (10 runs)' },
+                  { tier: 4, name: 'Void',   color: 'text-amber-400',   gs: 75, primary: '30–35', secondary: '3', forge: 'Void Forge',       req: 'Tempered T3 (15 runs)' },
+                ].map(r => (
+                  <div key={r.tier} className="bg-[#0f0f22] rounded-xl overflow-hidden">
+                    <div className="px-3 py-2 border-b border-[rgba(120,110,200,0.08)] flex items-center gap-3">
+                      <span className={`font-bold text-sm ${r.color}`}>T{r.tier} {r.name}</span>
+                      <span className="text-[10px] text-[#5050a0]">GS {r.gs} · {r.primary} primary · {r.secondary} secondary</span>
+                    </div>
+                    <div className="px-3 py-2 text-xs text-[#7070a0] flex flex-col sm:flex-row gap-2">
+                      <span>🔥 <span className="text-[#9090c0]">{r.forge}</span></span>
+                      <span>⚒ Absorbs: <span className="text-[#9090c0]">{r.req}</span></span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <H3>Tempering System</H3>
+              <Box color="amber">
+                <P>To craft the next tier, your current item must be <strong className="text-amber-300">tempered</strong> — completed the required number of runs while <em>equipped</em>.</P>
+                <div className="bg-[#0f0f22] rounded-lg p-3 mt-2 space-y-0">
+                  <Row label="T1 → T2 (Steel)"   value="5 equipped runs" />
+                  <Row label="T2 → T3 (Mithril)"  value="10 equipped runs" />
+                  <Row label="T3 → T4 (Void)"     value="15 equipped runs" />
+                </div>
+                <P>A tempered item is <strong className="text-amber-300">consumed</strong> during crafting — it becomes the soul of the new piece.</P>
+              </Box>
+
+              <H3>Crafting Loop</H3>
+              <Box color="purple">
+                <ol className="space-y-2 text-sm text-[#9090b8]">
+                  <li>1. Farm <span className="text-violet-300">Tier 1 dungeons</span> for Iron Ore, Leather, Arcane Dust.</li>
+                  <li>2. Build <span className="text-violet-300">The Forge</span> in Camp → craft your first <strong className="text-slate-200">Iron</strong> gear (T1).</li>
+                  <li>3. Equip it and run 5 dungeons → item becomes <span className="text-amber-300">Tempered</span>.</li>
+                  <li>4. Farm <span className="text-violet-300">Tier 2 dungeons</span> for Quality Ore, Spirit Thread.</li>
+                  <li>5. Build <span className="text-violet-300">Reinforced Forge</span> → absorb the tempered T1 into <strong className="text-blue-300">Steel</strong> (T2).</li>
+                  <li>6. Repeat for Mithril and Void. Each tier takes ~1 week of active play.</li>
+                </ol>
+              </Box>
 
               <H3>Equipment Slots</H3>
               <div className="bg-[#0f0f22] rounded-xl p-4">
@@ -316,59 +377,24 @@ export function WikiTab() {
                 <Row label="Chest"   value="END / PWR" />
                 <Row label="Boots"   value="SPD focus" />
                 <Row label="Ring"    value="LCK / INS" />
-                <Row label="Trinket" value="Mixed stats" />
+                <Row label="Trinket" value="INS / LCK" />
               </div>
 
-              <H3>Rarity Tiers</H3>
-              <div className="space-y-2">
-                {[
-                  { rarity: 'Common',    color: 'text-slate-400',   gs: 5,   primary: '1–4',   secondary: '0',  effects: '—' },
-                  { rarity: 'Uncommon',  color: 'text-emerald-400', gs: 12,  primary: '4–8',   secondary: '1',  effects: '—' },
-                  { rarity: 'Rare',      color: 'text-blue-400',    gs: 22,  primary: '8–14',  secondary: '2',  effects: '—' },
-                  { rarity: 'Epic',      color: 'text-purple-400',  gs: 38,  primary: '14–22', secondary: '3',  effects: '1 special' },
-                  { rarity: 'Legendary', color: 'text-amber-400',   gs: 60,  primary: '22–36', secondary: '3',  effects: '2 specials' },
-                ].map(r => (
-                  <div key={r.rarity} className="bg-[#0f0f22] rounded-xl p-3 flex items-center gap-4">
-                    <span className={`font-bold text-sm w-24 ${r.color}`}>{r.rarity}</span>
-                    <div className="flex-1 grid grid-cols-4 gap-2 text-xs text-[#7070a0]">
-                      <div><span className="text-[#5050a0]">GS</span> <span className="text-slate-300 font-bold">{r.gs}</span></div>
-                      <div><span className="text-[#5050a0]">Primary</span> <span className="text-slate-300">{r.primary}</span></div>
-                      <div><span className="text-[#5050a0]">2nd stats</span> <span className="text-slate-300">{r.secondary}</span></div>
-                      <div><span className="text-[#5050a0]">Effects</span> <span className="text-slate-300">{r.effects}</span></div>
-                    </div>
-                  </div>
-                ))}
+              <H3>Resources by Dungeon Tier</H3>
+              <div className="bg-[#0f0f22] rounded-xl p-4">
+                <Row label="Tier 1 dungeons" value="Iron Ore, Rough Leather, Arcane Dust" />
+                <Row label="Tier 2 dungeons" value="Quality Ore, Spirit Thread" />
+                <Row label="Tier 3 dungeons" value="Mithril Shard, Void Shard (rare)" />
+                <Row label="Boss floors"     value="2× resource drops" />
               </div>
 
               <H3>Gear Score (GS)</H3>
-              <P>Gear Score is the sum of GS values of all equipped items. Max possible GS with 6 legendary items = <Code>360</Code>.</P>
-              <P>GS is used to unlock higher-tier dungeons and for matchmaking on the Market.</P>
-
-              <H3>Special Effects</H3>
-              <P>Epic items have 1 special effect, Legendary items have 2. Effects are randomly assigned.</P>
-              <div className="bg-[#0f0f22] rounded-xl p-4 space-y-2 text-sm">
-                {[
-                  ['Night Stalker',    '+15% success in underground dungeons'],
-                  ['Lucky Break',      '30% chance to ignore injury on failure'],
-                  ['Treasure Sense',   '+1 bonus loot roll on Critical Success'],
-                  ['Ironhide',         'Injury duration reduced by 50%'],
-                  ["Scavenger's Eye",  '+10 guaranteed gold on any run'],
-                  ['Swift Reflexes',   '−10% run duration'],
-                  ["Scholar's Mind",   '+20% XP gained'],
-                ].map(([name, desc]) => (
-                  <div key={name} className="flex items-start gap-3">
-                    <span className="text-violet-400 font-semibold w-36 shrink-0">{name}</span>
-                    <span className="text-[#8080b0]">{desc}</span>
-                  </div>
-                ))}
-              </div>
-
-              <H3>Loot Pity System</H3>
-              <P>The game tracks your last high-rarity drop and guarantees a minimum after a certain number of runs.</P>
+              <P>Each equipped item adds to your total Gear Score. GS unlocks higher-tier dungeons.</P>
               <div className="bg-[#0f0f22] rounded-xl p-4">
-                <Row label="Uncommon guarantee" value="Every 5 runs without one" />
-                <Row label="Rare guarantee"     value="Every 20 runs without one" />
-                <Row label="Epic guarantee"     value="Every 75 runs without one" />
+                <Row label="Full T1 Iron set"   value="GS 90"  sub="6 × 15" />
+                <Row label="Full T2 Steel set"  value="GS 180" sub="6 × 30" />
+                <Row label="Full T3 Mithril set" value="GS 300" sub="6 × 50" />
+                <Row label="Full T4 Void set"   value="GS 450" sub="6 × 75" />
               </div>
             </div>
           )}

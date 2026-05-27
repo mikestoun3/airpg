@@ -14,6 +14,7 @@ import {
   getEffectiveStats,
   addMaterials,
   saveFloorCheckpoint,
+  incrementEquippedAttunement,
 } from '@/lib/db';
 import type { FloorRunData } from '@/lib/engine/loot-roller';
 import { getDungeon } from '@/lib/data/dungeons';
@@ -87,6 +88,9 @@ export async function POST(req: NextRequest) {
     if (pity) {
       updatePity(char.id, result.outcome, result.loot);
     }
+
+    // Increment attunement on all currently equipped items
+    incrementEquippedAttunement(char.id);
 
     // Record tier clear
     const dungeon = getDungeon(result.dungeonId);

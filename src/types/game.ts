@@ -27,6 +27,11 @@ export interface ItemTemplate {
   flavorText?: string;
 }
 
+export type GearTier = 1 | 2 | 3 | 4;
+
+export const ATTUNEMENT_REQUIRED: Record<GearTier, number> = { 1: 5, 2: 10, 3: 15, 4: 0 };
+export const GEAR_TIER_NAMES: Record<GearTier, string> = { 1: 'Iron', 2: 'Steel', 3: 'Mithril', 4: 'Void' };
+
 export interface ItemInstance {
   id: string;
   templateId: string;
@@ -38,6 +43,8 @@ export interface ItemInstance {
   secondaryStats: Array<{ stat: StatKey; value: number }>;
   specialEffects: SpecialEffect[];
   gearScore: number;
+  gearTier?: GearTier;
+  attunementRuns?: number;
 }
 
 export interface FloorResult {
@@ -116,6 +123,9 @@ export interface CraftRecipe {
   name: string;
   slot: EquipmentSlot;
   rarity: Rarity;
+  gearTier: GearTier;
+  requiredForgeLevel: 1 | 2 | 3 | 4;
+  requiredItemTier?: 1 | 2 | 3;
   description: string;
   ingredients: { resourceId: string; name: string; quantity: number }[];
   outputItem: {

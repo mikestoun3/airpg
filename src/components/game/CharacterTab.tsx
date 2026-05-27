@@ -13,14 +13,10 @@ const STAT_ICONS: Record<StatKey, string> = {
   pwr: '⚔', end: '🛡', lck: '✦', spd: '💨', ins: '👁',
 };
 
-const SLOT_SPRITE: Record<string, string> = {
-  weapon:  '/icons/slot_weapon.png',
-  helmet:  '/icons/slot_head.png',
-  chest:   '/icons/slot_chest.png',
-  boots:   '/icons/slot_boots.png',
-  ring:    '/icons/slot_accessory.png',
-  trinket: '/icons/slot_accessory.png',
-};
+function itemSprite(slot: string, rarity?: string): string {
+  if (!rarity) return `/icons/items/slot_${slot}.png`;
+  return `/icons/items/item_${slot}_${rarity}.png`;
+}
 
 const STAT_DESC: Record<StatKey, string> = {
   pwr: 'Increases success chance & loot quality',
@@ -108,11 +104,13 @@ export function CharacterTab({ state, onRefresh }: Props) {
               return (
                 <div key={slot}
                   className="flex items-center gap-2 p-2.5 rounded-lg bg-[#0f0f22] border border-[rgba(120,110,200,0.10)]">
-                  <div className="w-7 h-7 shrink-0 flex items-center justify-center opacity-60">
-                    {SLOT_SPRITE[slot]
-                      ? <img src={SLOT_SPRITE[slot]} alt={slot} width={24} height={24} style={{ imageRendering: 'pixelated' }} />
-                      : <span className="text-[#5050a0] text-[11px]">{SLOT_LABELS[slot]}</span>
-                    }
+                  <div className="w-8 h-8 shrink-0 flex items-center justify-center">
+                    <img
+                      src={itemSprite(slot, item?.rarity)}
+                      alt={slot}
+                      width={32} height={32}
+                      style={{ imageRendering: 'pixelated', opacity: item ? 1 : 0.3 }}
+                    />
                   </div>
                   {item ? (
                     <>

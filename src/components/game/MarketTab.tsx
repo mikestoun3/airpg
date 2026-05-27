@@ -72,6 +72,7 @@ declare global {
 }
 
 export function MarketTab({ state, onRefresh }: Props) {
+  const [mobileTab, setMobileTab] = useState<'browse' | 'sell'>('browse');
   const [listings, setListings] = useState<MarketListing[]>([]);
   const [myCharId, setMyCharId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +93,11 @@ export function MarketTab({ state, onRefresh }: Props) {
   // Buy state
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  // Edit price state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editPrice, setEditPrice] = useState('');
+  const [savingPrice, setSavingPrice] = useState(false);
 
   const [toast, setToast] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -203,6 +209,32 @@ export function MarketTab({ state, onRefresh }: Props) {
     }
   };
 
+  const handleSavePrice = async (listingId: string) => {
+    if (!editPrice || parseFloat(editPrice) <= 0) return;
+    setSavingPrice(true);
+    try {
+      const priceWei = ethers.parseEther(editPrice).toString();
+      const res = await fetch('/api/market', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, priceWei }),
+      });
+      const data = await res.json() as { ok: boolean; error?: string };
+      if (data.ok) {
+        showToast('Price updated. Cancel lock reset to 1 hour.');
+        setEditingId(null);
+        setEditPrice('');
+        await fetchListings();
+      } else {
+        showToast(data.error ?? 'Failed to update price', false);
+      }
+    } catch (err) {
+      showToast(String(err), false);
+    } finally {
+      setSavingPrice(false);
+    }
+  };
+
   const myListings = listings.filter((l) => l.sellerId === myCharId);
 
   const toggleRarity = (r: Rarity) => {
@@ -238,10 +270,26 @@ export function MarketTab({ state, onRefresh }: Props) {
     });
 
   return (
-    <div className="flex gap-6 h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row gap-3 md:gap-6 md:h-full md:overflow-hidden">
+
+      {/* Mobile tab switcher */}
+      <div className="flex md:hidden gap-1 flex-shrink-0 bg-[#0f0f22] border border-[rgba(120,110,200,0.15)] rounded-xl p-1">
+        <button onClick={() => setMobileTab('browse')}
+          className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+            mobileTab === 'browse' ? 'bg-[#1e1e40] text-slate-100' : 'text-[#6060a0]'
+          }`}>
+          🏪 Browse
+        </button>
+        <button onClick={() => setMobileTab('sell')}
+          className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+            mobileTab === 'sell' ? 'bg-[#1e1e40] text-slate-100' : 'text-[#6060a0]'
+          }`}>
+          💰 Sell
+        </button>
+      </div>
 
       {/* LEFT: sell panel */}
-      <div className="w-64 flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
+      <div className={`${mobileTab === 'sell' ? 'flex' : 'hidden'} md:flex w-full md:w-64 md:flex-shrink-0 flex-col gap-4 overflow-y-auto`}>
         <p className="text-[11px] text-[#6060a0] uppercase tracking-widest flex items-center gap-2">
           <span className="text-purple-500">◆</span> Sell Items
         </p>
@@ -283,25 +331,55 @@ export function MarketTab({ state, onRefresh }: Props) {
                     const now = Math.floor(Date.now() / 1000);
                     const locked = l.cancelLockUntil && now < l.cancelLockUntil;
                     const lockedMins = locked ? Math.ceil((l.cancelLockUntil - now) / 60) : 0;
+                    const isEditing = editingId === l.id;
                     return (
                     <div key={l.id}
-                      className={`flex items-center gap-2 p-2.5 rounded-lg bg-[#0f0f22] border ${RARITY_BORDER[l.item.rarity]}`}>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold truncate" style={{ color: RARITY_COLORS[l.item.rarity] }}>
-                          {l.item.name}
-                        </p>
-                        <p className="text-[10px] text-amber-400">{formatPol(l.priceWei)}</p>
-                        {locked && (
-                          <p className="text-[9px] text-[#5050a0]">🔒 cancel in {lockedMins}m</p>
-                        )}
+                      className={`p-2.5 rounded-lg bg-[#0f0f22] border ${RARITY_BORDER[l.item.rarity]}`}>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold truncate" style={{ color: RARITY_COLORS[l.item.rarity] }}>
+                            {l.item.name}
+                          </p>
+                          <p className="text-[10px] text-amber-400">{formatPol(l.priceWei)}</p>
+                          {locked && (
+                            <p className="text-[9px] text-[#5050a0]">🔒 cancel in {lockedMins}m</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => { setEditingId(isEditing ? null : l.id); setEditPrice(''); }}
+                          className="text-[10px] text-[#5050a0] hover:text-violet-400 transition-colors shrink-0 px-1"
+                          title="Edit price">
+                          ✎
+                        </button>
+                        <button
+                          onClick={() => handleCancel(l.id)}
+                          disabled={cancellingId === l.id || !!locked}
+                          title={locked ? `Locked for ${lockedMins} more minutes` : 'Cancel listing'}
+                          className="text-[10px] text-[#5050a0] hover:text-red-400 transition-colors shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
+                          {cancellingId === l.id ? '…' : '✕'}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleCancel(l.id)}
-                        disabled={cancellingId === l.id || !!locked}
-                        title={locked ? `Locked for ${lockedMins} more minutes` : 'Cancel listing'}
-                        className="text-[10px] text-[#5050a0] hover:text-red-400 transition-colors shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
-                        {cancellingId === l.id ? '…' : '✕'}
-                      </button>
+                      {isEditing && (
+                        <div className="mt-2 flex gap-1.5">
+                          <input
+                            type="number" min="0" step="0.001" placeholder="New price (POL)"
+                            value={editPrice}
+                            onChange={e => setEditPrice(e.target.value)}
+                            className="flex-1 min-w-0 bg-[#14142a] border border-[rgba(120,110,200,0.25)] rounded-lg px-2 py-1 text-slate-200 text-xs outline-none focus:border-violet-500"
+                          />
+                          <button
+                            onClick={() => handleSavePrice(l.id)}
+                            disabled={savingPrice || !editPrice || parseFloat(editPrice) <= 0}
+                            className="px-2 py-1 text-[10px] font-bold rounded-lg bg-violet-900/40 border border-violet-500/30 text-violet-300 hover:bg-violet-900/60 disabled:opacity-40 transition-all">
+                            {savingPrice ? '…' : 'Save'}
+                          </button>
+                          <button
+                            onClick={() => { setEditingId(null); setEditPrice(''); }}
+                            className="px-2 py-1 text-[10px] rounded-lg text-[#6060a0] hover:text-slate-300 transition-colors">
+                            ✕
+                          </button>
+                        </div>
+                      )}
                     </div>
                     );
                   })}
@@ -317,7 +395,7 @@ export function MarketTab({ state, onRefresh }: Props) {
       </div>
 
       {/* RIGHT: all listings */}
-      <div className="flex-1 flex flex-col gap-3 overflow-hidden">
+      <div className={`${mobileTab === 'browse' ? 'flex' : 'hidden'} md:flex flex-1 flex-col gap-3 overflow-hidden`}>
         {/* Header row */}
         <div className="flex items-center justify-between">
           <p className="text-[11px] text-[#6060a0] uppercase tracking-widest flex items-center gap-2">
@@ -340,7 +418,8 @@ export function MarketTab({ state, onRefresh }: Props) {
         </div>
 
         {/* Filter bar */}
-        <div className="flex-shrink-0 bg-[#0f0f22] border border-[rgba(120,110,200,0.12)] rounded-xl px-4 py-3 flex flex-wrap gap-3 items-center">
+        <div className="flex-shrink-0 bg-[#0f0f22] border border-[rgba(120,110,200,0.12)] rounded-xl overflow-x-auto">
+        <div className="flex gap-3 items-center px-4 py-3 min-w-max">
           {/* Rarity toggles */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[10px] text-[#4040a0] uppercase tracking-wider mr-0.5">Rarity</span>
@@ -417,6 +496,7 @@ export function MarketTab({ state, onRefresh }: Props) {
             </select>
           </div>
         </div>
+        </div>
 
         {toast && (
           <div className={`flex-shrink-0 px-4 py-2.5 rounded-xl border text-sm text-center ${
@@ -441,7 +521,7 @@ export function MarketTab({ state, onRefresh }: Props) {
             }
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-3 pr-1 content-start">
+          <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1 content-start">
             {otherListings.map((l) => {
               const isBuying = buyingId === l.id;
               return (
@@ -520,10 +600,19 @@ export function MarketTab({ state, onRefresh }: Props) {
                   onChange={(e) => setPricePol(e.target.value)}
                   className="w-full bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-violet-500/50"
                 />
-                {pricePol && !isNaN(parseFloat(pricePol)) && parseFloat(pricePol) > 0 && (
-                  <p className="text-[10px] text-[#5050a0] mt-1">
-                    = {parseFloat(pricePol).toFixed(4)} POL
-                  </p>
+                {pricePol && !isNaN(parseFloat(pricePol)) && parseFloat(pricePol) > 0 ? (
+                  <div className="mt-2 bg-[#0f0f22] rounded-lg px-3 py-2 text-xs space-y-1">
+                    <div className="flex justify-between text-[#5050a0]">
+                      <span>Marketplace fee ({MARKET_FEE_PCT}%)</span>
+                      <span className="text-red-400/70">−{(parseFloat(pricePol) * MARKET_FEE_PCT / 100).toFixed(4)} POL</span>
+                    </div>
+                    <div className="flex justify-between font-semibold border-t border-[rgba(120,110,200,0.1)] pt-1">
+                      <span className="text-[#7070a0]">You receive</span>
+                      <span className="text-emerald-400">{(parseFloat(pricePol) * (100 - MARKET_FEE_PCT) / 100).toFixed(4)} POL</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-[#4040a0] mt-1">{MARKET_FEE_PCT}% marketplace fee applies</p>
                 )}
               </div>
             </div>

@@ -18,10 +18,14 @@ export function LoginScreen({ onLogin }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [hasEthereum, setHasEthereum] = useState(false);
+  const [refCode, setRefCode] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
     setHasEthereum(!!window.ethereum);
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) setRefCode(ref);
   }, []);
 
   const handleConnect = async () => {
@@ -64,6 +68,15 @@ export function LoginScreen({ onLogin }: Props) {
       });
       const verifyData = await verifyRes.json() as { ok: boolean; walletAddress?: string; error?: string };
       if (!verifyData.ok) throw new Error(verifyData.error ?? 'Verification failed');
+
+      // Apply referral code if present in URL
+      if (refCode) {
+        await fetch('/api/referral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: refCode }),
+        }).catch(() => {});
+      }
 
       onLogin(verifyData.walletAddress!);
     } catch (err: unknown) {

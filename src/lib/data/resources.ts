@@ -13,6 +13,7 @@ export const RESOURCES: ResourceDef[] = [
   { id: 'quality_ore',    name: 'Quality Ore',    rarity: 'uncommon', icon: '💎', sprite: '/icons/res_gems.png'     },
   { id: 'spirit_thread',  name: 'Spirit Thread',  rarity: 'uncommon', icon: '🔮', sprite: '/icons/res_energy.png'  },
   { id: 'mithril_shard',  name: 'Mithril Shard',  rarity: 'rare',     icon: '💠', sprite: '/icons/res_crystals.png'},
+  { id: 'void_shard',     name: 'Void Shard',     rarity: 'rare',     icon: '🌑', sprite: '/icons/res_crystals.png'},
 ];
 
 export function getResourceSprite(resourceId: string): string | undefined {
@@ -52,11 +53,13 @@ export const DUNGEON_RESOURCE_DROPS: Record<string, ResourceDrop[]> = {
   cursed_catacombs: [
     { resourceId: 'arcane_dust',   chance: 0.60, minQty: 3, maxQty: 7 },
     { resourceId: 'spirit_thread', chance: 0.35, minQty: 1, maxQty: 4 },
-    { resourceId: 'mithril_shard', chance: 0.10, minQty: 1, maxQty: 2 },
+    { resourceId: 'mithril_shard', chance: 0.15, minQty: 1, maxQty: 2 },
+    { resourceId: 'void_shard',    chance: 0.05, minQty: 1, maxQty: 1 },
   ],
   bandit_stronghold: [
     { resourceId: 'rough_leather', chance: 0.50, minQty: 2, maxQty: 5 },
     { resourceId: 'iron_ore',      chance: 0.30, minQty: 1, maxQty: 4 },
     { resourceId: 'quality_ore',   chance: 0.25, minQty: 1, maxQty: 3 },
+    { resourceId: 'void_shard',    chance: 0.05, minQty: 1, maxQty: 1 },
   ],
 };

@@ -1,7 +1,9 @@
 'use client';
 import type { ItemInstance } from '@/types/game';
-import { STAT_LABELS, SLOT_LABELS } from '@/types/game';
+import { STAT_LABELS, SLOT_LABELS, ATTUNEMENT_REQUIRED, GEAR_TIER_NAMES } from '@/types/game';
 import { RarityText, RARITY_BORDER, RARITY_BG, RARITY_BADGE_BG, RARITY_GLOW } from './RarityBadge';
+
+const TIER_COLORS: Record<number, string> = { 1: '#9ca3af', 2: '#60a5fa', 3: '#c084fc', 4: '#fbbf24' };
 
 interface ItemCardProps {
   item: ItemInstance;
@@ -18,6 +20,14 @@ export function ItemCard({ item, onEquip, onSalvage, compact = false }: ItemCard
   if (compact) {
     return (
       <div className={`border ${RARITY_BORDER[item.rarity]} ${RARITY_BG[item.rarity]} ${RARITY_GLOW[item.rarity]} rounded-lg p-2.5 flex items-center gap-3`}>
+        <div className="w-8 h-8 shrink-0 flex items-center justify-center">
+          <img
+            src={`/icons/items/item_${item.slot}_${item.rarity}.png`}
+            alt={item.name}
+            width={32} height={32}
+            style={{ imageRendering: 'pixelated' }}
+          />
+        </div>
         <div className="min-w-0 flex-1">
           <RarityText rarity={item.rarity} className="text-sm font-semibold truncate block">
             {item.name}
@@ -45,11 +55,29 @@ export function ItemCard({ item, onEquip, onSalvage, compact = false }: ItemCard
   return (
     <div className={`border ${RARITY_BORDER[item.rarity]} ${RARITY_BG[item.rarity]} ${RARITY_GLOW[item.rarity]} rounded-xl p-4`}>
       <div className="flex items-start justify-between mb-3">
-        <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-2.5 flex-1 min-w-0">
+          <div className="w-10 h-10 shrink-0 flex items-center justify-center mt-0.5">
+            <img
+              src={`/icons/items/item_${item.slot}_${item.rarity}.png`}
+              alt={item.name}
+              width={40} height={40}
+              style={{ imageRendering: 'pixelated' }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
           <RarityText rarity={item.rarity} className="font-bold text-sm leading-tight block truncate">
             {item.name}
           </RarityText>
-          <span className="text-[11px] text-[#6060a0] mt-0.5 block">{SLOT_LABELS[item.slot]}</span>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[11px] text-[#6060a0]">{SLOT_LABELS[item.slot]}</span>
+            {item.gearTier && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                style={{ color: TIER_COLORS[item.gearTier], background: TIER_COLORS[item.gearTier] + '18' }}>
+                T{item.gearTier} {GEAR_TIER_NAMES[item.gearTier]}
+              </span>
+            )}
+          </div>
+          </div>
         </div>
         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize ml-2 shrink-0 ${RARITY_BADGE_BG[item.rarity]}`}>
           {item.rarity}
@@ -81,6 +109,28 @@ export function ItemCard({ item, onEquip, onSalvage, compact = false }: ItemCard
           ))}
         </div>
       )}
+
+      {item.gearTier && item.gearTier < 4 && (() => {
+        const runs = item.attunementRuns ?? 0;
+        const needed = ATTUNEMENT_REQUIRED[item.gearTier];
+        const pct = Math.min(runs / needed, 1) * 100;
+        const tempered = runs >= needed;
+        return (
+          <div className="mb-2">
+            <div className="flex items-center justify-between text-[10px] mb-1">
+              <span className="text-[#5050a0]">Tempering</span>
+              {tempered
+                ? <span className="text-emerald-400 font-semibold">✓ Tempered</span>
+                : <span className="text-[#6060a0]">{runs}/{needed} runs</span>
+              }
+            </div>
+            <div className="h-1 bg-[#0f0f22] rounded-full overflow-hidden">
+              <div className={`h-full rounded-full transition-all ${tempered ? 'bg-emerald-500' : 'bg-amber-500/70'}`}
+                style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="flex items-center justify-between pt-1">
         <span className="text-[11px] text-[#5050a0]">GS {item.gearScore}</span>

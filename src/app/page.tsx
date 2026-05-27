@@ -8,10 +8,12 @@ import { CampTab } from '@/components/game/CampTab';
 import { CraftTab } from '@/components/game/CraftTab';
 import { MarketTab } from '@/components/game/MarketTab';
 import { WikiTab } from '@/components/game/WikiTab';
+import { QuestsTab } from '@/components/game/QuestsTab';
+import { StoreTab } from '@/components/game/StoreTab';
 import { ResultModal } from '@/components/game/ResultModal';
 import { LoginScreen } from '@/components/auth/LoginScreen';
 
-type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft' | 'market' | 'wiki';
+type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft' | 'market' | 'wiki' | 'quests' | 'store';
 
 const NAV = [
   { id: 'adventure' as Tab, label: 'Adventure', icon: '⚔️', section: 'Explore' },
@@ -20,6 +22,8 @@ const NAV = [
   { id: 'camp' as Tab, label: 'Camp', icon: '🏕️', section: 'Base' },
   { id: 'craft' as Tab, label: 'Forge', icon: '⚒️', section: null },
   { id: 'market' as Tab, label: 'Market', icon: '🏪', section: 'World' },
+  { id: 'quests' as Tab, label: 'Quests', icon: '📋', section: null },
+  { id: 'store' as Tab, label: 'Store', icon: '🏬', section: null },
   { id: 'wiki' as Tab, label: 'Wiki', icon: '📖', section: null },
 ];
 
@@ -236,24 +240,26 @@ export default function GamePage() {
             {activeTab === 'camp' && <CampTab state={state} onRefresh={fetchState} />}
             {activeTab === 'craft' && <CraftTab state={state} onRefresh={fetchState} />}
             {activeTab === 'market' && <MarketTab state={state} onRefresh={fetchState} />}
+            {activeTab === 'quests' && <QuestsTab />}
+            {activeTab === 'store' && <StoreTab state={state} onRefresh={fetchState} />}
             {activeTab === 'wiki' && <WikiTab />}
           </div>
         </main>
 
         {/* ── Bottom nav (mobile only) ── */}
-        <nav className="md:hidden flex-shrink-0 bg-[#0c0c1e] border-t border-[rgba(120,110,200,0.12)] flex items-stretch">
+        <nav className="md:hidden flex-shrink-0 bg-[#0c0c1e] border-t border-[rgba(120,110,200,0.12)] flex items-stretch overflow-x-auto">
           {NAV.map((item) => {
             const isActive = activeTab === item.id;
             const showBadge = item.id === 'inventory' && invBadge && !isActive;
             return (
               <button key={item.id} onClick={() => setActiveTab(item.id)}
-                className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative transition-colors min-w-0 ${
+                className={`flex-shrink-0 flex flex-col items-center justify-center py-2 gap-0.5 relative transition-colors w-14 ${
                   isActive ? 'text-slate-100' : 'text-[#4040a0]'
                 }`}>
                 {isActive && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-purple-500 rounded-full" />}
                 <span className="text-lg leading-none">{item.icon}</span>
                 <span className="text-[9px] font-medium truncate w-full text-center px-0.5">{item.label}</span>
-                {showBadge && <span className="absolute top-1.5 right-[calc(50%-10px)] w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                {showBadge && <span className="absolute top-1.5 right-2 w-1.5 h-1.5 rounded-full bg-emerald-400" />}
               </button>
             );
           })}

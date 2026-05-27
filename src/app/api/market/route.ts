@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionWallet } from '@/lib/auth';
-import { getOrCreateCharacter, getActiveListings, listItem, getSellerListings } from '@/lib/db';
+import { getOrCreateCharacter, getActiveListings, listItem, getSellerListings, updateListingPrice } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,6 +30,26 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, listing });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const wallet = getSessionWallet(req);
+    if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
+
+    const { listingId, priceWei } = await req.json() as { listingId: string; priceWei: string };
+    if (!listingId || !priceWei) {
+      return NextResponse.json({ ok: false, error: 'Missing fields' }, { status: 400 });
+    }
+
+    const char = getOrCreateCharacter(wallet);
+    const result = updateListingPrice(listingId, char.id, priceWei);
+    if (!result.ok) return NextResponse.json({ ok: false, error: result.error }, { status: 403 });
+
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }

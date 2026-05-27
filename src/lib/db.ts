@@ -160,6 +160,41 @@ function initSchema(db: Database.Database) {
       redeemed_at INTEGER DEFAULT (unixepoch()),
       UNIQUE(code, character_id)
     );
+
+    CREATE TABLE IF NOT EXISTS referral_codes (
+      code TEXT PRIMARY KEY,
+      character_id TEXT NOT NULL UNIQUE,
+      created_at INTEGER DEFAULT (unixepoch())
+    );
+
+    CREATE TABLE IF NOT EXISTS referrals (
+      id TEXT PRIMARY KEY,
+      referrer_id TEXT NOT NULL,
+      referee_id TEXT NOT NULL UNIQUE,
+      created_at INTEGER DEFAULT (unixepoch()),
+      FOREIGN KEY (referrer_id) REFERENCES characters(id),
+      FOREIGN KEY (referee_id) REFERENCES characters(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS quest_completions (
+      id TEXT PRIMARY KEY,
+      character_id TEXT NOT NULL,
+      quest_id TEXT NOT NULL,
+      completed_at INTEGER DEFAULT (unixepoch()),
+      UNIQUE(character_id, quest_id),
+      FOREIGN KEY (character_id) REFERENCES characters(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS store_purchases (
+      id TEXT PRIMARY KEY,
+      character_id TEXT NOT NULL,
+      store_item_id TEXT NOT NULL,
+      tx_hash TEXT UNIQUE,
+      amount_wei TEXT NOT NULL,
+      reward_json TEXT NOT NULL,
+      created_at INTEGER DEFAULT (unixepoch()),
+      FOREIGN KEY (character_id) REFERENCES characters(id)
+    );
   `);
 
   try { db.exec('ALTER TABLE runs ADD COLUMN pre_rolled_json TEXT'); } catch { /* already exists */ }
@@ -514,6 +549,11 @@ export function salvageItem(characterId: string, itemId: string): { gold: number
   return { gold, essence };
 }
 
+export function removeItemFromInventory(characterId: string, itemId: string): void {
+  const db = getDb();
+  db.prepare('DELETE FROM inventory WHERE id = ? AND character_id = ?').run(itemId, characterId);
+}
+
 export function salvageByRarity(
   characterId: string,
   rarity: string
@@ -837,6 +877,43 @@ export function completeSale(
   })();
 }
 
+export function updateListingPrice(
+  listingId: string,
+  characterId: string,
+  newPriceWei: string,
+): { ok: boolean; error?: string } {
+  const db = getDb();
+  const listing = getListingById(listingId);
+  if (!listing || listing.status !== 'active') return { ok: false, error: 'Listing not found' };
+  if (listing.sellerId !== characterId) return { ok: false, error: 'Not your listing' };
+  try {
+    if (BigInt(newPriceWei) <= BigInt(0)) return { ok: false, error: 'Price must be positive' };
+  } catch {
+    return { ok: false, error: 'Invalid price' };
+  }
+  // Reset cancel lock so seller can't lower price right before lock expires then immediately cancel
+  const newLockUntil = Math.floor(Date.now() / 1000) + CANCEL_LOCK_SECONDS;
+  db.prepare(`
+    UPDATE market_listings SET price_wei = ?, cancel_lock_until = ?
+    WHERE id = ? AND status = 'active'
+  `).run(newPriceWei, newLockUntil, listingId);
+  return { ok: true };
+}
+
+export function incrementEquippedAttunement(characterId: string): void {
+  const db = getDb();
+  const slots: EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
+  const row = db.prepare('SELECT * FROM equipment WHERE character_id = ?').get(characterId) as Record<string, string | null> | undefined;
+  if (!row) return;
+  for (const slot of slots) {
+    const json = row[slot];
+    if (!json) continue;
+    const item = JSON.parse(json) as import('@/types/game').ItemInstance;
+    item.attunementRuns = (item.attunementRuns ?? 0) + 1;
+    db.prepare(`UPDATE equipment SET ${slot} = ? WHERE character_id = ?`).run(JSON.stringify(item), characterId);
+  }
+}
+
 export function cancelListing(listingId: string, characterId: string): { ok: boolean; lockedFor?: number } {
   const db = getDb();
   const listing = getListingById(listingId);
@@ -1060,6 +1137,95 @@ export function setMaintenanceMode(on: boolean): void {
   db.exec('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
   db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
     .run('maintenance', on ? '1' : '0');
+}
+
+// ── Referrals ─────────────────────────────────────────────────────────────────
+
+export function getOrCreateReferralCode(characterId: string): string {
+  const db = getDb();
+  const existing = db.prepare('SELECT code FROM referral_codes WHERE character_id = ?').get(characterId) as { code: string } | undefined;
+  if (existing) return existing.code;
+
+  const base = characterId.replace(/-/g, '').slice(0, 8).toUpperCase();
+  let code = base;
+  let suffix = 0;
+  while (db.prepare('SELECT character_id FROM referral_codes WHERE code = ?').get(code)) {
+    code = (base.slice(0, 6) + (suffix++).toString(16).padStart(2, '0')).toUpperCase();
+  }
+  db.prepare('INSERT INTO referral_codes (code, character_id) VALUES (?, ?)').run(code, characterId);
+  return code;
+}
+
+export function getCharacterByReferralCode(code: string): string | null {
+  const db = getDb();
+  const row = db.prepare('SELECT character_id FROM referral_codes WHERE code = ?').get(code.toUpperCase()) as { character_id: string } | undefined;
+  return row?.character_id ?? null;
+}
+
+export function applyReferral(referrerCode: string, refereeId: string): { ok: boolean; error?: string } {
+  const db = getDb();
+  const referrerId = getCharacterByReferralCode(referrerCode);
+  if (!referrerId) return { ok: false, error: 'Invalid referral code' };
+  if (referrerId === refereeId) return { ok: false, error: 'Cannot refer yourself' };
+
+  const existing = db.prepare('SELECT id FROM referrals WHERE referee_id = ?').get(refereeId);
+  if (existing) return { ok: false, error: 'Already referred' };
+
+  db.transaction(() => {
+    db.prepare('INSERT INTO referrals (id, referrer_id, referee_id) VALUES (?, ?, ?)').run(uuidv4(), referrerId, refereeId);
+    addResources(refereeId, 300, 30);
+    addResources(referrerId, 200, 20);
+  })();
+
+  return { ok: true };
+}
+
+export function getReferralCount(characterId: string): number {
+  const db = getDb();
+  const row = db.prepare('SELECT COUNT(*) as cnt FROM referrals WHERE referrer_id = ?').get(characterId) as { cnt: number };
+  return row.cnt;
+}
+
+// ── Quests ────────────────────────────────────────────────────────────────────
+
+export function getCompletedQuests(characterId: string): string[] {
+  const db = getDb();
+  const rows = db.prepare('SELECT quest_id FROM quest_completions WHERE character_id = ?').all(characterId) as { quest_id: string }[];
+  return rows.map(r => r.quest_id);
+}
+
+export function completeQuest(characterId: string, questId: string, reward: { gold: number; essence: number }): { ok: boolean; error?: string } {
+  const db = getDb();
+  const existing = db.prepare('SELECT id FROM quest_completions WHERE character_id = ? AND quest_id = ?').get(characterId, questId);
+  if (existing) return { ok: false, error: 'Quest already completed' };
+
+  db.transaction(() => {
+    db.prepare('INSERT INTO quest_completions (id, character_id, quest_id) VALUES (?, ?, ?)').run(uuidv4(), characterId, questId);
+    addResources(characterId, reward.gold, reward.essence);
+  })();
+
+  return { ok: true };
+}
+
+// ── Store ─────────────────────────────────────────────────────────────────────
+
+export function recordStorePurchase(
+  characterId: string,
+  storeItemId: string,
+  txHash: string,
+  amountWei: string,
+  rewardJson: string,
+): { ok: boolean; error?: string } {
+  const db = getDb();
+  const existing = db.prepare('SELECT id FROM store_purchases WHERE tx_hash = ?').get(txHash);
+  if (existing) return { ok: false, error: 'Transaction already used' };
+  try {
+    db.prepare('INSERT INTO store_purchases (id, character_id, store_item_id, tx_hash, amount_wei, reward_json) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(uuidv4(), characterId, storeItemId, txHash, amountWei, rewardJson);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'Purchase record failed' };
+  }
 }
 
 export function redeemPromoCode(code: string, characterId: string): RedeemResult {

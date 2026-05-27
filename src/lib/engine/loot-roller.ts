@@ -178,13 +178,8 @@ export function preRollRun(
   luck: number,
   difficulty: Difficulty
 ): PreRolledData {
-  const maxRolls = 3 + DIFF_LOOT_BONUS[difficulty];
-
+  // Items no longer drop from dungeons — gear comes from crafting only.
   const items: ItemInstance[] = [];
-  for (let i = 0; i < maxRolls; i++) {
-    const item = rollItem(table, luck);
-    if (item) items.push(item);
-  }
 
   const [goldMin, goldMax] = table.baseGold;
   const gold = Math.round(rand(goldMin, goldMax) * table.goldMultiplier);
@@ -212,15 +207,6 @@ export function preRollRun(
   }
 
   const previewEvents: RunPreviewEvent[] = [];
-
-  for (const item of items) {
-    previewEvents.push({
-      type: 'item',
-      revealAt: Math.random() * 0.68 + 0.10,
-      label: `Found: ${item.name}`,
-      rarity: item.rarity,
-    });
-  }
 
   for (const res of resources) {
     previewEvents.push({
@@ -327,10 +313,8 @@ export function preRollFloors(
       }
     }
 
-    const floorTableWithAdjustedWeights: DungeonLootTable = { ...table, rarityWeights: adjustedWeights };
-    const lootCount = outcome === 'partial' ? 1 : isBoss ? 3 : 2;
-
-    let items: ItemInstance[] = [];
+    // Items no longer drop from floors — gear comes from crafting only.
+    const items: ItemInstance[] = [];
     let gold = 0;
     let essence = 0;
     const resources: ResourceStack[] = [];
@@ -346,24 +330,12 @@ export function preRollFloors(
         if (outcome === 'partial') essence = Math.floor(essence * 0.5);
       }
 
-      for (let li = 0; li < lootCount; li++) {
-        const item = rollItem(floorTableWithAdjustedWeights, luck);
-        if (item) {
-          if (outcome === 'partial' && item.rarity !== 'common' && item.rarity !== 'uncommon') {
-            // Filter to common/uncommon only on partial
-            const rerolled = rollItem(floorTableWithAdjustedWeights, luck, 'common');
-            if (rerolled) items.push(rerolled);
-          } else {
-            items.push(item);
-          }
-        }
-      }
-
-      // Resource drops
+      // Resource drops (scaled — boss floors give double)
+      const isBoss = floor % 10 === 0;
       const drops = DUNGEON_RESOURCE_DROPS[dungeon.id] ?? [];
       for (const drop of drops) {
         if (Math.random() < drop.chance) {
-          const qty = rand(drop.minQty, drop.maxQty);
+          const qty = rand(drop.minQty, drop.maxQty) * (isBoss ? 2 : 1);
           const def = getResource(drop.resourceId);
           if (def) {
             resources.push({
