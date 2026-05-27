@@ -799,6 +799,70 @@ function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
   );
 }
 
+// ── Banned players panel ──────────────────────────────────────────────────────
+
+function BannedPanel({ toast, onSelectChar }: { toast: (m: string) => void; onSelectChar: (id: string) => void }) {
+  const [banned, setBanned] = useState<Array<{ id: string; name: string; level: number; walletAddress: string | null; banReason?: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [unbanning, setUnbanning] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const d = await fetch('/api/admin/banned').then(r => r.json()) as { ok: boolean; banned: typeof banned };
+    if (d.ok) setBanned(d.banned);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const unban = async (id: string, name: string) => {
+    setUnbanning(id);
+    await fetch(`/api/admin/character/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unban' }),
+    });
+    setUnbanning(null);
+    toast(`Unbanned ${name}`);
+    load();
+  };
+
+  if (loading) return <div className="flex-1 flex items-center justify-center text-[#5050a0] text-sm">Loading…</div>;
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6">
+      <div className="max-w-3xl mx-auto space-y-3">
+        <div className="flex items-center gap-3 mb-2">
+          <h2 className="text-slate-300 font-semibold">Banned Players</h2>
+          <span className="text-[#5050a0] text-xs">{banned.length} account{banned.length !== 1 ? 's' : ''}</span>
+        </div>
+        {banned.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-4xl mb-3">✓</p>
+            <p className="text-[#5050a0] text-sm">No banned players</p>
+          </div>
+        ) : banned.map(p => (
+          <div key={p.id} className="flex items-center gap-4 px-4 py-3 bg-[#14142a] border border-red-900/30 rounded-xl">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <button onClick={() => onSelectChar(p.id)}
+                  className="text-red-400/80 font-semibold text-sm hover:text-red-300 transition-colors">
+                  {p.name}
+                </button>
+                <span className="text-[10px] text-[#5050a0]">Lv.{p.level}</span>
+              </div>
+              {p.walletAddress && <p className="text-[10px] font-mono text-[#4040a0] mt-0.5">{p.walletAddress}</p>}
+              {p.banReason && <p className="text-[11px] text-[#6060a0] italic mt-0.5">"{p.banReason}"</p>}
+            </div>
+            <button onClick={() => unban(p.id, p.name)} disabled={unbanning === p.id}
+              className="px-3 py-1.5 rounded-lg bg-emerald-900/20 border border-emerald-700/30 text-emerald-400 text-xs hover:bg-emerald-900/40 disabled:opacity-50 transition-colors shrink-0">
+              {unbanning === p.id ? '…' : 'Unban'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── IP Analytics panel ────────────────────────────────────────────────────────
 
 function IpAnalyticsPanel({ toast, onSelectChar }: { toast: (m: string) => void; onSelectChar: (id: string) => void }) {
@@ -877,7 +941,7 @@ function IpAnalyticsPanel({ toast, onSelectChar }: { toast: (m: string) => void;
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [view, setView] = useState<'accounts' | 'listings' | 'promos' | 'payouts' | 'ip'>('accounts');
+  const [view, setView] = useState<'accounts' | 'listings' | 'promos' | 'payouts' | 'ip' | 'banned'>('accounts');
   const [accounts, setAccounts] = useState<AccountSummary[]>([]);
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -952,6 +1016,7 @@ export default function AdminPage() {
             ['listings', 'Market'],
             ['promos', 'Promo Codes'],
             ['payouts', 'Payouts'],
+            ['banned', '🚫 Banned'],
             ['ip', 'IP Analytics'],
           ] as const).map(([v, label]) => (
             <button key={v} onClick={() => setView(v)}
@@ -986,6 +1051,8 @@ export default function AdminPage() {
         <PromoPanel toast={showToast} />
       ) : view === 'payouts' ? (
         <PayoutsPanel toast={showToast} />
+      ) : view === 'banned' ? (
+        <BannedPanel toast={showToast} onSelectChar={id => { setSelectedId(id); setView('accounts'); }} />
       ) : view === 'ip' ? (
         <IpAnalyticsPanel toast={showToast} onSelectChar={id => { setSelectedId(id); setView('accounts'); }} />
       ) : (

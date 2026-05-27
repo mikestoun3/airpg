@@ -1060,6 +1060,24 @@ export function adminUpdateCharacter(id: string, fields: Partial<{
   db.prepare(`UPDATE characters SET ${sets} WHERE id = ?`).run([...entries.map(([, v]) => v), id]);
 }
 
+export function getBannedCharacters(): Array<{ id: string; name: string; level: number; walletAddress: string | null; banReason?: string }> {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT c.id, c.name, c.level, c.ban_reason, w.address as w_addr
+    FROM characters c
+    LEFT JOIN wallets w ON w.character_id = c.id
+    WHERE c.banned = 1
+    ORDER BY c.name
+  `).all() as Array<{ id: string; name: string; level: number; ban_reason: string | null; w_addr: string | null }>;
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    level: r.level,
+    walletAddress: r.w_addr,
+    banReason: r.ban_reason ?? undefined,
+  }));
+}
+
 export function banCharacter(id: string, reason?: string): void {
   const db = getDb();
   db.prepare('UPDATE characters SET banned = 1, ban_reason = ? WHERE id = ?').run(reason ?? null, id);

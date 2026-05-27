@@ -123,7 +123,8 @@ export default function GamePage() {
           )}
           <p className="text-[#5050a0] text-sm">Если вы считаете, что блокировка была ошибочной — свяжитесь с нами.</p>
           <a href="https://t.me/airpg_support" target="_blank" rel="noreferrer"
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white font-bold text-sm transition-all">
+            className="flex items-center gap-2.5 px-6 py-2.5 rounded-xl bg-[#0088cc] hover:bg-[#0099dd] text-white font-bold text-sm transition-all">
+            <img src="/icons/telegram.png" alt="Telegram" width={20} height={20} className="rounded-full" />
             Написать в поддержку
           </a>
         </div>
