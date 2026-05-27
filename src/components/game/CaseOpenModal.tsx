@@ -130,21 +130,29 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
       <p className="text-slate-200 font-bold text-lg mb-8 tracking-wide">{caseName}</p>
 
       {/* ── Reel ─────────────────────────────────────────────────── */}
+      <div className="relative select-none" style={{ width: 'min(714px, calc(100vw - 24px))', height: `${ITEM_W + 12}px` }}>
+        {/* Glow layer — outside the clipped container so it radiates in all directions */}
+        {(phase === 'stopped' || phase === 'reveal') && (
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-xl transition-all duration-500"
+            style={{
+              width: ITEM_W,
+              height: ITEM_W,
+              boxShadow: RARITY_GLOW_BOX[item.rarity],
+              zIndex: 30,
+            }}
+          />
+        )}
       <div
         ref={containerRef}
-        className="relative select-none"
+        className="absolute inset-0"
         style={{
-          width: 'min(714px, calc(100vw - 24px))',
-          height: `${ITEM_W + 12}px`,
           overflow: 'hidden',
-          transform: 'translateZ(0)', // promote to GPU layer so overflow clips composited children
+          maskImage: 'radial-gradient(ellipse 44% 100% at 50% 50%, black 40%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 44% 100% at 50% 50%, black 40%, transparent 100%)',
+          zIndex: 10,
         }}
       >
-        {/* Edge vignettes — fade out in reveal phase so winner glow is unobstructed */}
-        <div className="absolute inset-y-0 left-0 w-28 z-10 pointer-events-none transition-opacity duration-500"
-          style={{ background: 'linear-gradient(to right, #000 0%, transparent 100%)', opacity: phase === 'reveal' ? 0 : 1 }} />
-        <div className="absolute inset-y-0 right-0 w-28 z-10 pointer-events-none transition-opacity duration-500"
-          style={{ background: 'linear-gradient(to left, #000 0%, transparent 100%)', opacity: phase === 'reveal' ? 0 : 1 }} />
 
         {/* Center hairline */}
         <div className="absolute inset-y-0 left-1/2 -translate-x-px w-px z-20 transition-colors duration-500"
@@ -174,7 +182,7 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
                   width: ITEM_W, height: ITEM_W,
                   background: active ? `linear-gradient(135deg, #1a1a35 0%, #0f0f22 100%)` : '#0d0d20',
                   border: `2px solid ${active ? RARITY_BORDER[ri.rarity] : RARITY_BORDER[ri.rarity] + '50'}`,
-                  boxShadow: active ? RARITY_GLOW_BOX[ri.rarity] : 'none',
+                  boxShadow: 'none',
                   opacity: faded ? 0.1 : 1,
                   transform: isWin && phase === 'reveal' ? 'scale(1.18)' : 'scale(1)',
                   transition: 'opacity 0.5s ease, transform 0.55s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease, border-color 0.4s ease',
@@ -192,6 +200,7 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
             );
           })}
         </div>
+      </div>
       </div>
 
       {/* ── Reveal info ───────────────────────────────────────────── */}

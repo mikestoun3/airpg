@@ -71,7 +71,8 @@ export function QuestsTab() {
   const inviteLink = `${typeof window !== 'undefined' ? window.location.origin + window.location.pathname : ''}?ref=${data.referralCode}`;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="md:h-full md:overflow-y-auto">
+    <div className="max-w-2xl mx-auto space-y-4 pb-4">
 
       {/* Section tabs */}
       <div className="flex gap-2 p-1 bg-[#0c0c1e] rounded-xl border border-[rgba(120,110,200,0.12)]">
@@ -203,6 +204,7 @@ export function QuestsTab() {
           })}
         </div>
       )}
+    </div>
     </div>
   );
 }

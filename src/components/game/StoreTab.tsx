@@ -125,6 +125,7 @@ export function StoreTab({ state, onRefresh }: Props) {
   };
 
   return (
+    <div className="md:h-full md:overflow-y-auto">
     <div className="max-w-2xl mx-auto space-y-4">
 
       {/* Case opening animation */}
@@ -265,6 +266,7 @@ export function StoreTab({ state, onRefresh }: Props) {
       <p className="text-center text-[#3a3a6a] text-xs pb-2">
         Payments are sent on Polygon network. Ensure your MetaMask is connected to Polygon.
       </p>
+    </div>
     </div>
   );
 }
