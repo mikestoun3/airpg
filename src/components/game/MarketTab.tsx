@@ -74,8 +74,10 @@ declare global {
 export function MarketTab({ state, onRefresh }: Props) {
   const [mobileTab, setMobileTab] = useState<'browse' | 'sell'>('browse');
   const [listings, setListings] = useState<MarketListing[]>([]);
+  const [total, setTotal] = useState(0);
   const [myCharId, setMyCharId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // List-item modal state
   const [showListModal, setShowListModal] = useState(false);
@@ -109,13 +111,25 @@ export function MarketTab({ state, onRefresh }: Props) {
   const fetchListings = useCallback(async () => {
     setLoading(true);
     const res = await fetch('/api/market');
-    const data = await res.json() as { ok: boolean; listings?: MarketListing[]; myCharId?: string };
+    const data = await res.json() as { ok: boolean; listings?: MarketListing[]; total?: number; myCharId?: string };
     if (data.ok) {
       setListings(data.listings ?? []);
+      setTotal(data.total ?? 0);
       setMyCharId(data.myCharId ?? null);
     }
     setLoading(false);
   }, []);
+
+  const loadMore = useCallback(async () => {
+    setLoadingMore(true);
+    const res = await fetch(`/api/market?offset=${listings.length}`);
+    const data = await res.json() as { ok: boolean; listings?: MarketListing[]; total?: number };
+    if (data.ok) {
+      setListings(prev => [...prev, ...(data.listings ?? [])]);
+      setTotal(data.total ?? 0);
+    }
+    setLoadingMore(false);
+  }, [listings.length]);
 
   useEffect(() => { fetchListings(); }, [fetchListings]);
 
@@ -401,7 +415,7 @@ export function MarketTab({ state, onRefresh }: Props) {
           <p className="text-[11px] text-[#6060a0] uppercase tracking-widest flex items-center gap-2">
             <span className="text-purple-500">◆</span> Market
             <span className="text-[#4040a0]">
-              {otherListings.length}{hasFilters ? ` / ${listings.filter(l => l.sellerId !== myCharId).length}` : ''} listing{otherListings.length !== 1 ? 's' : ''}
+              {otherListings.length}{hasFilters ? ` filtered` : total > listings.length ? ` / ${total}` : ''} listing{otherListings.length !== 1 ? 's' : ''}
             </span>
           </p>
           <div className="flex items-center gap-3">
@@ -521,7 +535,8 @@ export function MarketTab({ state, onRefresh }: Props) {
             }
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1 content-start">
+          <div className="flex-1 overflow-y-auto flex flex-col gap-3 pr-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 content-start">
             {otherListings.map((l) => {
               const isBuying = buyingId === l.id;
               return (
@@ -566,6 +581,13 @@ export function MarketTab({ state, onRefresh }: Props) {
                 </div>
               );
             })}
+          </div>
+          {!hasFilters && listings.length < total && (
+            <button onClick={loadMore} disabled={loadingMore}
+              className="w-full py-2.5 rounded-xl bg-[#14142a] border border-[rgba(120,110,200,0.2)] text-[#7070a0] text-sm hover:text-slate-300 hover:border-[rgba(120,110,200,0.35)] disabled:opacity-50 transition-all">
+              {loadingMore ? 'Loading…' : `Load more (${listings.length} / ${total})`}
+            </button>
+          )}
           </div>
         )}
       </div>

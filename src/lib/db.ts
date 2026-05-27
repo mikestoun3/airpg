@@ -865,11 +865,12 @@ export function listItem(
   );
 }
 
-export function getActiveListings(): MarketListing[] {
+export function getActiveListings(limit = 30, offset = 0): { listings: MarketListing[]; total: number } {
   const db = getDb();
-  const rows = db.prepare("SELECT * FROM market_listings WHERE status = 'active' ORDER BY listed_at DESC")
-    .all() as Record<string, unknown>[];
-  return rows.map(rowToListing);
+  const total = (db.prepare("SELECT COUNT(*) as n FROM market_listings WHERE status = 'active'").get() as { n: number }).n;
+  const rows = db.prepare("SELECT * FROM market_listings WHERE status = 'active' ORDER BY listed_at DESC LIMIT ? OFFSET ?")
+    .all(limit, offset) as Record<string, unknown>[];
+  return { listings: rows.map(rowToListing), total };
 }
 
 export function getListingById(id: string): MarketListing | null {

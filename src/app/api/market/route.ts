@@ -6,8 +6,11 @@ export async function GET(req: NextRequest) {
   try {
     const wallet = getSessionWallet(req);
     const myCharId = wallet ? getOrCreateCharacter(wallet).id : null;
-    const listings = getActiveListings().map(({ sellerWallet: _sw, buyerWallet: _bw, ...rest }) => rest);
-    return NextResponse.json({ ok: true, listings, myCharId });
+    const limit = 30;
+    const offset = parseInt(req.nextUrl.searchParams.get('offset') ?? '0') || 0;
+    const { listings: raw, total } = getActiveListings(limit, offset);
+    const listings = raw.map(({ sellerWallet: _sw, buyerWallet: _bw, ...rest }) => rest);
+    return NextResponse.json({ ok: true, listings, total, myCharId });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }
