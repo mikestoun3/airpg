@@ -61,6 +61,31 @@ export function StoreTab({ state, onRefresh }: Props) {
       const from = accounts[0];
       if (!from) throw new Error('No account');
 
+      // Switch to Polygon (chainId 0x89 = 137)
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x89' }],
+        });
+      } catch (switchErr: unknown) {
+        // Chain not added yet — add it
+        const code = (switchErr as { code?: number }).code;
+        if (code === 4902 || code === -32603) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x89',
+              chainName: 'Polygon Mainnet',
+              nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+              rpcUrls: ['https://polygon-rpc.com'],
+              blockExplorerUrls: ['https://polygonscan.com'],
+            }],
+          });
+        } else {
+          throw switchErr;
+        }
+      }
+
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [{
