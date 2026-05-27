@@ -7,6 +7,7 @@ interface QuestData {
   completed: string[];
   referralCount: number;
   referralCode: string;
+  savedFloors: Record<string, number>;
 }
 
 interface ClaimState {
@@ -18,12 +19,12 @@ export function QuestsTab() {
   const [claimState, setClaimState] = useState<ClaimState>({});
   const [claimMsg, setClaimMsg] = useState<{ id: string; msg: string; ok: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [activeSection, setActiveSection] = useState<'social' | 'referral'>('social');
+  const [activeSection, setActiveSection] = useState<'social' | 'referral' | 'dungeons'>('social');
 
   const load = useCallback(async () => {
     const res = await fetch('/api/quests');
     const json = await res.json() as { ok: boolean } & QuestData;
-    if (json.ok) setData(json);
+    if (json.ok) setData({ ...json, savedFloors: json.savedFloors ?? {} });
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -68,6 +69,15 @@ export function QuestsTab() {
 
   const socialQuests = data.quests.filter(q => q.type === 'social');
   const referralQuests = data.quests.filter(q => q.type === 'referral');
+  const floorQuests = data.quests.filter(q => q.type === 'floor');
+
+  // Group floor quests by dungeon
+  const floorQuestsByDungeon = floorQuests.reduce<Record<string, Quest[]>>((acc, q) => {
+    const key = q.dungeonName ?? q.dungeonId ?? 'Unknown';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(q);
+    return acc;
+  }, {});
   const inviteLink = `${typeof window !== 'undefined' ? window.location.origin + window.location.pathname : ''}?ref=${data.referralCode}`;
 
   return (
@@ -76,14 +86,18 @@ export function QuestsTab() {
 
       {/* Section tabs */}
       <div className="flex gap-2 p-1 bg-[#0c0c1e] rounded-xl border border-[rgba(120,110,200,0.12)]">
-        {(['social', 'referral'] as const).map(s => (
+        {([
+          ['social', '🌐 Social'],
+          ['referral', '👥 Referrals'],
+          ['dungeons', '🗺 Dungeons'],
+        ] as const).map(([s, label]) => (
           <button key={s} onClick={() => setActiveSection(s)}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
               activeSection === s
                 ? 'bg-gradient-to-r from-violet-700 to-purple-700 text-white'
                 : 'text-[#6060a0] hover:text-[#9090c0]'
             }`}>
-            {s === 'social' ? '🌐 Social' : '👥 Referrals'}
+            {label}
           </button>
         ))}
       </div>
@@ -198,6 +212,69 @@ export function QuestsTab() {
                   ) : (
                     <span className="text-[#4040a0] text-xs">Invite {needed - progress} more</span>
                   )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {activeSection === 'dungeons' && (
+        <div className="space-y-5">
+          <p className="text-[#5050a0] text-xs px-1">Reach milestone floors in each dungeon to earn rewards. Progress is saved from your deepest run.</p>
+          {Object.entries(floorQuestsByDungeon).map(([dungeonName, quests]) => {
+            const allDone = quests.every(q => data.completed.includes(q.id));
+            return (
+              <div key={dungeonName}>
+                <p className={`text-xs font-bold uppercase tracking-widest mb-2 px-1 ${allDone ? 'text-emerald-600' : 'text-[#7070b0]'}`}>
+                  {dungeonName}
+                </p>
+                <div className="space-y-2">
+                  {quests.map(quest => {
+                    const done = data.completed.includes(quest.id);
+                    const floor = data.savedFloors[quest.dungeonId ?? ''] ?? 0;
+                    const required = quest.requiredFloor ?? 0;
+                    const canClaim = !done && floor >= required;
+                    const loading = claimState[quest.id] === 'loading';
+                    const isMsg = claimMsg?.id === quest.id;
+                    const pct = Math.min((floor / required) * 100, 100);
+
+                    return (
+                      <div key={quest.id}
+                        className={`bg-[#0f0f22] border rounded-xl p-3.5 transition-all ${done ? 'border-emerald-700/30 opacity-70' : canClaim ? 'border-amber-600/40' : 'border-[rgba(120,110,200,0.15)]'}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="text-xl w-8 text-center shrink-0">{quest.icon}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <p className={`font-semibold text-sm ${done ? 'text-emerald-400' : 'text-slate-200'}`}>{quest.title}</p>
+                              <p className="text-amber-400/80 text-xs shrink-0">+{quest.reward.gold}g{quest.reward.essence > 0 ? ` +${quest.reward.essence} ESS` : ''}</p>
+                            </div>
+                            <p className="text-[#5050a0] text-xs mt-0.5">Floor {required}</p>
+                          </div>
+                          <div className="shrink-0">
+                            {done ? (
+                              <span className="text-emerald-400 text-sm font-bold">✓</span>
+                            ) : isMsg && claimMsg ? (
+                              <span className={`text-xs font-semibold ${claimMsg.ok ? 'text-emerald-400' : 'text-red-400'}`}>{claimMsg.msg}</span>
+                            ) : canClaim ? (
+                              <button onClick={() => handleClaim(quest)} disabled={loading}
+                                className="px-3 py-1.5 text-xs bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 disabled:opacity-50 text-white rounded-lg font-semibold transition-all">
+                                {loading ? '...' : '🎁 Claim'}
+                              </button>
+                            ) : (
+                              <span className="text-[#4040a0] text-xs tabular-nums">{floor}/{required}</span>
+                            )}
+                          </div>
+                        </div>
+                        {!done && floor < required && (
+                          <div className="mt-2">
+                            <div className="h-1 bg-[#0a0a1a] rounded-full overflow-hidden">
+                              <div className="h-full bg-violet-700/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

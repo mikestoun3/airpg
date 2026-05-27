@@ -190,7 +190,8 @@ export function resolveFloorRun(
   floorData: FloorRunData,
   char: Character,
   runId: string,
-  dungeonId: string
+  dungeonId: string,
+  savedFloor = 0
 ): RunResult {
   const dungeon = getDungeon(dungeonId);
   if (!dungeon) throw new Error(`Unknown dungeon: ${dungeonId}`);
@@ -230,13 +231,15 @@ export function resolveFloorRun(
   }
   const totalResources: ResourceStack[] = Array.from(resourceMap.values());
 
-  // XP: base = dungeon.tier * 60 per completed floor + insight bonus
+  // XP: base = dungeon.tier * 60 per completed floor + insight bonus + depth bonus
   const floorsCompleted = completedFloors.length;
   const baseXP = dungeon.tier * 60 * Math.max(1, floorsCompleted);
   let xpMult = 1 + char.ins * 0.02;
   if (outcome === 'partial') xpMult *= 0.5;
   if (outcome === 'failure') xpMult *= 0.25;
-  const xpGained = Math.round(baseXP * xpMult);
+  // +5% XP per 10 floors of saved depth (caps at +100% at floor 200)
+  const depthBonus = 1 + Math.min(Math.floor(savedFloor / 10) * 0.05, 1.0);
+  const xpGained = Math.round(baseXP * xpMult * depthBonus);
 
   // Injury: 30% on failure, 100% if floor was badly failed (effective much lower than DC)
   let injuryChance = 0;

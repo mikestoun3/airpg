@@ -322,3 +322,23 @@ export const FORGE_UPGRADE_ID: Record<1 | 2 | 3 | 4, string> = {
   3: 'master_forge',
   4: 'void_forge',
 };
+
+export interface ConversionRecipe {
+  id: string;
+  fromResourceId: string;
+  fromName: string;
+  fromQuantity: number;
+  toResourceId: string;
+  toName: string;
+  toQuantity: number;
+  fromIcon: string;
+  toIcon: string;
+}
+
+export const CONVERSION_RECIPES: ConversionRecipe[] = [
+  { id: 'convert_iron_to_quality',    fromResourceId: 'iron_ore',      fromName: 'Iron Ore',      fromQuantity: 3, toResourceId: 'quality_ore',    toName: 'Quality Ore',   toQuantity: 1, fromIcon: '🪨', toIcon: '💎' },
+  { id: 'convert_quality_to_mithril', fromResourceId: 'quality_ore',   fromName: 'Quality Ore',   fromQuantity: 3, toResourceId: 'mithril_shard',  toName: 'Mithril Shard', toQuantity: 1, fromIcon: '💎', toIcon: '✨' },
+  { id: 'convert_leather_to_thread',  fromResourceId: 'rough_leather', fromName: 'Rough Leather', fromQuantity: 3, toResourceId: 'spirit_thread',  toName: 'Spirit Thread', toQuantity: 1, fromIcon: '🧵', toIcon: '🌿' },
+  { id: 'convert_thread_to_void',     fromResourceId: 'spirit_thread', fromName: 'Spirit Thread', fromQuantity: 3, toResourceId: 'void_shard',     toName: 'Void Shard',    toQuantity: 1, fromIcon: '🌿', toIcon: '🌑' },
+  { id: 'convert_dust_to_thread',     fromResourceId: 'arcane_dust',   fromName: 'Arcane Dust',   fromQuantity: 3, toResourceId: 'spirit_thread',  toName: 'Spirit Thread', toQuantity: 1, fromIcon: '✨', toIcon: '🌿' },
+];

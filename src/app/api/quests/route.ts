@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionWallet } from '@/lib/auth';
-import { getOrCreateCharacter, getCompletedQuests, completeQuest, getReferralCount, getOrCreateReferralCode } from '@/lib/db';
+import { getOrCreateCharacter, getCompletedQuests, completeQuest, getReferralCount, getOrCreateReferralCode, getFloorProgress } from '@/lib/db';
 import { QUESTS } from '@/lib/data/quests';
 
 export async function GET(req: NextRequest) {
@@ -11,8 +11,9 @@ export async function GET(req: NextRequest) {
   const completed = getCompletedQuests(char.id);
   const referralCount = getReferralCount(char.id);
   const referralCode = getOrCreateReferralCode(char.id);
+  const savedFloors = getFloorProgress(char.id);
 
-  return NextResponse.json({ ok: true, completed, referralCount, referralCode, quests: QUESTS });
+  return NextResponse.json({ ok: true, completed, referralCount, referralCode, savedFloors, quests: QUESTS });
 }
 
 export async function POST(req: NextRequest) {
@@ -34,6 +35,18 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           ok: false,
           error: `Need ${quest.requiredReferrals} referrals (have ${count})`,
+        }, { status: 400 });
+      }
+    }
+
+    // For floor quests, verify the player has reached the required floor
+    if (quest.type === 'floor' && quest.dungeonId && quest.requiredFloor) {
+      const savedFloors = getFloorProgress(char.id);
+      const reached = savedFloors[quest.dungeonId] ?? 0;
+      if (reached < quest.requiredFloor) {
+        return NextResponse.json({
+          ok: false,
+          error: `Need floor ${quest.requiredFloor} (reached ${reached})`,
         }, { status: 400 });
       }
     }

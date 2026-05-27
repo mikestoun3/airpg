@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionWallet } from '@/lib/auth';
-import { getOrCreateCharacter, spendMaterials, addItemToInventory, getBuiltUpgrades, removeItemFromInventory, getInventory, spendGold } from '@/lib/db';
-import { CRAFT_RECIPES, ATTUNEMENT_RUNS_REQUIRED, FORGE_UPGRADE_ID } from '@/lib/data/recipes';
+import { getOrCreateCharacter, spendMaterials, addItemToInventory, getBuiltUpgrades, removeItemFromInventory, getInventory, spendGold, addMaterials } from '@/lib/db';
+import { CRAFT_RECIPES, ATTUNEMENT_RUNS_REQUIRED, FORGE_UPGRADE_ID, CONVERSION_RECIPES } from '@/lib/data/recipes';
 import { v4 as uuidv4 } from 'uuid';
 import type { ItemInstance, GearTier } from '@/types/game';
 
 export async function POST(req: NextRequest) {
   try {
     const { recipeId, ingredientItemId } = await req.json() as { recipeId: string; ingredientItemId?: string };
+
+    // Handle resource conversions
+    const conversion = CONVERSION_RECIPES.find(c => c.id === recipeId);
+    if (conversion) {
+      const wallet = getSessionWallet(req);
+      const char = getOrCreateCharacter(wallet ?? undefined);
+      const spent = spendMaterials(char.id, [{ resourceId: conversion.fromResourceId, quantity: conversion.fromQuantity }]);
+      if (!spent) return NextResponse.json({ ok: false, error: 'Not enough materials.' }, { status: 400 });
+      addMaterials(char.id, [{ resourceId: conversion.toResourceId, quantity: conversion.toQuantity }]);
+      return NextResponse.json({ ok: true, conversion: true, toName: conversion.toName });
+    }
 
     const recipe = CRAFT_RECIPES.find((r) => r.id === recipeId);
     if (!recipe) {

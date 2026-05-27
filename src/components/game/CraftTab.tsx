@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import type { GameState, ItemInstance } from '@/types/game';
 import { RARITY_COLORS } from '@/types/game';
-import { CRAFT_RECIPES, ATTUNEMENT_RUNS_REQUIRED, FORGE_UPGRADE_ID } from '@/lib/data/recipes';
+import { CRAFT_RECIPES, ATTUNEMENT_RUNS_REQUIRED, FORGE_UPGRADE_ID, CONVERSION_RECIPES } from '@/lib/data/recipes';
 import { RESOURCES } from '@/lib/data/resources';
 import { ResIcon } from '@/components/ui/ResIcon';
 
@@ -43,6 +43,7 @@ const FORGE_NAMES: Record<number, string> = {
 
 export function CraftTab({ state, onRefresh }: Props) {
   const [crafting, setCrafting] = useState<string | null>(null);
+  const [converting, setConverting] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [selectedIngredient, setSelectedIngredient] = useState<Record<string, string>>({});
   const [showIngredientPicker, setShowIngredientPicker] = useState<string | null>(null);
@@ -112,6 +113,22 @@ export function CraftTab({ state, onRefresh }: Props) {
       setMessage({ type: 'err', text: data.error });
     }
     setCrafting(null);
+  };
+
+  const handleConvert = async (conversionId: string) => {
+    setConverting(conversionId); setMessage(null);
+    const res = await fetch('/api/craft', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipeId: conversionId }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      setMessage({ type: 'ok', text: `Converted → ${data.toName}` });
+      onRefresh();
+    } else {
+      setMessage({ type: 'err', text: data.error });
+    }
+    setConverting(null);
   };
 
   const recipes = tierFilter
@@ -214,6 +231,44 @@ export function CraftTab({ state, onRefresh }: Props) {
             {message.text}
           </div>
         )}
+
+        {/* Alchemy: resource conversions */}
+        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.15)] rounded-xl overflow-hidden">
+          <div className="px-4 pt-3 pb-2 flex items-center gap-2">
+            <span className="text-purple-500">◆</span>
+            <p className="text-[11px] text-[#6060a0] uppercase tracking-widest">Alchemy — Resource Conversion (3:1)</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[rgba(120,110,200,0.08)]">
+            {CONVERSION_RECIPES.map(conv => {
+              const have = stock[conv.fromResourceId] ?? 0;
+              const canConvert = have >= conv.fromQuantity;
+              const isConverting = converting === conv.id;
+              return (
+                <div key={conv.id} className="bg-[#14142a] px-4 py-3 flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0 text-sm">
+                    <span className="text-[#7070a0]">{conv.fromQuantity}×</span>
+                    <span className="text-slate-300 truncate">{conv.fromName}</span>
+                    <span className="text-[#5050a0] mx-1">→</span>
+                    <span className="text-violet-300 font-semibold truncate">{conv.toName}</span>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-2">
+                    <span className={`text-xs tabular-nums ${canConvert ? 'text-emerald-400' : 'text-red-400/70'}`}>{have}</span>
+                    <button
+                      onClick={() => handleConvert(conv.id)}
+                      disabled={!canConvert || !!isConverting || !!converting}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                        canConvert
+                          ? 'border-violet-500/40 bg-violet-900/20 text-violet-300 hover:bg-violet-900/40'
+                          : 'border-transparent bg-transparent text-[#3a3a60] cursor-not-allowed'
+                      }`}>
+                      {isConverting ? '…' : '⚗'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {recipes.map((recipe) => {

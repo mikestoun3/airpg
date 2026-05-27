@@ -15,6 +15,7 @@ import {
   addMaterials,
   saveFloorCheckpoint,
   incrementEquippedAttunement,
+  getFloorProgress,
 } from '@/lib/db';
 import type { FloorRunData } from '@/lib/engine/loot-roller';
 import { getDungeon } from '@/lib/data/dungeons';
@@ -44,7 +45,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'No pre-rolled floor data found for this run.' }, { status: 400 });
     }
 
-    const result = resolveFloorRun(floorData, charWithGear, runId, dungeonId);
+    const savedFloors = getFloorProgress(char.id);
+    const savedFloor = savedFloors[dungeonId] ?? 0;
+    const result = resolveFloorRun(floorData, charWithGear, runId, dungeonId, savedFloor);
 
     // Save floor checkpoint: find the highest completed floor that's a multiple of 10
     const completedFloors = (result.floorResults ?? []).filter(f => f.outcome !== 'failure');
