@@ -31,8 +31,8 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
   const failFloor = result.floorResults?.find(f => f.outcome === 'failure');
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-      <div className="bg-[#0f0f22] border border-[rgba(120,110,200,0.25)] rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-2xl shadow-black/60">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-6">
+      <div className="bg-[#0f0f22] border border-[rgba(120,110,200,0.25)] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl shadow-black/60">
 
         {/* Header */}
         <div className={`h-1.5 bg-gradient-to-r ${cfg.bar} rounded-t-2xl`} />

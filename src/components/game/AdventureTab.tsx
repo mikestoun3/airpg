@@ -24,10 +24,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
   const isIdle = character.status === 'idle';
   const isInjured = character.status === 'injured';
 
-  // ── Active run: show full-screen animated timer ──
-  if (activeRun) {
-    return <RunTimer run={activeRun} onComplete={onRunComplete} />;
-  }
+  if (activeRun) return <RunTimer run={activeRun} onComplete={onRunComplete} />;
 
   const handleSend = async () => {
     if (!selectedDungeon) return;
@@ -48,31 +45,25 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
   const selected = selectedDungeon ? DUNGEONS.find(d => d.id === selectedDungeon) : null;
   const cr = character.combatRating;
 
-  // Floor-based computations
   const savedFloor = selected ? (savedFloors?.[selected.id] ?? 0) : 0;
   const startFloor = savedFloor + 1;
   const endFloor = startFloor + floorsToAttempt - 1;
-
-  // DC for the first floor of this run
   const firstFloorDC = selected ? Math.round(selected.baseDC + (startFloor - 1) * selected.floorDCStep) : 0;
   const lastFloorDC = selected ? Math.round(selected.baseDC + (endFloor - 1) * selected.floorDCStep) : 0;
-  const successAt = firstFloorDC + 51;
   const firstFloorOdds = selected ? Math.min(95, Math.max(5, Math.round(((cr - firstFloorDC + 50) / 100) * 100))) : 0;
-
-  // Duration estimate
   const spdReduction = Math.min(character.spd * 0.02, 0.4);
   const estimatedDuration = Math.max(1, Math.round(floorsToAttempt * 2 * (1 - spdReduction)));
 
-  // Check if any floor in the range is a boss (multiple of 10)
   const bossFloors: number[] = [];
   for (let f = startFloor; f <= endFloor; f++) {
     if (f % 10 === 0) bossFloors.push(f);
   }
 
   return (
-    <div className="flex gap-6 h-full">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-full">
+
       {/* LEFT: dungeon list */}
-      <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-1">
+      <div className="flex-1 flex flex-col gap-4 md:overflow-y-auto md:pr-1">
         <p className="text-[11px] text-[#6060a0] uppercase tracking-widest flex items-center gap-2">
           <span className="text-purple-500">◆</span> Available Dungeons
         </p>
@@ -102,7 +93,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
                   <div className={`h-0.5 bg-gradient-to-r ${TIER_COLORS[dungeon.tier]}`} />
                   <div className="p-4 flex items-start gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <span className="text-slate-100 font-semibold">{dungeon.name}</span>
                         <span className="text-[10px] text-[#6060a0] bg-[#0f0f22] px-1.5 py-0.5 rounded">{TIER_LABELS[dungeon.tier]}</span>
                         {dungeonSavedFloor > 0 && (
@@ -148,23 +139,20 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
       </div>
 
       {/* RIGHT: dungeon detail + send */}
-      <div className="w-80 flex-shrink-0 flex flex-col gap-4">
+      <div className="w-full md:w-80 md:flex-shrink-0 flex flex-col gap-4">
         {selected && !isInjured ? (
           <>
             <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl overflow-hidden">
-              <div className={`h-24 bg-gradient-to-br ${TIER_COLORS[selected.tier]} flex items-end p-4`}>
+              <div className={`h-20 md:h-24 bg-gradient-to-br ${TIER_COLORS[selected.tier]} flex items-end p-4`}>
                 <div>
                   <p className="text-white/60 text-xs">{TIER_LABELS[selected.tier]}</p>
                   <h3 className="text-white font-bold text-lg">{selected.name}</h3>
-                  {savedFloor > 0 && (
-                    <p className="text-white/50 text-xs mt-0.5">Checkpoint: Floor {savedFloor}</p>
-                  )}
+                  {savedFloor > 0 && <p className="text-white/50 text-xs mt-0.5">Checkpoint: Floor {savedFloor}</p>}
                 </div>
               </div>
               <div className="p-4">
                 <p className="text-[#8080b0] text-sm mb-4">{selected.description}</p>
 
-                {/* Floor range info */}
                 <div className="bg-[#0f0f22] rounded-lg p-3 mb-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[#6060a0] text-xs">Floor Range</span>
@@ -178,11 +166,9 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
                       {startFloor === endFloor ? firstFloorDC : `${firstFloorDC}–${lastFloorDC}`}
                     </span>
                   </div>
-                  {savedFloor > 0 ? (
-                    <p className="text-violet-400/70 text-[11px] mt-1.5">Starting from saved floor {startFloor}</p>
-                  ) : (
-                    <p className="text-[#5050a0] text-[11px] mt-1.5">Starting from Floor 1</p>
-                  )}
+                  {savedFloor > 0
+                    ? <p className="text-violet-400/70 text-[11px] mt-1.5">Starting from saved floor {startFloor}</p>
+                    : <p className="text-[#5050a0] text-[11px] mt-1.5">Starting from Floor 1</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
@@ -211,14 +197,11 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
               </div>
             </div>
 
-            {/* Floor depth selector */}
             <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
               <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3">Floor Depth</p>
               <div className="grid grid-cols-5 gap-1.5 mb-2">
                 {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setFloorsToAttempt(n)}
+                  <button key={n} onClick={() => setFloorsToAttempt(n)}
                     className={`aspect-square rounded-lg text-xs font-bold border transition-all ${
                       floorsToAttempt === n
                         ? 'border-violet-500/60 bg-violet-900/40 text-violet-200'
@@ -230,9 +213,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
               </div>
               <p className="text-[11px] text-[#6060a0] leading-relaxed">
                 {floorsToAttempt} floor{floorsToAttempt > 1 ? 's' : ''} · ~{estimatedDuration} min · deeper floors get harder
-                {endFloor > startFloor && (
-                  <span className="text-amber-400/70"> · last floor DC {lastFloorDC}</span>
-                )}
+                {endFloor > startFloor && <span className="text-amber-400/70"> · last floor DC {lastFloorDC}</span>}
               </p>
             </div>
 
@@ -245,13 +226,11 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
               {loading ? 'Sending...' : 'SEND HERO →'}
             </button>
           </>
-        ) : (
+        ) : !isInjured ? (
           <div className="bg-[#14142a] border border-[rgba(120,110,200,0.15)] rounded-xl p-6 text-center text-[#5050a0]">
-            <p className="text-sm">
-              {isInjured ? 'Hero is recovering' : '← Select a dungeon to begin'}
-            </p>
+            <p className="text-sm">← Select a dungeon to begin</p>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

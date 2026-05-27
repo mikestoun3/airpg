@@ -1046,6 +1046,22 @@ export function saveFloorCheckpoint(characterId: string, dungeonId: string, floo
   `).run(characterId, dungeonId, floor);
 }
 
+// ── Settings ───────────────────────────────────────────────────────────────────
+
+export function getMaintenanceMode(): boolean {
+  const db = getDb();
+  db.exec('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get('maintenance') as { value: string } | undefined;
+  return row?.value === '1';
+}
+
+export function setMaintenanceMode(on: boolean): void {
+  const db = getDb();
+  db.exec('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+  db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+    .run('maintenance', on ? '1' : '0');
+}
+
 export function redeemPromoCode(code: string, characterId: string): RedeemResult {
   const db = getDb();
   const normalized = code.toUpperCase().trim();

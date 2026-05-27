@@ -752,8 +752,23 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [maintenance, setMaintenance] = useState<boolean>(false);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
   const showToast = (m: string) => setToast(m);
+
+  const loadMaintenance = useCallback(async () => {
+    const r = await fetch('/api/admin/maintenance');
+    if (r.ok) { const d = await r.json() as { maintenance: boolean }; setMaintenance(d.maintenance); }
+  }, []);
+
+  const toggleMaintenance = async () => {
+    setMaintenanceLoading(true);
+    const next = !maintenance;
+    const r = await fetch('/api/admin/maintenance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: next }) });
+    if (r.ok) { setMaintenance(next); showToast(next ? 'Тех.работы включены' : 'Тех.работы отключены'); }
+    setMaintenanceLoading(false);
+  };
 
   const checkAuth = useCallback(async () => {
     const r = await fetch('/api/admin/accounts');
@@ -769,8 +784,8 @@ export default function AdminPage() {
 
   useEffect(() => { checkAuth(); }, [checkAuth]);
   useEffect(() => {
-    if (authed) loadAccounts();
-  }, [authed, loadAccounts]);
+    if (authed) { loadAccounts(); loadMaintenance(); }
+  }, [authed, loadAccounts, loadMaintenance]);
 
   useEffect(() => {
     const t = setTimeout(() => loadAccounts(search || undefined), 250);
@@ -816,7 +831,21 @@ export default function AdminPage() {
             </button>
           ))}
         </div>
-        <button onClick={logout} className="ml-auto text-xs text-[#4040a0] hover:text-[#8080c0] transition-colors">Logout</button>
+        <div className="ml-auto flex items-center gap-4">
+          <button
+            onClick={toggleMaintenance}
+            disabled={maintenanceLoading}
+            className={`flex items-center gap-2 px-3 py-1 rounded-lg text-xs border transition-colors ${
+              maintenance
+                ? 'bg-red-900/40 border-red-700/50 text-red-300 hover:bg-red-900/60'
+                : 'bg-[#1a1a35] border-[rgba(120,110,200,0.2)] text-[#7070c0] hover:text-slate-200'
+            } disabled:opacity-50`}
+          >
+            <span className={`w-2 h-2 rounded-full ${maintenance ? 'bg-red-400' : 'bg-emerald-500'}`} />
+            {maintenance ? 'Тех.работы ON' : 'Тех.работы OFF'}
+          </button>
+          <button onClick={logout} className="text-xs text-[#4040a0] hover:text-[#8080c0] transition-colors">Logout</button>
+        </div>
       </header>
 
       {/* Body */}

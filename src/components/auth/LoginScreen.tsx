@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Props {
   onLogin: (wallet: string) => void;
@@ -16,10 +16,22 @@ declare global {
 export function LoginScreen({ onLogin }: Props) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'signing' | 'verifying' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [hasEthereum, setHasEthereum] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    setHasEthereum(!!window.ethereum);
+  }, []);
 
   const handleConnect = async () => {
     setError(null);
+
     if (!window.ethereum) {
+      if (isMobile) {
+        window.location.href = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+        return;
+      }
       setError('MetaMask not found. Please install the MetaMask browser extension.');
       return;
     }
@@ -30,7 +42,6 @@ export function LoginScreen({ onLogin }: Props) {
       const address = accounts[0];
       if (!address) throw new Error('No account returned');
 
-      // Get nonce from server
       setStatus('signing');
       const nonceRes = await fetch('/api/auth/nonce', {
         method: 'POST',
@@ -40,13 +51,11 @@ export function LoginScreen({ onLogin }: Props) {
       const nonceData = await nonceRes.json() as { ok: boolean; message?: string; error?: string };
       if (!nonceData.ok) throw new Error(nonceData.error ?? 'Failed to get nonce');
 
-      // Sign message with MetaMask
       const signature = await window.ethereum.request({
         method: 'personal_sign',
         params: [nonceData.message, address],
       }) as string;
 
-      // Verify with server
       setStatus('verifying');
       const verifyRes = await fetch('/api/auth/verify', {
         method: 'POST',
@@ -68,6 +77,10 @@ export function LoginScreen({ onLogin }: Props) {
     }
   };
 
+  const handleOpenInMetaMask = () => {
+    window.location.href = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+  };
+
   const statusLabel = {
     idle: null,
     connecting: 'Connecting to MetaMask...',
@@ -77,7 +90,7 @@ export function LoginScreen({ onLogin }: Props) {
   }[status];
 
   return (
-    <div className="h-screen flex items-center justify-center bg-[#09091a]">
+    <div className="h-[100dvh] flex items-center justify-center bg-[#09091a]">
       <div className="flex flex-col items-center gap-8 max-w-sm w-full px-6">
 
         {/* Logo */}
@@ -111,28 +124,52 @@ export function LoginScreen({ onLogin }: Props) {
             </div>
           )}
 
-          <button
-            onClick={handleConnect}
-            disabled={status === 'connecting' || status === 'signing' || status === 'verifying'}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
-            <svg width="20" height="20" viewBox="0 0 212 189" fill="none">
-              <path d="M201.7 0L120.2 61.4l14.8-35.1L201.7 0z" fill="#E17726"/>
-              <path d="M10.3 0l80.8 62-14.1-35.7L10.3 0z" fill="#E27625"/>
-              <path d="M172 136.5l-21.7 33.2 46.5 12.8 13.3-45.4-38.1-.6z" fill="#E27625"/>
-              <path d="M2 137.1l13.2 45.4 46.4-12.8-21.6-33.2-38 .6z" fill="#E27625"/>
-              <path d="M59.2 82.1l-12.8 19.4 45.6 2-1.5-49L59.2 82.1z" fill="#E27625"/>
-              <path d="M152.8 82.1l-31.7-28.2-1 49.5 45.5-2-12.8-19.3z" fill="#E27625"/>
-              <path d="M61.6 169.7l27.4-13.3-23.6-18.4-3.8 31.7z" fill="#E27625"/>
-              <path d="M123 156.4l27.3 13.3-3.7-31.7-23.6 18.4z" fill="#E27625"/>
-            </svg>
-            Connect MetaMask
-          </button>
+          {/* Main connect button — shows if MetaMask is injected OR on desktop */}
+          {(hasEthereum || !isMobile) && (
+            <button
+              onClick={handleConnect}
+              disabled={status === 'connecting' || status === 'signing' || status === 'verifying'}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+              <MetaMaskIcon />
+              Connect MetaMask
+            </button>
+          )}
 
-          <p className="text-center text-[#3a3a6a] text-xs">
-            A new hero is created for each wallet address.
-          </p>
+          {/* Mobile: open in MetaMask app */}
+          {isMobile && !hasEthereum && (
+            <button
+              onClick={handleOpenInMetaMask}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+              <MetaMaskIcon />
+              Open in MetaMask
+            </button>
+          )}
+
+          {/* Mobile hint when MetaMask IS injected (inside MM browser) */}
+          {isMobile && hasEthereum && (
+            <p className="text-center text-[#4a4a7a] text-xs">
+              Running inside MetaMask browser ✓
+            </p>
+          )}
+
+          {/* Mobile: also show "open in MM" as secondary option if on desktop no ethereum */}
+          {isMobile && !hasEthereum && (
+            <p className="text-center text-[#3a3a6a] text-xs">
+              This opens the site inside MetaMask&apos;s built-in browser where your wallet is available.
+            </p>
+          )}
+
+          {!isMobile && (
+            <p className="text-center text-[#3a3a6a] text-xs">
+              A new hero is created for each wallet address.
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
+}
+
+function MetaMaskIcon() {
+  return <img src="/icons/metamask.svg" alt="MetaMask" width={22} height={22} />;
 }

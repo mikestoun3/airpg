@@ -59,32 +59,27 @@ export function CharacterTab({ state, onRefresh }: Props) {
   };
 
   return (
-    <div className="flex gap-6 h-full">
-      {/* LEFT: Character portrait + equipment */}
-      <div className="w-72 flex-shrink-0 flex flex-col gap-4">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-full">
+
+      {/* LEFT: portrait + equipment */}
+      <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-4">
         {/* Portrait card */}
         <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl overflow-hidden">
-          {/* Avatar area */}
-          <div className="bg-gradient-to-b from-[#1a1a40] to-[#0f0f28] h-36 flex items-center justify-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-700 to-purple-900 flex items-center justify-center text-4xl border-2 border-violet-500/40">
+          <div className="bg-gradient-to-b from-[#1a1a40] to-[#0f0f28] h-28 md:h-36 flex items-center justify-center">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-violet-700 to-purple-900 flex items-center justify-center text-4xl border-2 border-violet-500/40">
               ⚔
             </div>
           </div>
           <div className="p-4">
             <h2 className="text-slate-100 font-bold text-xl text-center">{character.name}</h2>
             <p className="text-[#7070b0] text-sm text-center mb-3">Level {character.level} · Wanderer</p>
-
-            {/* XP bar */}
             <div className="mb-1 flex justify-between text-[11px] text-[#6060a0]">
               <span>XP</span>
               <span>{character.xp} / {character.xpToNext}</span>
             </div>
             <div className="h-1.5 bg-[#0f0f22] rounded-full overflow-hidden mb-4">
-              <div className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all"
-                style={{ width: `${xpPct}%` }} />
+              <div className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all" style={{ width: `${xpPct}%` }} />
             </div>
-
-            {/* Quick stats */}
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Gear Score', value: character.gearScore, color: 'text-purple-400' },
@@ -102,12 +97,12 @@ export function CharacterTab({ state, onRefresh }: Props) {
         </div>
 
         {/* Equipment */}
-        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4 flex-1">
+        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
           <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3 flex items-center gap-2">
             <span className="text-purple-500">◆</span> Equipment
             {onRun && <span className="ml-auto text-[10px] text-violet-400/70">⚔ on run</span>}
           </p>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-2">
             {slots.map((slot) => {
               const item = equipment[slot];
               return (
@@ -122,18 +117,11 @@ export function CharacterTab({ state, onRefresh }: Props) {
                   {item ? (
                     <>
                       <div className="flex-1 min-w-0">
-                        <RarityText rarity={item.rarity} className="text-xs font-semibold truncate block">
-                          {item.name}
-                        </RarityText>
-                        <span className="text-[#5050a0] text-[10px]">
-                          +{item.primaryValue} {STAT_LABELS[item.primaryStat]} · GS {item.gearScore}
-                        </span>
+                        <RarityText rarity={item.rarity} className="text-xs font-semibold truncate block">{item.name}</RarityText>
+                        <span className="text-[#5050a0] text-[10px]">+{item.primaryValue} {STAT_LABELS[item.primaryStat]} · GS {item.gearScore}</span>
                       </div>
-                      <button onClick={() => !onRun && handleUnequip(slot)}
-                        disabled={onRun}
-                        className="text-[#4040a0] hover:text-[#8080b0] transition-colors shrink-0 text-xs disabled:opacity-20 disabled:cursor-not-allowed">
-                        ✕
-                      </button>
+                      <button onClick={() => !onRun && handleUnequip(slot)} disabled={onRun}
+                        className="text-[#4040a0] hover:text-[#8080b0] transition-colors shrink-0 text-xs disabled:opacity-20 disabled:cursor-not-allowed">✕</button>
                     </>
                   ) : (
                     <span className="text-[#3a3a70] text-xs italic">Empty</span>
@@ -145,9 +133,8 @@ export function CharacterTab({ state, onRefresh }: Props) {
         </div>
       </div>
 
-      {/* RIGHT: Stats + upgrades */}
-      <div className="flex-1 flex flex-col gap-4">
-        {/* Primary stats */}
+      {/* RIGHT: stats */}
+      <div className="flex-1 flex flex-col gap-4 md:overflow-y-auto">
         <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[11px] text-[#6060a0] uppercase tracking-widest flex items-center gap-2">
@@ -159,21 +146,18 @@ export function CharacterTab({ state, onRefresh }: Props) {
               </span>
             )}
           </div>
-
           <div className="space-y-3">
             {(['pwr', 'end', 'lck', 'spd', 'ins'] as StatKey[]).map((stat) => (
-              <div key={stat} className="flex items-center gap-4"
+              <div key={stat} className="flex items-center gap-3 md:gap-4"
                 onMouseEnter={() => setTooltip(stat)} onMouseLeave={() => setTooltip(null)}>
-                <div className="flex items-center gap-2 w-36 shrink-0">
+                <div className="flex items-center gap-2 w-28 md:w-36 shrink-0">
                   <span className="text-lg w-6 text-center">{STAT_ICONS[stat]}</span>
                   <span className="text-slate-300 text-sm">{STAT_LABELS[stat]}</span>
                 </div>
-
                 <div className="flex-1 h-2 bg-[#0f0f22] rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-violet-600 to-purple-500 rounded-full transition-all"
                     style={{ width: `${Math.min(100, (character[stat] / 30) * 100)}%` }} />
                 </div>
-
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-slate-100 font-bold font-mono w-8 text-right">{character[stat]}</span>
                   {character.statPoints > 0 && (
@@ -186,7 +170,6 @@ export function CharacterTab({ state, onRefresh }: Props) {
               </div>
             ))}
           </div>
-
           {tooltip && (
             <div className="mt-4 p-3 bg-[#0f0f22] rounded-lg border border-[rgba(120,110,200,0.15)] text-[#9090c0] text-xs">
               <span className="text-purple-400 font-semibold">{STAT_LABELS[tooltip]}:</span> {STAT_DESC[tooltip]}
@@ -194,7 +177,6 @@ export function CharacterTab({ state, onRefresh }: Props) {
           )}
         </div>
 
-        {/* Combat stats */}
         <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-5">
           <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-4 flex items-center gap-2">
             <span className="text-purple-500">◆</span> Combat Stats
@@ -205,10 +187,10 @@ export function CharacterTab({ state, onRefresh }: Props) {
               { label: 'Defense Power', value: character.end, icon: '🛡' },
               { label: 'Combat Rating', value: character.combatRating, icon: '⚡' },
             ].map(({ label, value, icon }) => (
-              <div key={label} className="bg-[#0f0f22] rounded-xl p-4 text-center">
-                <p className="text-2xl mb-1">{icon}</p>
-                <p className="text-slate-100 font-bold text-2xl">{value}</p>
-                <p className="text-[#6060a0] text-[11px] mt-1">{label}</p>
+              <div key={label} className="bg-[#0f0f22] rounded-xl p-3 md:p-4 text-center">
+                <p className="text-xl md:text-2xl mb-1">{icon}</p>
+                <p className="text-slate-100 font-bold text-xl md:text-2xl">{value}</p>
+                <p className="text-[#6060a0] text-[10px] md:text-[11px] mt-1">{label}</p>
               </div>
             ))}
           </div>
