@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import type { GameState, RunResult } from '@/types/game';
 import { AdventureTab } from '@/components/game/AdventureTab';
 import { CharacterTab } from '@/components/game/CharacterTab';
@@ -31,12 +31,91 @@ function shortAddr(addr: string) {
   return addr.slice(0, 6) + '…' + addr.slice(-4);
 }
 
+function NicknameModal({ onDone }: { onDone: () => void }) {
+  const [value, setValue] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const validate = (v: string) => {
+    if (v.length === 0) return '';
+    if (v.length < 3) return 'Минимум 3 символа';
+    if (!/^[a-zA-Z0-9_]+$/.test(v)) return 'Только латиница, цифры и _';
+    return '';
+  };
+
+  const handleChange = (v: string) => {
+    if (v.length > 13) return;
+    setValue(v);
+    setError(validate(v));
+  };
+
+  const submit = async () => {
+    const err = validate(value);
+    if (err || value.length < 3) { setError(err || 'Минимум 3 символа'); return; }
+    setLoading(true);
+    const res = await fetch('/api/nickname', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nickname: value }),
+    });
+    const data = await res.json() as { ok: boolean; error?: string };
+    setLoading(false);
+    if (data.ok) { onDone(); }
+    else { setError(data.error ?? 'Ошибка'); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-[#09091a]/95 backdrop-blur-sm flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-[#0f0f22] border border-[rgba(120,110,200,0.25)] rounded-2xl overflow-hidden shadow-2xl">
+        <div className="px-6 pt-8 pb-6">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-800 flex items-center justify-center text-2xl mx-auto mb-4">⚔️</div>
+            <h2 className="text-slate-100 font-black text-xl tracking-wide">Выберите никнейм</h2>
+            <p className="text-[#5050a0] text-sm mt-1">Это имя увидят другие игроки</p>
+          </div>
+
+          <div className="relative mb-1.5">
+            <input
+              ref={inputRef}
+              value={value}
+              onChange={e => handleChange(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+              placeholder="Hero_123"
+              maxLength={13}
+              className={`w-full bg-[#14142a] border rounded-xl px-4 py-3 text-slate-100 text-sm font-mono tracking-wide outline-none transition-colors ${
+                error ? 'border-red-500/60 focus:border-red-500' : 'border-[rgba(120,110,200,0.25)] focus:border-violet-500'
+              }`}
+            />
+            <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono ${value.length >= 13 ? 'text-amber-400' : 'text-[#4040a0]'}`}>
+              {value.length}/13
+            </span>
+          </div>
+
+          {error ? (
+            <p className="text-red-400 text-xs mb-4 px-1">{error}</p>
+          ) : (
+            <p className="text-[#4040a0] text-xs mb-4 px-1">Латиница, цифры и _ · 3–13 символов · навсегда</p>
+          )}
+
+          <button onClick={submit} disabled={loading || value.length < 3 || !!error}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm transition-all">
+            {loading ? 'Проверяем…' : 'Начать игру'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function GamePage() {
   const [state, setState] = useState<GameState | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('adventure');
   const [loading, setLoading] = useState(true);
   const [maintenance, setMaintenance] = useState(false);
   const [banned, setBanned] = useState<{ reason?: string } | null>(null);
+  const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<{
     result: RunResult; leveled?: boolean; newLevel?: number;
   } | null>(null);
@@ -52,7 +131,13 @@ export default function GamePage() {
       if (d.banned) { setBanned({ reason: d.banReason }); setLoading(false); return; }
     }
     const data = await gRes.json();
-    if (data.ok) { setState(data.state); setHasCompletedRun(data.hasCompletedRun); }
+    if (data.ok) {
+      setState(data.state);
+      setHasCompletedRun(data.hasCompletedRun);
+      if (data.state?.character && !data.state.character.nicknameSet) {
+        setShowNicknameModal(true);
+      }
+    }
     setLoading(false);
   }, []);
 
@@ -148,6 +233,10 @@ export default function GamePage() {
 
   return (
     <div className="h-[100dvh] flex overflow-hidden bg-[#09091a]">
+
+      {showNicknameModal && (
+        <NicknameModal onDone={async () => { setShowNicknameModal(false); await fetchState(); }} />
+      )}
 
       {/* ── Sidebar (desktop only) ── */}
       <aside className="hidden md:flex w-56 flex-shrink-0 bg-[#0c0c1e] border-r border-[rgba(120,110,200,0.12)] flex-col">

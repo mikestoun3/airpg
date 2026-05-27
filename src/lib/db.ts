@@ -199,6 +199,7 @@ function initSchema(db: Database.Database) {
 
   try { db.exec('ALTER TABLE runs ADD COLUMN pre_rolled_json TEXT'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN wallet_address TEXT'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE characters ADD COLUMN nickname_set INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN banned INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN ban_reason TEXT'); } catch { /* already exists */ }
   try {
@@ -341,6 +342,17 @@ export function getOrCreateCharacter(walletAddress?: string) {
   return rowToCharacter(db.prepare('SELECT * FROM characters WHERE id = ?').get(id) as Record<string, unknown>);
 }
 
+export function isNicknameTaken(nickname: string): boolean {
+  const db = getDb();
+  const row = db.prepare('SELECT id FROM characters WHERE LOWER(name) = LOWER(?) AND nickname_set = 1').get(nickname);
+  return !!row;
+}
+
+export function setNickname(characterId: string, nickname: string): void {
+  const db = getDb();
+  db.prepare('UPDATE characters SET name = ?, nickname_set = 1 WHERE id = ?').run(nickname, characterId);
+}
+
 export function updateCharacterStatus(id: string, status: string, injuredUntil?: number) {
   const db = getDb();
   db.prepare('UPDATE characters SET status = ?, injured_until = ? WHERE id = ?')
@@ -435,6 +447,7 @@ function rowToCharacter(row: Record<string, unknown>) {
     combatRating: Math.floor(pwr * 1.5 + end),
     status: row.status as import('@/types/game').CharacterStatus,
     injuredUntil: row.injured_until as number | undefined,
+    nicknameSet: !!(row.nickname_set as number),
     banned: !!(row.banned as number),
     banReason: (row.ban_reason as string | undefined) ?? undefined,
   };

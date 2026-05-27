@@ -110,6 +110,7 @@ export interface Character {
   status: CharacterStatus;
   injuredUntil?: number;
   statPoints: number;
+  nicknameSet: boolean;
 }
 
 export interface ResourceStack {
