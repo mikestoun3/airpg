@@ -140,11 +140,11 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
           transform: 'translateZ(0)', // promote to GPU layer so overflow clips composited children
         }}
       >
-        {/* Edge vignettes */}
-        <div className="absolute inset-y-0 left-0 w-28 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to right, #000 0%, transparent 100%)' }} />
-        <div className="absolute inset-y-0 right-0 w-28 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to left, #000 0%, transparent 100%)' }} />
+        {/* Edge vignettes — fade out in reveal phase so winner glow is unobstructed */}
+        <div className="absolute inset-y-0 left-0 w-28 z-10 pointer-events-none transition-opacity duration-500"
+          style={{ background: 'linear-gradient(to right, #000 0%, transparent 100%)', opacity: phase === 'reveal' ? 0 : 1 }} />
+        <div className="absolute inset-y-0 right-0 w-28 z-10 pointer-events-none transition-opacity duration-500"
+          style={{ background: 'linear-gradient(to left, #000 0%, transparent 100%)', opacity: phase === 'reveal' ? 0 : 1 }} />
 
         {/* Center hairline */}
         <div className="absolute inset-y-0 left-1/2 -translate-x-px w-px z-20 transition-colors duration-500"
