@@ -31,35 +31,35 @@ export interface ResourceDrop {
 
 export const DUNGEON_RESOURCE_DROPS: Record<string, ResourceDrop[]> = {
   goblin_warrens: [
-    { resourceId: 'iron_ore',      chance: 0.55, minQty: 2, maxQty: 5 },
-    { resourceId: 'rough_leather', chance: 0.45, minQty: 1, maxQty: 4 },
-    { resourceId: 'quality_ore',   chance: 0.12, minQty: 1, maxQty: 2 },
+    { resourceId: 'iron_ore',      chance: 0.45, minQty: 1, maxQty: 3 },
+    { resourceId: 'rough_leather', chance: 0.35, minQty: 1, maxQty: 2 },
+    { resourceId: 'quality_ore',   chance: 0.08, minQty: 1, maxQty: 1 },
   ],
   forgotten_cellar: [
-    { resourceId: 'arcane_dust',   chance: 0.50, minQty: 2, maxQty: 5 },
-    { resourceId: 'rough_leather', chance: 0.35, minQty: 1, maxQty: 3 },
-    { resourceId: 'spirit_thread', chance: 0.10, minQty: 1, maxQty: 2 },
+    { resourceId: 'arcane_dust',   chance: 0.40, minQty: 1, maxQty: 3 },
+    { resourceId: 'rough_leather', chance: 0.28, minQty: 1, maxQty: 2 },
+    { resourceId: 'spirit_thread', chance: 0.08, minQty: 1, maxQty: 1 },
   ],
   ruined_watchtower: [
-    { resourceId: 'rough_leather', chance: 0.50, minQty: 2, maxQty: 6 },
-    { resourceId: 'iron_ore',      chance: 0.40, minQty: 2, maxQty: 4 },
-    { resourceId: 'quality_ore',   chance: 0.20, minQty: 1, maxQty: 3 },
+    { resourceId: 'rough_leather', chance: 0.40, minQty: 1, maxQty: 3 },
+    { resourceId: 'iron_ore',      chance: 0.32, minQty: 1, maxQty: 2 },
+    { resourceId: 'quality_ore',   chance: 0.15, minQty: 1, maxQty: 2 },
   ],
   collapsed_mine: [
-    { resourceId: 'iron_ore',      chance: 0.70, minQty: 3, maxQty: 8 },
-    { resourceId: 'quality_ore',   chance: 0.50, minQty: 2, maxQty: 5 },
-    { resourceId: 'mithril_shard', chance: 0.15, minQty: 1, maxQty: 2 },
+    { resourceId: 'iron_ore',      chance: 0.55, minQty: 2, maxQty: 4 },
+    { resourceId: 'quality_ore',   chance: 0.40, minQty: 1, maxQty: 3 },
+    { resourceId: 'mithril_shard', chance: 0.12, minQty: 1, maxQty: 2 },
   ],
   cursed_catacombs: [
-    { resourceId: 'arcane_dust',   chance: 0.60, minQty: 3, maxQty: 7 },
-    { resourceId: 'spirit_thread', chance: 0.35, minQty: 1, maxQty: 4 },
-    { resourceId: 'mithril_shard', chance: 0.15, minQty: 1, maxQty: 2 },
+    { resourceId: 'arcane_dust',   chance: 0.45, minQty: 2, maxQty: 4 },
+    { resourceId: 'spirit_thread', chance: 0.28, minQty: 1, maxQty: 2 },
+    { resourceId: 'mithril_shard', chance: 0.12, minQty: 1, maxQty: 2 },
     { resourceId: 'void_shard',    chance: 0.05, minQty: 1, maxQty: 1 },
   ],
   bandit_stronghold: [
-    { resourceId: 'rough_leather', chance: 0.50, minQty: 2, maxQty: 5 },
-    { resourceId: 'iron_ore',      chance: 0.30, minQty: 1, maxQty: 4 },
-    { resourceId: 'quality_ore',   chance: 0.25, minQty: 1, maxQty: 3 },
+    { resourceId: 'rough_leather', chance: 0.40, minQty: 1, maxQty: 3 },
+    { resourceId: 'iron_ore',      chance: 0.25, minQty: 1, maxQty: 2 },
+    { resourceId: 'quality_ore',   chance: 0.20, minQty: 1, maxQty: 2 },
     { resourceId: 'void_shard',    chance: 0.05, minQty: 1, maxQty: 1 },
   ],
 };

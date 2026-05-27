@@ -36,6 +36,7 @@ export default function GamePage() {
   const [activeTab, setActiveTab] = useState<Tab>('adventure');
   const [loading, setLoading] = useState(true);
   const [maintenance, setMaintenance] = useState(false);
+  const [banned, setBanned] = useState<{ reason?: string } | null>(null);
   const [pendingResult, setPendingResult] = useState<{
     result: RunResult; leveled?: boolean; newLevel?: number;
   } | null>(null);
@@ -46,6 +47,10 @@ export default function GamePage() {
     const mData = await mRes.json() as { maintenance: boolean };
     setMaintenance(mData.maintenance);
     if (mData.maintenance) { setLoading(false); return; }
+    if (gRes.status === 403) {
+      const d = await gRes.json() as { banned?: boolean; banReason?: string };
+      if (d.banned) { setBanned({ reason: d.banReason }); setLoading(false); return; }
+    }
     const data = await gRes.json();
     if (data.ok) { setState(data.state); setHasCompletedRun(data.hasCompletedRun); }
     setLoading(false);
@@ -102,6 +107,25 @@ export default function GamePage() {
           <div className="text-5xl">🔧</div>
           <h1 className="text-slate-100 text-2xl font-black tracking-wide">Технические работы</h1>
           <p className="text-[#5050a0] text-sm max-w-xs">Сервер временно недоступен. Мы уже всё чиним — возвращайтесь позже.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (banned) {
+    return (
+      <div className="h-[100dvh] flex items-center justify-center bg-[#09091a]">
+        <div className="flex flex-col items-center gap-5 text-center px-6 max-w-sm">
+          <div className="text-5xl">🚫</div>
+          <h1 className="text-slate-100 text-2xl font-black tracking-wide">Вы заблокированы</h1>
+          {banned.reason && (
+            <p className="text-[#7070a0] text-sm bg-[#0f0f22] border border-[rgba(120,110,200,0.2)] rounded-xl px-4 py-3">{banned.reason}</p>
+          )}
+          <p className="text-[#5050a0] text-sm">Если вы считаете, что блокировка была ошибочной — свяжитесь с нами.</p>
+          <a href="https://t.me/airpg_support" target="_blank" rel="noreferrer"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white font-bold text-sm transition-all">
+            Написать в поддержку
+          </a>
         </div>
       </div>
     );

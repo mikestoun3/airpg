@@ -11,7 +11,13 @@ interface AccountSummary {
   level: number;
   gold: number;
   status: string;
+  banned: boolean;
   walletAddress: string | null;
+}
+
+interface IpGroup {
+  ip: string;
+  characters: Array<{ id: string; name: string; level: number; walletAddress: string | null; banned: boolean; lastSeen: number }>;
 }
 
 interface CharacterDetail {
@@ -30,6 +36,8 @@ interface CharacterDetail {
   ins: number;
   statPoints: number;
   status: string;
+  banned: boolean;
+  banReason?: string;
   walletAddress: string | null;
   equipment: Equipment;
   inventory: ItemInstance[];
@@ -168,6 +176,8 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
   const [giveRarity, setGiveRarity] = useState<Rarity>('rare');
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [banning, setBanning] = useState(false);
+  const [banReason, setBanReason] = useState('');
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/admin/character/${charId}`);
@@ -217,6 +227,29 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
     load();
   };
 
+  const banFn = async () => {
+    setBanning(true);
+    await fetch(`/api/admin/character/${charId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ban', reason: banReason || undefined }),
+    });
+    setBanning(false);
+    setBanReason('');
+    toast('Player banned');
+    load();
+  };
+
+  const unbanFn = async () => {
+    setBanning(true);
+    await fetch(`/api/admin/character/${charId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unban' }),
+    });
+    setBanning(false);
+    toast('Player unbanned');
+    load();
+  };
+
   const giveItemFn = async () => {
     const r = await fetch(`/api/admin/character/${charId}/give`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -236,10 +269,13 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
       <div className="px-6 py-4 border-b border-[rgba(120,110,200,0.12)]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-slate-100 font-bold text-lg">{detail.name}</h2>
               <span className="text-[#5050a0] text-sm">Lv.{detail.level}</span>
               <span className={`text-xs ${statusColor}`}>{detail.status}</span>
+              {detail.banned && (
+                <span className="text-[10px] bg-red-900/40 border border-red-600/40 text-red-400 px-2 py-0.5 rounded-full font-bold">BANNED</span>
+              )}
             </div>
             {detail.walletAddress && (
               <p className="text-[10px] font-mono text-[#4040a0] mt-0.5">{detail.walletAddress}</p>
@@ -252,12 +288,32 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
         </div>
 
         {/* Actions */}
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {detail.status === 'on_run' && (
             <button onClick={resetCharacter} disabled={resetting}
               className="px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-600/40 text-red-400 text-xs hover:bg-red-900/50 disabled:opacity-50 transition-colors">
               {resetting ? 'Resetting…' : '⚠ Reset (unstick from dungeon)'}
             </button>
+          )}
+          {detail.banned ? (
+            <button onClick={unbanFn} disabled={banning}
+              className="px-3 py-1.5 rounded-lg bg-emerald-900/30 border border-emerald-600/40 text-emerald-400 text-xs hover:bg-emerald-900/50 disabled:opacity-50 transition-colors">
+              {banning ? 'Unbanning…' : '✓ Unban Player'}
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input value={banReason} onChange={e => setBanReason(e.target.value)}
+                placeholder="Ban reason (optional)"
+                className="w-48 bg-[#0f0f25] border border-red-700/30 rounded-lg px-3 py-1.5 text-slate-200 text-xs outline-none focus:border-red-600"
+              />
+              <button onClick={banFn} disabled={banning}
+                className="px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-600/40 text-red-400 text-xs hover:bg-red-900/50 disabled:opacity-50 transition-colors">
+                {banning ? 'Banning…' : '🚫 Ban Player'}
+              </button>
+            </div>
+          )}
+          {detail.banned && detail.banReason && (
+            <span className="text-[11px] text-red-400/70 italic">Причина: {detail.banReason}</span>
           )}
         </div>
 
@@ -743,11 +799,85 @@ function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
   );
 }
 
+// ── IP Analytics panel ────────────────────────────────────────────────────────
+
+function IpAnalyticsPanel({ toast, onSelectChar }: { toast: (m: string) => void; onSelectChar: (id: string) => void }) {
+  const [groups, setGroups] = useState<IpGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [banning, setBanning] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/ip-analytics').then(r => r.json()).then((d: { ok: boolean; groups: IpGroup[] }) => {
+      if (d.ok) setGroups(d.groups);
+      setLoading(false);
+    });
+  }, []);
+
+  const banChar = async (charId: string, name: string) => {
+    setBanning(charId);
+    await fetch(`/api/admin/character/${charId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ban', reason: 'Multi-accounting (IP match)' }),
+    });
+    setBanning(null);
+    toast(`Banned ${name}`);
+    // Refresh
+    const d = await fetch('/api/admin/ip-analytics').then(r => r.json()) as { ok: boolean; groups: IpGroup[] };
+    if (d.ok) setGroups(d.groups);
+  };
+
+  if (loading) return <div className="flex-1 flex items-center justify-center text-[#5050a0] text-sm">Loading…</div>;
+  if (groups.length === 0) return <div className="flex-1 flex items-center justify-center text-[#5050a0] text-sm">No shared IPs detected</div>;
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <h2 className="text-slate-300 font-semibold">IP Analytics</h2>
+          <span className="text-[#5050a0] text-xs">{groups.length} shared IP{groups.length !== 1 ? 's' : ''} detected</span>
+        </div>
+        {groups.map(g => (
+          <div key={g.ip} className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-[rgba(120,110,200,0.1)] flex items-center gap-3 bg-[#0f0f22]">
+              <span className="font-mono text-violet-300 text-sm">{g.ip}</span>
+              <span className="text-[10px] text-[#5050a0]">{g.characters.length} accounts</span>
+            </div>
+            <div className="divide-y divide-[rgba(120,110,200,0.06)]">
+              {g.characters.map(c => (
+                <div key={c.id} className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => onSelectChar(c.id)}
+                        className="text-slate-300 text-sm font-medium hover:text-violet-300 transition-colors">
+                        {c.name}
+                      </button>
+                      <span className="text-[10px] text-[#5050a0]">Lv.{c.level}</span>
+                      {c.banned && <span className="text-[10px] bg-red-900/40 text-red-400 px-1.5 py-0.5 rounded border border-red-600/30">BANNED</span>}
+                    </div>
+                    {c.walletAddress && <p className="text-[10px] font-mono text-[#4040a0] mt-0.5">{shortAddr(c.walletAddress)}</p>}
+                    <p className="text-[10px] text-[#3a3a5a] mt-0.5">Last seen: {fmtDate(c.lastSeen)}</p>
+                  </div>
+                  {!c.banned && (
+                    <button onClick={() => banChar(c.id, c.name)} disabled={banning === c.id}
+                      className="px-3 py-1.5 rounded-lg bg-red-900/20 border border-red-700/30 text-red-400 text-xs hover:bg-red-900/40 disabled:opacity-50 transition-colors shrink-0">
+                      {banning === c.id ? '…' : '🚫 Ban'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main admin page ────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [view, setView] = useState<'accounts' | 'listings' | 'promos' | 'payouts'>('accounts');
+  const [view, setView] = useState<'accounts' | 'listings' | 'promos' | 'payouts' | 'ip'>('accounts');
   const [accounts, setAccounts] = useState<AccountSummary[]>([]);
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -822,6 +952,7 @@ export default function AdminPage() {
             ['listings', 'Market'],
             ['promos', 'Promo Codes'],
             ['payouts', 'Payouts'],
+            ['ip', 'IP Analytics'],
           ] as const).map(([v, label]) => (
             <button key={v} onClick={() => setView(v)}
               className={`px-4 py-1 rounded-lg text-xs transition-colors ${
@@ -855,6 +986,8 @@ export default function AdminPage() {
         <PromoPanel toast={showToast} />
       ) : view === 'payouts' ? (
         <PayoutsPanel toast={showToast} />
+      ) : view === 'ip' ? (
+        <IpAnalyticsPanel toast={showToast} onSelectChar={id => { setSelectedId(id); setView('accounts'); }} />
       ) : (
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar: account list */}
@@ -871,15 +1004,15 @@ export default function AdminPage() {
               )}
               {accounts.map(acc => {
                 const isSelected = acc.id === selectedId;
-                const statusClr = acc.status === 'on_run' ? 'text-indigo-400' : acc.status === 'injured' ? 'text-red-400' : 'text-emerald-400';
+                const statusClr = acc.banned ? 'text-red-500' : acc.status === 'on_run' ? 'text-indigo-400' : acc.status === 'injured' ? 'text-red-400' : 'text-emerald-400';
                 return (
                   <button key={acc.id} onClick={() => setSelectedId(acc.id)}
                     className={`w-full text-left px-4 py-2.5 border-b border-[rgba(120,110,200,0.06)] transition-colors ${
                       isSelected ? 'bg-[#1a1a35]' : 'hover:bg-[#111128]'
                     }`}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`text-xs font-semibold truncate ${isSelected ? 'text-slate-100' : 'text-slate-300'}`}>{acc.name}</span>
-                      <span className={`text-[10px] shrink-0 ${statusClr}`}>●</span>
+                      <span className={`text-xs font-semibold truncate ${isSelected ? 'text-slate-100' : acc.banned ? 'text-red-400/70' : 'text-slate-300'}`}>{acc.name}</span>
+                      <span className={`text-[10px] shrink-0 ${statusClr}`}>{acc.banned ? '🚫' : '●'}</span>
                     </div>
                     <div className="flex items-center justify-between mt-0.5">
                       <span className="text-[10px] text-[#4040a0]">Lv.{acc.level}</span>

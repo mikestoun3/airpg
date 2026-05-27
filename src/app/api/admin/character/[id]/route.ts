@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminAuthed } from '@/lib/admin-auth';
-import { adminGetCharacter, adminUpdateCharacter, adminResetCharacter, getEquipment, getInventory } from '@/lib/db';
+import { adminGetCharacter, adminUpdateCharacter, adminResetCharacter, getEquipment, getInventory, banCharacter, unbanCharacter } from '@/lib/db';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAdminAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
@@ -20,6 +20,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.action === 'reset') {
     adminResetCharacter(id);
     return NextResponse.json({ ok: true, action: 'reset' });
+  }
+
+  if (body.action === 'ban') {
+    banCharacter(id, body.reason as string | undefined);
+    return NextResponse.json({ ok: true, action: 'ban' });
+  }
+
+  if (body.action === 'unban') {
+    unbanCharacter(id);
+    return NextResponse.json({ ok: true, action: 'unban' });
   }
 
   adminUpdateCharacter(id, body as Parameters<typeof adminUpdateCharacter>[1]);

@@ -199,6 +199,18 @@ function initSchema(db: Database.Database) {
 
   try { db.exec('ALTER TABLE runs ADD COLUMN pre_rolled_json TEXT'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN wallet_address TEXT'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE characters ADD COLUMN banned INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE characters ADD COLUMN ban_reason TEXT'); } catch { /* already exists */ }
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS ip_logs (
+        character_id TEXT NOT NULL,
+        ip TEXT NOT NULL,
+        last_seen INTEGER DEFAULT (unixepoch()),
+        PRIMARY KEY (character_id, ip)
+      );
+    `);
+  } catch { /* already exists */ }
   try { db.exec('ALTER TABLE market_listings ADD COLUMN cancel_lock_until INTEGER'); } catch { /* already exists */ }
   // Migrate tx_hash to be unique — rebuild table if needed
   try {
@@ -423,6 +435,8 @@ function rowToCharacter(row: Record<string, unknown>) {
     combatRating: Math.floor(pwr * 1.5 + end),
     status: row.status as import('@/types/game').CharacterStatus,
     injuredUntil: row.injured_until as number | undefined,
+    banned: !!(row.banned as number),
+    banReason: (row.ban_reason as string | undefined) ?? undefined,
   };
 }
 
@@ -1043,6 +1057,60 @@ export function adminUpdateCharacter(id: string, fields: Partial<{
   if (entries.length === 0) return;
   const sets = entries.map(([k]) => `${k} = ?`).join(', ');
   db.prepare(`UPDATE characters SET ${sets} WHERE id = ?`).run([...entries.map(([, v]) => v), id]);
+}
+
+export function banCharacter(id: string, reason?: string): void {
+  const db = getDb();
+  db.prepare('UPDATE characters SET banned = 1, ban_reason = ? WHERE id = ?').run(reason ?? null, id);
+}
+
+export function unbanCharacter(id: string): void {
+  const db = getDb();
+  db.prepare('UPDATE characters SET banned = 0, ban_reason = NULL WHERE id = ?').run(id);
+}
+
+export function logIp(characterId: string, ip: string): void {
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO ip_logs (character_id, ip, last_seen) VALUES (?, ?, unixepoch())
+    ON CONFLICT(character_id, ip) DO UPDATE SET last_seen = unixepoch()
+  `).run(characterId, ip);
+}
+
+export function getIpAnalytics(): Array<{
+  ip: string;
+  characters: Array<{ id: string; name: string; level: number; walletAddress: string | null; banned: boolean; lastSeen: number }>;
+}> {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT l.ip, l.character_id, l.last_seen,
+           c.name, c.level, c.banned, w.address as wallet
+    FROM ip_logs l
+    JOIN characters c ON c.id = l.character_id
+    LEFT JOIN wallets w ON w.character_id = c.id
+    ORDER BY l.ip, l.last_seen DESC
+  `).all() as Array<{ ip: string; character_id: string; last_seen: number; name: string; level: number; banned: number; wallet: string | null }>;
+
+  const grouped = new Map<string, typeof rows>();
+  for (const row of rows) {
+    if (!grouped.has(row.ip)) grouped.set(row.ip, []);
+    grouped.get(row.ip)!.push(row);
+  }
+
+  return Array.from(grouped.entries())
+    .filter(([, chars]) => chars.length > 1)
+    .map(([ip, chars]) => ({
+      ip,
+      characters: chars.map(r => ({
+        id: r.character_id,
+        name: r.name,
+        level: r.level,
+        walletAddress: r.wallet,
+        banned: !!r.banned,
+        lastSeen: r.last_seen,
+      })),
+    }))
+    .sort((a, b) => b.characters.length - a.characters.length);
 }
 
 export interface AdminListing extends MarketListing {

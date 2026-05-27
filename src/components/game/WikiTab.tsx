@@ -249,9 +249,9 @@ export function WikiTab() {
 
               <H3>Injury Duration</H3>
               <div className="bg-[#0f0f22] rounded-xl p-4">
-                <Row label="Tier 1 dungeon" value="45 min" sub="30 + 1×15" />
-                <Row label="Tier 2 dungeon" value="60 min" sub="30 + 2×15" />
-                <Row label="Tier 3 dungeon" value="75 min" sub="30 + 3×15" />
+                <Row label="Tier 1 dungeon" value="2 min" sub="normal · 4 min nightmare" />
+                <Row label="Tier 2 dungeon" value="5 min" sub="normal · 10 min nightmare" />
+                <Row label="Tier 3 dungeon" value="8 min" sub="normal · 16 min nightmare" />
               </div>
             </div>
           )}
@@ -362,12 +362,26 @@ export function WikiTab() {
               <Box color="purple">
                 <ol className="space-y-2 text-sm text-[#9090b8]">
                   <li>1. Farm <span className="text-violet-300">Tier 1 dungeons</span> for Iron Ore, Leather, Arcane Dust.</li>
-                  <li>2. Build <span className="text-violet-300">The Forge</span> in Camp → craft your first <strong className="text-slate-200">Iron</strong> gear (T1).</li>
+                  <li>2. Build <span className="text-violet-300">The Forge</span> in Camp → craft your first <strong className="text-slate-200">Iron</strong> gear (T1) for <span className="text-amber-300">100g</span>.</li>
                   <li>3. Equip it and run 5 dungeons → item becomes <span className="text-amber-300">Tempered</span>.</li>
                   <li>4. Farm <span className="text-violet-300">Tier 2 dungeons</span> for Quality Ore, Spirit Thread.</li>
-                  <li>5. Build <span className="text-violet-300">Reinforced Forge</span> → absorb the tempered T1 into <strong className="text-blue-300">Steel</strong> (T2).</li>
-                  <li>6. Repeat for Mithril and Void. Each tier takes ~1 week of active play.</li>
+                  <li>5. Build <span className="text-violet-300">Reinforced Forge</span> → absorb the tempered T1 into <strong className="text-blue-300">Steel</strong> (T2) for <span className="text-amber-300">300g</span>.</li>
+                  <li>6. Repeat for Mithril (700g) and Void (1500g). Each tier takes ~1 week of active play.</li>
                 </ol>
+              </Box>
+
+              <H3>Item Upgrading</H3>
+              <Box color="amber">
+                <P>Any crafted item can be upgraded up to <strong className="text-amber-300">5 times</strong> from the Inventory. Each upgrade costs gold and improves the item's primary stat and Gear Score.</P>
+                <div className="bg-[#0f0f22] rounded-lg p-3 mt-2 space-y-0">
+                  <Row label="Per upgrade" value="+3 primary stat, +4 GS" />
+                  <Row label="Common"    value="50g / 100g / 150g / 200g / 250g" sub="750g total to +5" />
+                  <Row label="Uncommon"  value="120g / 240g / … / 600g"          sub="1800g total to +5" />
+                  <Row label="Rare"      value="300g / 600g / … / 1500g"         sub="4500g total to +5" />
+                  <Row label="Epic"      value="700g → 3500g total" />
+                  <Row label="Legendary" value="1800g → 9000g total" />
+                </div>
+                <P>A fully upgraded T1 Iron piece (+5) gains +20 GS and +15 primary over its base — solid value before crafting the next tier.</P>
               </Box>
 
               <H3>Equipment Slots</H3>
@@ -412,7 +426,7 @@ export function WikiTab() {
                   unlock: 'Available from start',
                   loot: 'Gold, iron, common gear',
                   boss: 'Goblin Chieftain (floor 10)',
-                  injury: '45 min',
+                  injury: '2 min (4 nm)',
                   color: 'from-slate-700 to-slate-600',
                 },
                 {
@@ -421,7 +435,7 @@ export function WikiTab() {
                   unlock: 'Available from start',
                   loot: 'Common gear, potions, uncommon chance',
                   boss: 'Crypt Lord (floor 10)',
-                  injury: '45 min',
+                  injury: '2 min (4 nm)',
                   color: 'from-slate-700 to-slate-600',
                 },
                 {
@@ -430,7 +444,7 @@ export function WikiTab() {
                   unlock: '5 Tier 1 clears + Level 4',
                   loot: 'Uncommon gear, stone, gold',
                   boss: 'Bandit Captain (floor 10)',
-                  injury: '60 min',
+                  injury: '5 min (10 nm)',
                   color: 'from-indigo-800 to-blue-700',
                 },
                 {
@@ -439,7 +453,7 @@ export function WikiTab() {
                   unlock: '8 Tier 1 clears + Level 5',
                   loot: 'Ore, essence, rare gear',
                   boss: 'Mine Colossus (floor 10)',
-                  injury: '60 min',
+                  injury: '5 min (10 nm)',
                   color: 'from-indigo-800 to-blue-700',
                 },
                 {
@@ -448,7 +462,7 @@ export function WikiTab() {
                   unlock: 'GS 45 + Level 11',
                   loot: 'Gold-heavy, unique items',
                   boss: 'Stronghold Warlord (floor 10)',
-                  injury: '75 min',
+                  injury: '8 min (16 nm)',
                   color: 'from-violet-800 to-purple-700',
                 },
                 {
@@ -457,7 +471,7 @@ export function WikiTab() {
                   unlock: 'GS 50 + Level 12',
                   loot: 'Rare gear, essence, legendary chance',
                   boss: 'Lich Lord (floor 10)',
-                  injury: '75 min',
+                  injury: '8 min (16 nm)',
                   color: 'from-violet-800 to-purple-700',
                 },
               ].map(d => (

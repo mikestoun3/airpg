@@ -13,6 +13,7 @@ import {
   updateCharacterStatus,
   getMaterials,
   getFloorProgress,
+  logIp,
 } from '@/lib/db';
 import { RESOURCES } from '@/lib/data/resources';
 import type { ResourceStack } from '@/types/game';
@@ -24,6 +25,17 @@ export async function GET(req: NextRequest) {
   try {
     const wallet = getSessionWallet(req);
     const char = getOrCreateCharacter(wallet ?? undefined);
+
+    // Log IP for analytics
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      ?? req.headers.get('x-real-ip')
+      ?? 'unknown';
+    if (ip !== 'unknown') logIp(char.id, ip);
+
+    if (char.banned) {
+      return NextResponse.json({ ok: false, banned: true, banReason: char.banReason ?? null }, { status: 403 });
+    }
+
     const equipment = getEquipment(char.id);
     const inventory = getInventory(char.id);
     const builtUpgrades = getBuiltUpgrades(char.id);
