@@ -45,7 +45,17 @@ export interface ItemInstance {
   gearScore: number;
   gearTier?: GearTier;
   attunementRuns?: number;
+  upgradeLevel?: number;
 }
+
+export const UPGRADE_GOLD_BASE: Record<Rarity, number> = {
+  common: 50,
+  uncommon: 120,
+  rare: 300,
+  epic: 700,
+  legendary: 1800,
+};
+export const UPGRADE_MAX = 5;
 
 export interface FloorResult {
   floor: number;
@@ -127,6 +137,7 @@ export interface CraftRecipe {
   requiredForgeLevel: 1 | 2 | 3 | 4;
   requiredItemTier?: 1 | 2 | 3;
   description: string;
+  goldCost: number;
   ingredients: { resourceId: string; name: string; quantity: number }[];
   outputItem: {
     templateId: string;

@@ -341,6 +341,28 @@ export function addResources(id: string, gold: number, essence: number, relics: 
     .run(gold, essence, relics, id);
 }
 
+export function upgradeItemInInventory(characterId: string, itemId: string): { ok: boolean; error?: string; item?: ItemInstance; goldSpent?: number } {
+  const db = getDb();
+  const row = db.prepare('SELECT item_json FROM inventory WHERE id = ? AND character_id = ?').get(itemId, characterId) as { item_json: string } | undefined;
+  if (!row) return { ok: false, error: 'Item not found.' };
+
+  const item = JSON.parse(row.item_json) as ItemInstance;
+  const level = item.upgradeLevel ?? 0;
+  if (level >= 5) return { ok: false, error: 'Item is fully upgraded.' };
+
+  const UPGRADE_GOLD_BASE: Record<string, number> = { common: 50, uncommon: 120, rare: 300, epic: 700, legendary: 1800 };
+  const cost = UPGRADE_GOLD_BASE[item.rarity] * (level + 1);
+
+  const char = db.prepare('SELECT gold FROM characters WHERE id = ?').get(characterId) as { gold: number };
+  if (char.gold < cost) return { ok: false, error: `Not enough gold. Need ${cost}g.` };
+
+  const upgraded: ItemInstance = { ...item, upgradeLevel: level + 1, gearScore: item.gearScore + 4, primaryValue: item.primaryValue + 3 };
+  db.prepare('UPDATE inventory SET item_json = ? WHERE id = ? AND character_id = ?').run(JSON.stringify(upgraded), itemId, characterId);
+  db.prepare('UPDATE characters SET gold = gold - ? WHERE id = ?').run(cost, characterId);
+
+  return { ok: true, item: upgraded, goldSpent: cost };
+}
+
 export function addXpAndLevel(id: string, xpGained: number) {
   const db = getDb();
   const char = db.prepare('SELECT level, xp FROM characters WHERE id = ?').get(id) as { level: number; xp: number };

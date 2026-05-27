@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import type { GameState, Rarity } from '@/types/game';
+import { UPGRADE_GOLD_BASE, UPGRADE_MAX } from '@/types/game';
 import { ItemCard } from '../ui/ItemCard';
 
 interface Props {
@@ -29,6 +30,7 @@ const SALVAGE_RARITIES: { rarity: Rarity; label: string; color: string; borderCo
 
 export function InventoryTab({ state, onRefresh }: Props) {
   const [pendingEquip, setPendingEquip] = useState<string | null>(null);
+  const [pendingUpgrade, setPendingUpgrade] = useState<string | null>(null);
   const [pendingSalvage, setPendingSalvage] = useState<string | null>(null);
   const [pendingSalvageRarity, setPendingSalvageRarity] = useState<Rarity | null>(null);
   const [confirmRarity, setConfirmRarity] = useState<Rarity | null>(null);
@@ -52,6 +54,19 @@ export function InventoryTab({ state, onRefresh }: Props) {
     showToast('Item equipped!');
     await onRefresh();
     setPendingEquip(null);
+  };
+
+  const handleUpgrade = async (itemId: string) => {
+    setPendingUpgrade(itemId);
+    const res = await fetch('/api/inventory/upgrade', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId }),
+    });
+    const data = await res.json();
+    if (data.ok) showToast(`Upgraded! Spent ${data.goldSpent}g`);
+    else showToast(data.error ?? 'Upgrade failed');
+    await onRefresh();
+    setPendingUpgrade(null);
   };
 
   const handleSalvage = async (itemId: string) => {
@@ -240,6 +255,8 @@ export function InventoryTab({ state, onRefresh }: Props) {
                 item={item}
                 onEquip={onRun || pendingEquip === item.id ? undefined : () => handleEquip(item.id)}
                 onSalvage={pendingSalvage === item.id ? undefined : () => handleSalvage(item.id)}
+                onUpgrade={pendingUpgrade === item.id ? undefined : () => handleUpgrade(item.id)}
+                canAffordUpgrade={state.character.gold >= UPGRADE_GOLD_BASE[item.rarity] * ((item.upgradeLevel ?? 0) + 1) && (item.upgradeLevel ?? 0) < UPGRADE_MAX}
               />
             ))}
           </div>

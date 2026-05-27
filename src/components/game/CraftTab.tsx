@@ -70,6 +70,10 @@ export function CraftTab({ state, onRefresh }: Props) {
       return { ok: false, reason: 'Need Materials' };
     }
 
+    if (recipe.goldCost > 0 && state.character.gold < recipe.goldCost) {
+      return { ok: false, reason: `Need ${recipe.goldCost}g` };
+    }
+
     if (recipe.requiredItemTier) {
       const ingredientId = selectedIngredient[recipeId];
       if (!ingredientId) return { ok: false, reason: 'Select item to absorb' };
@@ -259,6 +263,17 @@ export function CraftTab({ state, onRefresh }: Props) {
 
                   {/* Material cost */}
                   <div className="space-y-1">
+                    {recipe.goldCost > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1 text-[#8080a0]">
+                          <img src="/icons/res_gold.png" alt="gold" width={16} height={16} style={{ imageRendering: 'pixelated' }} />
+                          <span>Gold</span>
+                        </span>
+                        <span className={`font-semibold tabular-nums ${state.character.gold >= recipe.goldCost ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {state.character.gold}/{recipe.goldCost}
+                        </span>
+                      </div>
+                    )}
                     {recipe.ingredients.map((ing) => {
                       const have = stock[ing.resourceId] ?? 0;
                       const ok = have >= ing.quantity;

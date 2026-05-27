@@ -1,6 +1,6 @@
 'use client';
 import type { ItemInstance } from '@/types/game';
-import { STAT_LABELS, SLOT_LABELS, ATTUNEMENT_REQUIRED, GEAR_TIER_NAMES } from '@/types/game';
+import { STAT_LABELS, SLOT_LABELS, ATTUNEMENT_REQUIRED, GEAR_TIER_NAMES, UPGRADE_GOLD_BASE, UPGRADE_MAX } from '@/types/game';
 import { RarityText, RARITY_BORDER, RARITY_BG, RARITY_BADGE_BG, RARITY_GLOW } from './RarityBadge';
 
 const TIER_COLORS: Record<number, string> = { 1: '#9ca3af', 2: '#60a5fa', 3: '#c084fc', 4: '#fbbf24' };
@@ -9,6 +9,8 @@ interface ItemCardProps {
   item: ItemInstance;
   onEquip?: () => void;
   onSalvage?: () => void;
+  onUpgrade?: () => void;
+  canAffordUpgrade?: boolean;
   compact?: boolean;
 }
 
@@ -16,7 +18,9 @@ const STAT_ICONS: Record<string, string> = {
   pwr: '⚔', end: '🛡', lck: '✦', spd: '💨', ins: '👁',
 };
 
-export function ItemCard({ item, onEquip, onSalvage, compact = false }: ItemCardProps) {
+export function ItemCard({ item, onEquip, onSalvage, onUpgrade, canAffordUpgrade = true, compact = false }: ItemCardProps) {
+  const upgradeLevel = item.upgradeLevel ?? 0;
+  const upgradeCost = upgradeLevel < UPGRADE_MAX ? UPGRADE_GOLD_BASE[item.rarity] * (upgradeLevel + 1) : 0;
   if (compact) {
     return (
       <div className={`border ${RARITY_BORDER[item.rarity]} ${RARITY_BG[item.rarity]} ${RARITY_GLOW[item.rarity]} rounded-lg p-2.5 flex items-center gap-3`}>
@@ -133,8 +137,27 @@ export function ItemCard({ item, onEquip, onSalvage, compact = false }: ItemCard
       })()}
 
       <div className="flex items-center justify-between pt-1">
-        <span className="text-[11px] text-[#5050a0]">GS {item.gearScore}</span>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-[#5050a0]">GS {item.gearScore}</span>
+          {upgradeLevel > 0 && (
+            <span className="text-[10px] text-amber-400 font-bold">+{upgradeLevel}</span>
+          )}
+        </div>
+        <div className="flex gap-1.5">
+          {onUpgrade && upgradeLevel < UPGRADE_MAX && (
+            <button onClick={onUpgrade} disabled={!canAffordUpgrade}
+              className={`px-2.5 py-1.5 text-[11px] rounded-lg font-semibold transition-all ${
+                canAffordUpgrade
+                  ? 'bg-amber-900/40 hover:bg-amber-900/60 text-amber-400 border border-amber-700/40'
+                  : 'bg-[#1a1a2a] text-[#4a4a6a] border border-[rgba(120,110,200,0.1)] cursor-not-allowed'
+              }`}
+              title={canAffordUpgrade ? `Upgrade for ${upgradeCost}g` : `Need ${upgradeCost}g`}>
+              ▲ {upgradeCost}g
+            </button>
+          )}
+          {onUpgrade && upgradeLevel >= UPGRADE_MAX && (
+            <span className="text-[10px] text-amber-500/60 px-2 py-1.5">Max</span>
+          )}
           {onEquip && (
             <button onClick={onEquip}
               className="px-3 py-1.5 text-xs bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white rounded-lg transition-all font-semibold">

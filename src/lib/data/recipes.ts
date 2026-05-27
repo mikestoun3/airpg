@@ -9,6 +9,7 @@ const T1: CraftRecipe[] = [
     name: 'Iron Sword',
     slot: 'weapon', rarity: 'uncommon', gearTier: 1, requiredForgeLevel: 1,
     description: 'A reliable iron blade — the foundation of every hero\'s arsenal.',
+    goldCost: 100,
     ingredients: [
       { resourceId: 'iron_ore',      name: 'Iron Ore',      quantity: 6 },
       { resourceId: 'rough_leather', name: 'Rough Leather', quantity: 3 },
@@ -20,6 +21,7 @@ const T1: CraftRecipe[] = [
     name: 'Iron Helm',
     slot: 'helmet', rarity: 'uncommon', gearTier: 1, requiredForgeLevel: 1,
     description: 'Hammered iron plate. Not pretty, but it keeps your skull intact.',
+    goldCost: 100,
     ingredients: [
       { resourceId: 'iron_ore',      name: 'Iron Ore',      quantity: 5 },
       { resourceId: 'rough_leather', name: 'Rough Leather', quantity: 2 },
@@ -31,6 +33,7 @@ const T1: CraftRecipe[] = [
     name: 'Iron Chestplate',
     slot: 'chest', rarity: 'uncommon', gearTier: 1, requiredForgeLevel: 1,
     description: 'Basic torso protection forged from raw iron ore.',
+    goldCost: 100,
     ingredients: [
       { resourceId: 'iron_ore',      name: 'Iron Ore',      quantity: 7 },
       { resourceId: 'rough_leather', name: 'Rough Leather', quantity: 4 },
@@ -42,6 +45,7 @@ const T1: CraftRecipe[] = [
     name: 'Iron Boots',
     slot: 'boots', rarity: 'uncommon', gearTier: 1, requiredForgeLevel: 1,
     description: 'Heavy but protective. A bit slow, but you\'ll survive.',
+    goldCost: 100,
     ingredients: [
       { resourceId: 'rough_leather', name: 'Rough Leather', quantity: 5 },
       { resourceId: 'iron_ore',      name: 'Iron Ore',      quantity: 3 },
@@ -53,6 +57,7 @@ const T1: CraftRecipe[] = [
     name: 'Arcane Ring',
     slot: 'ring', rarity: 'uncommon', gearTier: 1, requiredForgeLevel: 1,
     description: 'Arcane dust compressed into a simple band.',
+    goldCost: 100,
     ingredients: [
       { resourceId: 'arcane_dust',   name: 'Arcane Dust',   quantity: 5 },
       { resourceId: 'iron_ore',      name: 'Iron Ore',      quantity: 2 },
@@ -64,6 +69,7 @@ const T1: CraftRecipe[] = [
     name: 'Hunter\'s Charm',
     slot: 'trinket', rarity: 'uncommon', gearTier: 1, requiredForgeLevel: 1,
     description: 'Scraps of leather and iron twisted into a lucky charm.',
+    goldCost: 100,
     ingredients: [
       { resourceId: 'rough_leather', name: 'Rough Leather', quantity: 4 },
       { resourceId: 'arcane_dust',   name: 'Arcane Dust',   quantity: 3 },
@@ -81,6 +87,7 @@ const T2: CraftRecipe[] = [
     name: 'Steel Sword',
     slot: 'weapon', rarity: 'rare', gearTier: 2, requiredForgeLevel: 2, requiredItemTier: 1,
     description: 'A tempered Iron Sword reforged with quality ore into true steel.',
+    goldCost: 300,
     ingredients: [
       { resourceId: 'quality_ore',   name: 'Quality Ore',   quantity: 5 },
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 2 },
@@ -92,6 +99,7 @@ const T2: CraftRecipe[] = [
     name: 'Steel Helm',
     slot: 'helmet', rarity: 'rare', gearTier: 2, requiredForgeLevel: 2, requiredItemTier: 1,
     description: 'The Iron Helm is stripped down and rebuilt with reinforced plate.',
+    goldCost: 300,
     ingredients: [
       { resourceId: 'quality_ore',   name: 'Quality Ore',   quantity: 4 },
       { resourceId: 'rough_leather', name: 'Rough Leather', quantity: 3 },
@@ -103,6 +111,7 @@ const T2: CraftRecipe[] = [
     name: 'Steel Chestplate',
     slot: 'chest', rarity: 'rare', gearTier: 2, requiredForgeLevel: 2, requiredItemTier: 1,
     description: 'The Iron Chestplate is rebuilt with layered steel alloy.',
+    goldCost: 300,
     ingredients: [
       { resourceId: 'quality_ore',   name: 'Quality Ore',   quantity: 6 },
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 3 },
@@ -114,6 +123,7 @@ const T2: CraftRecipe[] = [
     name: 'Steel Boots',
     slot: 'boots', rarity: 'rare', gearTier: 2, requiredForgeLevel: 2, requiredItemTier: 1,
     description: 'Iron Boots reshaped and reinforced for both speed and protection.',
+    goldCost: 300,
     ingredients: [
       { resourceId: 'quality_ore',   name: 'Quality Ore',   quantity: 3 },
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 3 },
@@ -125,6 +135,7 @@ const T2: CraftRecipe[] = [
     name: 'Spirit Ring',
     slot: 'ring', rarity: 'rare', gearTier: 2, requiredForgeLevel: 2, requiredItemTier: 1,
     description: 'The Arcane Ring is infused with refined spirit thread.',
+    goldCost: 300,
     ingredients: [
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 4 },
       { resourceId: 'arcane_dust',   name: 'Arcane Dust',   quantity: 4 },
@@ -136,6 +147,7 @@ const T2: CraftRecipe[] = [
     name: 'Spirit Pendant',
     slot: 'trinket', rarity: 'rare', gearTier: 2, requiredForgeLevel: 2, requiredItemTier: 1,
     description: 'A Hunter\'s Charm reborn with spiritual energy.',
+    goldCost: 300,
     ingredients: [
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 3 },
       { resourceId: 'arcane_dust',   name: 'Arcane Dust',   quantity: 5 },
@@ -153,6 +165,7 @@ const T3: CraftRecipe[] = [
     name: 'Mithril Blade',
     slot: 'weapon', rarity: 'epic', gearTier: 3, requiredForgeLevel: 3, requiredItemTier: 2,
     description: 'The Steel Sword is dissolved in mithril and recast into legend.',
+    goldCost: 700,
     ingredients: [
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 6 },
       { resourceId: 'quality_ore',   name: 'Quality Ore',   quantity: 4 },
@@ -164,6 +177,7 @@ const T3: CraftRecipe[] = [
     name: 'Mithril Helm',
     slot: 'helmet', rarity: 'epic', gearTier: 3, requiredForgeLevel: 3, requiredItemTier: 2,
     description: 'A Steel Helm reforged in mithril fire.',
+    goldCost: 700,
     ingredients: [
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 5 },
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 4 },
@@ -175,6 +189,7 @@ const T3: CraftRecipe[] = [
     name: 'Mithril Cuirass',
     slot: 'chest', rarity: 'epic', gearTier: 3, requiredForgeLevel: 3, requiredItemTier: 2,
     description: 'The Steel Chestplate is submerged in liquid mithril.',
+    goldCost: 700,
     ingredients: [
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 8 },
       { resourceId: 'quality_ore',   name: 'Quality Ore',   quantity: 5 },
@@ -186,6 +201,7 @@ const T3: CraftRecipe[] = [
     name: 'Mithril Greaves',
     slot: 'boots', rarity: 'epic', gearTier: 3, requiredForgeLevel: 3, requiredItemTier: 2,
     description: 'Steel Boots reborn in mithril — fleet and near-unbreakable.',
+    goldCost: 700,
     ingredients: [
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 5 },
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 5 },
@@ -197,6 +213,7 @@ const T3: CraftRecipe[] = [
     name: 'Mithril Band',
     slot: 'ring', rarity: 'epic', gearTier: 3, requiredForgeLevel: 3, requiredItemTier: 2,
     description: 'A Spirit Ring recrystallised in mithril essence.',
+    goldCost: 700,
     ingredients: [
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 4 },
       { resourceId: 'arcane_dust',   name: 'Arcane Dust',   quantity: 6 },
@@ -208,6 +225,7 @@ const T3: CraftRecipe[] = [
     name: 'Mithril Talisman',
     slot: 'trinket', rarity: 'epic', gearTier: 3, requiredForgeLevel: 3, requiredItemTier: 2,
     description: 'A Spirit Pendant encased in raw mithril crystal.',
+    goldCost: 700,
     ingredients: [
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 4 },
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 6 },
@@ -225,6 +243,7 @@ const T4: CraftRecipe[] = [
     name: 'Void Edge',
     slot: 'weapon', rarity: 'legendary', gearTier: 4, requiredForgeLevel: 4, requiredItemTier: 3,
     description: 'A Mithril Blade torn apart by void energy and reformed into the ultimate weapon.',
+    goldCost: 1500,
     ingredients: [
       { resourceId: 'void_shard',    name: 'Void Shard',    quantity: 8 },
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 5 },
@@ -236,6 +255,7 @@ const T4: CraftRecipe[] = [
     name: 'Void Crown',
     slot: 'helmet', rarity: 'legendary', gearTier: 4, requiredForgeLevel: 4, requiredItemTier: 3,
     description: 'A Mithril Helm consumed by void and reborn.',
+    goldCost: 1500,
     ingredients: [
       { resourceId: 'void_shard',    name: 'Void Shard',    quantity: 7 },
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 4 },
@@ -247,6 +267,7 @@ const T4: CraftRecipe[] = [
     name: 'Void Plate',
     slot: 'chest', rarity: 'legendary', gearTier: 4, requiredForgeLevel: 4, requiredItemTier: 3,
     description: 'A Mithril Cuirass shattered by the void and reforged from nothing.',
+    goldCost: 1500,
     ingredients: [
       { resourceId: 'void_shard',    name: 'Void Shard',    quantity: 10 },
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 6 },
@@ -258,6 +279,7 @@ const T4: CraftRecipe[] = [
     name: 'Void Striders',
     slot: 'boots', rarity: 'legendary', gearTier: 4, requiredForgeLevel: 4, requiredItemTier: 3,
     description: 'Mithril Greaves dissolved in void essence. Move between worlds.',
+    goldCost: 1500,
     ingredients: [
       { resourceId: 'void_shard',    name: 'Void Shard',    quantity: 7 },
       { resourceId: 'mithril_shard', name: 'Mithril Shard', quantity: 4 },
@@ -269,6 +291,7 @@ const T4: CraftRecipe[] = [
     name: 'Void Sigil',
     slot: 'ring', rarity: 'legendary', gearTier: 4, requiredForgeLevel: 4, requiredItemTier: 3,
     description: 'A Mithril Band inscribed with void glyphs and sealed.',
+    goldCost: 1500,
     ingredients: [
       { resourceId: 'void_shard',    name: 'Void Shard',    quantity: 6 },
       { resourceId: 'arcane_dust',   name: 'Arcane Dust',   quantity: 8 },
@@ -280,6 +303,7 @@ const T4: CraftRecipe[] = [
     name: 'Void Phylactery',
     slot: 'trinket', rarity: 'legendary', gearTier: 4, requiredForgeLevel: 4, requiredItemTier: 3,
     description: 'A Mithril Talisman that holds a fragment of void within.',
+    goldCost: 1500,
     ingredients: [
       { resourceId: 'void_shard',    name: 'Void Shard',    quantity: 6 },
       { resourceId: 'spirit_thread', name: 'Spirit Thread', quantity: 8 },

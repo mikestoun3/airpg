@@ -143,7 +143,7 @@ export function resolveRun(
 
   const injured = Math.random() < injuryChance;
   const injuryMinutes = injured
-    ? Math.round((30 + dungeon.tier * 15) * (run.difficulty === 'nightmare' ? 1.5 : 1))
+    ? Math.round((dungeon.tier * 3 - 1) * (run.difficulty === 'nightmare' ? 2 : 1))
     : 0;
 
   return {
@@ -246,7 +246,7 @@ export function resolveFloorRun(
     injuryChance = criticalFail ? 1.0 : 0.3;
   }
   const injured = Math.random() < injuryChance;
-  const injuryMinutes = injured ? Math.round(30 + dungeon.tier * 15) : 0;
+  const injuryMinutes = injured ? Math.round(dungeon.tier * 3 - 1) : 0;
 
   // Use last floor's combat values for display
   const displayFloor = lastFloor ?? floorData.floors[0];

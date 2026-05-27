@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionWallet } from '@/lib/auth';
-import { getOrCreateCharacter, spendMaterials, addItemToInventory, getBuiltUpgrades, removeItemFromInventory, getInventory } from '@/lib/db';
+import { getOrCreateCharacter, spendMaterials, addItemToInventory, getBuiltUpgrades, removeItemFromInventory, getInventory, spendGold } from '@/lib/db';
 import { CRAFT_RECIPES, ATTUNEMENT_RUNS_REQUIRED, FORGE_UPGRADE_ID } from '@/lib/data/recipes';
 import { v4 as uuidv4 } from 'uuid';
 import type { ItemInstance, GearTier } from '@/types/game';
@@ -60,11 +60,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Check gold
+    if (recipe.goldCost > 0 && char.gold < recipe.goldCost) {
+      return NextResponse.json({ ok: false, error: `Not enough gold. Need ${recipe.goldCost}g.` }, { status: 400 });
+    }
+
     // Spend materials
     const spent = spendMaterials(char.id, recipe.ingredients);
     if (!spent) {
       return NextResponse.json({ ok: false, error: 'Not enough materials.' }, { status: 400 });
     }
+
+    // Spend gold
+    if (recipe.goldCost > 0) spendGold(char.id, recipe.goldCost);
 
     // Consume ingredient item
     if (ingredient) {
