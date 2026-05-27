@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { GameState, ItemInstance } from '@/types/game';
 import { STORE_ITEMS, type StoreItem } from '@/lib/data/store';
 import { RarityText, RARITY_BORDER, RARITY_BG, RARITY_GLOW } from '@/components/ui/RarityBadge';
+import { CaseOpenModal } from './CaseOpenModal';
 
 declare global {
   interface Window {
@@ -39,6 +40,7 @@ export function StoreTab({ state, onRefresh }: Props) {
   const [buying, setBuying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PurchaseResult | null>(null);
+  const [caseOpen, setCaseOpen] = useState<{ item: ItemInstance; caseName: string } | null>(null);
 
   const filtered = category === 'all' ? STORE_ITEMS : STORE_ITEMS.filter(i => i.category === category);
 
@@ -77,8 +79,14 @@ export function StoreTab({ state, onRefresh }: Props) {
 
       if (!json.ok) throw new Error(json.error ?? 'Purchase failed');
 
-      setResult({ item: json.item ?? null, reward: json.reward!, name: item.name });
       onRefresh();
+
+      // Loot cases → open with reel animation; packs → simple modal
+      if (item.category === 'loot_case' && json.item) {
+        setCaseOpen({ item: json.item, caseName: item.name });
+      } else {
+        setResult({ item: json.item ?? null, reward: json.reward!, name: item.name });
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('User rejected') || msg.includes('user rejected') || msg.includes('denied')) {
@@ -94,7 +102,16 @@ export function StoreTab({ state, onRefresh }: Props) {
   return (
     <div className="max-w-2xl mx-auto space-y-4">
 
-      {/* Result modal */}
+      {/* Case opening animation */}
+      {caseOpen && (
+        <CaseOpenModal
+          item={caseOpen.item}
+          caseName={caseOpen.caseName}
+          onClose={() => setCaseOpen(null)}
+        />
+      )}
+
+      {/* Result modal (gold/essence packs) */}
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={() => setResult(null)}>
           <div className="bg-[#0f0f22] border border-[rgba(120,110,200,0.3)] rounded-2xl p-6 max-w-sm w-full text-center space-y-4" onClick={e => e.stopPropagation()}>
