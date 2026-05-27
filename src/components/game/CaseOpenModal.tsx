@@ -122,7 +122,7 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-4 transition-all duration-1000"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-4 transition-all duration-1000 overflow-hidden"
       style={{ background: bgColor }}
     >
       {/* Header */}
@@ -137,6 +137,7 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
           width: 'min(714px, calc(100vw - 24px))',
           height: `${ITEM_W + 12}px`,
           overflow: 'hidden',
+          transform: 'translateZ(0)', // promote to GPU layer so overflow clips composited children
         }}
       >
         {/* Edge vignettes */}
