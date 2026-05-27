@@ -58,9 +58,9 @@ export function CharacterTab({ state, onRefresh }: Props) {
     <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-full">
 
       {/* LEFT: portrait + equipment */}
-      <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-4">
+      <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-4 md:overflow-y-auto md:pb-2">
         {/* Portrait card */}
-        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl overflow-hidden">
+        <div className="flex-shrink-0 bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl overflow-hidden">
           {/* Avatar — fixed height, just the circle */}
           <div className="bg-gradient-to-b from-[#1a1a40] to-[#0f0f28] h-28 md:h-32 flex items-center justify-center">
             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-violet-700 to-purple-900 flex items-center justify-center text-4xl border-2 border-violet-500/40 shadow-lg shadow-violet-900/40">
