@@ -276,7 +276,7 @@ export default function GamePage() {
                 <button onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all relative mb-0.5 ${
                     isActive
-                      ? 'bg-[#1a1a24] font-bold border border-[rgba(255,255,255,0.07)]'
+                      ? 'font-bold'
                       : 'font-medium text-[#68687a] hover:bg-[#16161e] hover:text-[#909098]'
                   }`}>
                   {isActive && (
