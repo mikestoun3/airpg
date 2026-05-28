@@ -310,7 +310,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   {/* Item or ghost */}
                   {item ? (
                     <img src={`/icons/items/item_${slot}_${item.rarity}.png`} alt={item.name}
-                      className="absolute inset-0 w-full h-full object-cover" />
+                      className="absolute inset-0 w-full h-full object-cover scale-95" />
                   ) : (
                     <img src={`/icons/items/slot_${slot}.png`} alt={slot}
                       className="w-9 h-9 object-contain opacity-10" />
