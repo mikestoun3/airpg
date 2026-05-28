@@ -51,9 +51,23 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Compute gear score
+    // Compute gear score + effective stats (base + equipment bonuses)
     const gearScore = getGearScore(char.id);
     char.gearScore = gearScore;
+    const bonus = { pwr: 0, end: 0, lck: 0, spd: 0, ins: 0 };
+    for (const slot of ['weapon','helmet','chest','boots','ring','trinket'] as const) {
+      const item = equipment[slot];
+      if (!item) continue;
+      if (item.primaryStat in bonus) bonus[item.primaryStat as keyof typeof bonus] += item.primaryValue;
+      for (const s of item.secondaryStats) {
+        if (s.stat in bonus) bonus[s.stat as keyof typeof bonus] += s.value;
+      }
+    }
+    char.pwr += bonus.pwr;
+    char.end += bonus.end;
+    char.lck += bonus.lck;
+    char.spd += bonus.spd;
+    char.ins += bonus.ins;
     char.combatRating = Math.floor(char.pwr * 1.5 + char.end);
 
     // Floor progress
