@@ -132,77 +132,79 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               const dungeonStartFloor = dungeonSavedFloor + 1;
               const floorDC = Math.round(dungeon.baseDC + (dungeonStartFloor - 1) * dungeon.floorDCStep);
               const odds = Math.min(95, Math.max(5, Math.round(((cr - floorDC + 50) / 100) * 100)));
-              const rewardRate = odds - 100; // negative = penalty, e.g. -25%
+              const rewardRate = odds - 100;
               const estimatedMins = Math.max(1, Math.round(3 * dungeon.durationMinutes * (1 - spdReduction)));
               const timeLabel = estimatedMins >= 60
-                ? `${Math.floor(estimatedMins / 60)}h${estimatedMins % 60 > 0 ? ` ${estimatedMins % 60}m` : ''}`
+                ? `${Math.floor(estimatedMins / 60)}h ${estimatedMins % 60 > 0 ? `${estimatedMins % 60}m` : ''}`.trim()
                 : `${estimatedMins}m`;
-              const diff = dungeon.tier === 1 ? { label: 'Easy', cls: 'text-emerald-400 bg-emerald-900/30 border-emerald-700/40' }
-                : dungeon.tier === 2 ? { label: 'Normal', cls: 'text-amber-400 bg-amber-900/30 border-amber-700/40' }
-                : { label: 'Hard', cls: 'text-red-400 bg-red-900/30 border-red-700/40' };
+              const diff = dungeon.tier === 1
+                ? { label: 'Easy',   cls: 'text-emerald-400 bg-emerald-900/30 border-emerald-700/40' }
+                : dungeon.tier === 2
+                ? { label: 'Normal', cls: 'text-sky-400 bg-sky-900/30 border-sky-700/40' }
+                : { label: 'Hard',   cls: 'text-red-400 bg-red-900/30 border-red-700/40' };
+              const rateColor = rewardRate >= -20 ? 'text-emerald-400' : rewardRate >= -50 ? 'text-amber-400' : 'text-red-400';
               const imgSrc = DUNGEON_IMG[dungeon.id];
 
               return (
                 <div key={dungeon.id}
-                  className={`rounded-xl border overflow-hidden transition-all ${
+                  className={`rounded-lg border overflow-hidden transition-all ${
                     isSel
-                      ? 'border-red-600/60 bg-[#161620]'
-                      : 'border-[rgba(255,255,255,0.07)] bg-[#13131a] hover:border-[rgba(255,255,255,0.12)]'
-                  }`}>
-                  <div className="flex items-stretch">
+                      ? 'border-red-600/50'
+                      : 'border-[rgba(255,255,255,0.07)] hover:border-[rgba(255,255,255,0.13)]'
+                  } bg-[#13131a]`}>
+                  <div className="flex items-stretch h-[88px]">
+
                     {/* Thumbnail */}
-                    <div className={`w-32 shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'}`}>
+                    <div className={`w-[140px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'}`}>
                       {imgSrc && (
                         <img src={imgSrc} alt={dungeon.name}
-                          className="absolute inset-0 w-full h-full object-cover opacity-85"
+                          className="absolute inset-0 w-full h-full object-cover"
                           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#13131a]/70" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#13131a]/60" />
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 flex flex-col justify-center gap-1.5 px-4 py-3 min-w-0">
-                      <div>
-                        <p className="text-slate-100 font-bold text-base leading-tight uppercase tracking-wide">
-                          {dungeon.name}
-                        </p>
-                        <p className="text-[11px] text-[#505060] mt-0.5 uppercase tracking-wide">
-                          {DUNGEON_SUBTITLE[dungeon.id]}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${diff.cls}`}>
+                    {/* Name + subtitle + badge */}
+                    <div className="flex-1 flex flex-col justify-center px-4 min-w-0">
+                      <p className="text-slate-100 font-bold text-[15px] uppercase tracking-wide leading-tight truncate">
+                        {dungeon.name}
+                      </p>
+                      <p className="text-[10px] text-[#4a4a58] uppercase tracking-widest mt-0.5">
+                        {DUNGEON_SUBTITLE[dungeon.id]}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${diff.cls}`}>
                           {diff.label}
                         </span>
                         {dungeonSavedFloor > 0 && (
-                          <span className="text-[9px] text-[#606070] border border-[rgba(255,255,255,0.08)] px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] text-[#555565] border border-[rgba(255,255,255,0.08)] px-1.5 py-0.5 rounded">
                             Fl.{dungeonSavedFloor + 1}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 mt-0.5">
-                        <div>
-                          <p className="text-[9px] text-[#404050] uppercase tracking-widest">Reward Rate</p>
-                          <p className={`text-sm font-bold ${rewardRate >= -20 ? 'text-emerald-400' : rewardRate >= -50 ? 'text-amber-400' : 'text-red-400'}`}>
-                            {rewardRate >= 0 ? '+' : ''}{rewardRate}%
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] text-[#404050] uppercase tracking-widest">Time</p>
-                          <p className="text-sm font-bold text-slate-300">{timeLabel}</p>
-                        </div>
+                    </div>
+
+                    {/* Stats: Reward Rate + Time */}
+                    <div className="flex items-center gap-6 px-5 shrink-0">
+                      <div>
+                        <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest">Reward Rate</p>
+                        <p className={`text-base font-bold mt-1 ${rateColor}`}>
+                          {rewardRate >= 0 ? '+' : ''}{rewardRate}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest">Time</p>
+                        <p className="text-base font-bold mt-1 text-slate-200">{timeLabel}</p>
                       </div>
                     </div>
 
-                    {/* ENTER button */}
+                    {/* ENTER button — full height */}
                     <button
                       onClick={() => { setSelectedDungeon(dungeon.id); setError(null); }}
                       disabled={!isIdle}
-                      className={`shrink-0 px-4 flex items-center justify-center font-black text-[11px] uppercase tracking-[0.15em] transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                        isSel
-                          ? 'bg-red-600 text-white'
-                          : 'bg-red-700 hover:bg-red-600 text-white'
+                      className={`w-[72px] shrink-0 flex items-center justify-center font-bold text-sm uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                        isSel ? 'bg-red-500 text-white' : 'bg-red-600 hover:bg-red-500 text-white'
                       }`}>
                       {isSel ? '✓' : 'Enter'}
                     </button>
