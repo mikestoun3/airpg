@@ -32,7 +32,7 @@ const RARITY_GLOW_BOX: Record<string, string> = {
   common:    '0 0 14px 3px rgba(156,163,175,0.45)',
   uncommon:  '0 0 18px 5px rgba(34,197,94,0.55)',
   rare:      '0 0 24px 6px rgba(59,130,246,0.65)',
-  epic:      '0 0 32px 8px rgba(168,85,247,0.75)',
+  epic:      '0 0 32px 8px rgba(200,50,50,0.75)',
   legendary: '0 0 44px 12px rgba(251,191,36,0.95)',
 };
 
@@ -40,7 +40,7 @@ const RARITY_BG_RADIAL: Record<string, string> = {
   common:    'rgba(107,114,128,0.06)',
   uncommon:  'rgba(34,197,94,0.08)',
   rare:      'rgba(59,130,246,0.10)',
-  epic:      'rgba(168,85,247,0.13)',
+  epic:      'rgba(200,50,50,0.13)',
   legendary: 'rgba(251,191,36,0.16)',
 };
 
@@ -180,7 +180,7 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
                 className="shrink-0 rounded-xl flex items-center justify-center"
                 style={{
                   width: ITEM_W, height: ITEM_W,
-                  background: active ? `linear-gradient(135deg, #1a1a35 0%, #0f0f22 100%)` : '#0d0d20',
+                  background: active ? `linear-gradient(135deg, #1e1010 0%, #130909 100%)` : '#120808',
                   border: `2px solid ${active ? RARITY_BORDER[ri.rarity] : RARITY_BORDER[ri.rarity] + '50'}`,
                   boxShadow: 'none',
                   opacity: faded ? 0.1 : 1,
@@ -218,13 +218,13 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
             <RarityText rarity={item.rarity} className="font-black text-2xl block tracking-wide">
               {item.name}
             </RarityText>
-            <p className="text-[#5050a0] text-xs capitalize mt-0.5">
+            <p className="text-[#6a4040] text-xs capitalize mt-0.5">
               {item.rarity} · {SLOT_LABELS[item.slot]} · GS {item.gearScore}
             </p>
             <div className="mt-3 space-y-1">
               <p className="text-slate-200 text-sm font-medium">+{item.primaryValue} {STAT_LABELS[item.primaryStat]}</p>
               {item.secondaryStats.map(s => (
-                <p key={s.stat} className="text-[#6060a0] text-xs">+{s.value} {STAT_LABELS[s.stat]}</p>
+                <p key={s.stat} className="text-[#5a3535] text-xs">+{s.value} {STAT_LABELS[s.stat]}</p>
               ))}
             </div>
             <p className="text-emerald-500/60 text-[11px] mt-3">Added to Inventory</p>
@@ -237,14 +237,14 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
         {showClose ? (
           <button
             onClick={onClose}
-            className="px-10 py-3 bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-900/40"
+            className="px-10 py-3 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-red-950/40"
           >
             Awesome!
           </button>
         ) : phase === 'spin' ? (
           <button
             onClick={skipAnimation}
-            className="text-[#2a2a55] hover:text-[#5050a0] text-xs transition-colors"
+            className="text-[#2a2a55] hover:text-[#6a4040] text-xs transition-colors"
           >
             Skip
           </button>

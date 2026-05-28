@@ -40,12 +40,12 @@ const DUNGEON_FALLBACK: Record<string, string> = {
 };
 
 const DUNGEON_SUBTITLE: Record<string, string> = {
-  goblin_warrens:    'Beginner Dungeon',
-  forgotten_cellar:  'Abandoned Location',
-  ruined_watchtower: 'Bandit Territory',
-  collapsed_mine:    'Ancient Ruins',
-  cursed_catacombs:  'Corrupted Burial Grounds',
-  bandit_stronghold: 'Enemy Fortification',
+  goblin_warrens:    'Collapsed Transit Zone',
+  forgotten_cellar:  'Abandoned Signal Relay',
+  ruined_watchtower: 'Rogue Military Outpost',
+  collapsed_mine:    'Energy Anomaly Site',
+  cursed_catacombs:  'Corrupted Network Node',
+  bandit_stronghold: 'Seized Power Facility',
 };
 
 const SLOTS: EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
@@ -139,7 +139,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   }`}>
                   <div className="flex items-stretch">
                     {/* Thumbnail */}
-                    <div className={`w-24 min-h-[76px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a0a0a] to-[#0d0606]'}`}>
+                    <div className={`w-28 min-h-[96px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a0a0a] to-[#0d0606]'}`}>
                       {imgSrc && (
                         <img src={imgSrc} alt={dungeon.name}
                           className="absolute inset-0 w-full h-full object-cover opacity-80"
@@ -202,7 +202,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                 <div key={dungeon.id}
                   className="rounded-xl border border-[rgba(200,80,80,0.07)] bg-[#110909] opacity-50 overflow-hidden">
                   <div className="flex items-stretch">
-                    <div className={`w-24 min-h-[76px] shrink-0 bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#140808] to-[#0a0505]'} opacity-40`} />
+                    <div className={`w-28 min-h-[96px] shrink-0 bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#140808] to-[#0a0505]'} opacity-40`} />
                     <div className="flex-1 flex items-center justify-between px-3 py-3">
                       <div>
                         <p className="text-[#5a3535] font-medium text-sm">🔒 {dungeon.name}</p>
@@ -292,13 +292,13 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   {item ? (
                     <>
                       <img src={`/icons/items/item_${slot}_${item.rarity}.png`} alt={item.name}
-                        className="w-10 h-10 object-contain" />
+                        className="w-12 h-12 object-contain" />
                       <span className="absolute bottom-1 right-1 w-2 h-2 rounded-full border border-black/40"
                         style={{ backgroundColor: RARITY_COLORS[item.rarity] }} />
                     </>
                   ) : (
                     <img src={`/icons/items/slot_${slot}.png`} alt={slot}
-                      className="w-8 h-8 opacity-15 object-contain" />
+                      className="w-9 h-9 opacity-15 object-contain" />
                   )}
                 </div>
               );

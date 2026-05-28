@@ -85,7 +85,7 @@ export function QuestsTab() {
     <div className="max-w-2xl mx-auto space-y-4 pb-4">
 
       {/* Section tabs */}
-      <div className="flex gap-2 p-1 bg-[#0c0c1e] rounded-xl border border-[rgba(120,110,200,0.12)]">
+      <div className="flex gap-2 p-1 bg-[#110a0a] rounded-xl border border-[rgba(200,70,70,0.12)]">
         {([
           ['social', '🌐 Social'],
           ['referral', '👥 Referrals'],
@@ -94,8 +94,8 @@ export function QuestsTab() {
           <button key={s} onClick={() => setActiveSection(s)}
             className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
               activeSection === s
-                ? 'bg-gradient-to-r from-violet-700 to-purple-700 text-white'
-                : 'text-[#6060a0] hover:text-[#9090c0]'
+                ? 'bg-gradient-to-r from-red-700 to-rose-700 text-white'
+                : 'text-[#5a3535] hover:text-[#a07070]'
             }`}>
             {label}
           </button>
@@ -104,17 +104,17 @@ export function QuestsTab() {
 
       {activeSection === 'social' && (
         <div className="space-y-3">
-          <p className="text-[#5050a0] text-xs px-1">Complete tasks and claim your rewards. These are verified on honor system.</p>
+          <p className="text-[#6a4040] text-xs px-1">Complete tasks and claim your rewards. These are verified on honor system.</p>
           {socialQuests.map(quest => {
             const done = data.completed.includes(quest.id);
             const loading = claimState[quest.id] === 'loading';
             const isMsg = claimMsg?.id === quest.id;
             return (
-              <div key={quest.id} className={`bg-[#0f0f22] border rounded-xl p-4 flex items-center gap-4 transition-all ${done ? 'border-emerald-700/30 opacity-70' : 'border-[rgba(120,110,200,0.2)]'}`}>
+              <div key={quest.id} className={`bg-[#130909] border rounded-xl p-4 flex items-center gap-4 transition-all ${done ? 'border-emerald-700/30 opacity-70' : 'border-[rgba(200,70,70,0.2)]'}`}>
                 <div className="text-2xl w-10 text-center shrink-0">{quest.icon}</div>
                 <div className="flex-1 min-w-0">
                   <p className={`font-semibold text-sm ${done ? 'text-emerald-400' : 'text-slate-200'}`}>{quest.title}</p>
-                  <p className="text-[#5050a0] text-xs mt-0.5">{quest.description}</p>
+                  <p className="text-[#6a4040] text-xs mt-0.5">{quest.description}</p>
                   <p className="text-amber-400/80 text-xs mt-1">
                     +{quest.reward.gold} Gold{quest.reward.essence > 0 ? ` · +${quest.reward.essence} ESS` : ''}
                   </p>
@@ -126,7 +126,7 @@ export function QuestsTab() {
                     <span className={`text-xs font-semibold ${claimMsg.ok ? 'text-emerald-400' : 'text-red-400'}`}>{claimMsg.msg}</span>
                   ) : (
                     <button onClick={() => handleClaim(quest)} disabled={loading}
-                      className="px-3 py-1.5 text-xs bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 text-white rounded-lg font-semibold transition-all">
+                      className="px-3 py-1.5 text-xs bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 text-white rounded-lg font-semibold transition-all">
                       {loading ? '...' : 'Complete →'}
                     </button>
                   )}
@@ -140,25 +140,25 @@ export function QuestsTab() {
       {activeSection === 'referral' && (
         <div className="space-y-3">
           {/* Invite link card */}
-          <div className="bg-[#0f0f22] border border-[rgba(120,110,200,0.2)] rounded-xl p-4 space-y-3">
+          <div className="bg-[#130909] border border-[rgba(200,70,70,0.2)] rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-lg">🔗</span>
               <div>
                 <p className="text-slate-200 font-semibold text-sm">Your Invite Link</p>
-                <p className="text-[#5050a0] text-xs">Friends who join via your link get +300 Gold & +30 ESS. You get +200 Gold & +20 ESS per referral.</p>
+                <p className="text-[#6a4040] text-xs">Friends who join via your link get +300 Gold & +30 ESS. You get +200 Gold & +20 ESS per referral.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-[#080818] rounded-lg px-3 py-2 border border-[rgba(120,110,200,0.12)]">
-              <span className="text-[#6060a0] text-xs font-mono flex-1 truncate">{inviteLink}</span>
+            <div className="flex items-center gap-2 bg-[#080818] rounded-lg px-3 py-2 border border-[rgba(200,70,70,0.12)]">
+              <span className="text-[#5a3535] text-xs font-mono flex-1 truncate">{inviteLink}</span>
               <button onClick={copyLink}
-                className={`shrink-0 px-3 py-1 text-xs rounded-lg font-semibold transition-all ${copied ? 'bg-emerald-700 text-white' : 'bg-[#1e1e40] hover:bg-[#252550] text-[#9090c0]'}`}>
+                className={`shrink-0 px-3 py-1 text-xs rounded-lg font-semibold transition-all ${copied ? 'bg-emerald-700 text-white' : 'bg-[#1e0e0e] hover:bg-[#252550] text-[#a07070]'}`}>
                 {copied ? '✓ Copied!' : 'Copy'}
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <div className="text-[#5050a0] text-xs">Your code:</div>
-              <div className="text-violet-400 font-mono font-bold text-sm tracking-widest">{data.referralCode}</div>
-              <div className="ml-auto text-[#6060a0] text-xs">{data.referralCount} referred</div>
+              <div className="text-[#6a4040] text-xs">Your code:</div>
+              <div className="text-red-400 font-mono font-bold text-sm tracking-widest">{data.referralCode}</div>
+              <div className="ml-auto text-[#5a3535] text-xs">{data.referralCount} referred</div>
             </div>
           </div>
 
@@ -173,27 +173,27 @@ export function QuestsTab() {
             const isMsg = claimMsg?.id === quest.id;
 
             return (
-              <div key={quest.id} className={`bg-[#0f0f22] border rounded-xl p-4 transition-all ${done ? 'border-emerald-700/30 opacity-70' : canClaim ? 'border-amber-600/40' : 'border-[rgba(120,110,200,0.15)]'}`}>
+              <div key={quest.id} className={`bg-[#130909] border rounded-xl p-4 transition-all ${done ? 'border-emerald-700/30 opacity-70' : canClaim ? 'border-amber-600/40' : 'border-[rgba(200,70,70,0.15)]'}`}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="text-2xl w-10 text-center shrink-0">{quest.icon}</div>
                   <div className="flex-1 min-w-0">
                     <p className={`font-semibold text-sm ${done ? 'text-emerald-400' : 'text-slate-200'}`}>{quest.title}</p>
-                    <p className="text-[#5050a0] text-xs mt-0.5">{quest.description}</p>
+                    <p className="text-[#6a4040] text-xs mt-0.5">{quest.description}</p>
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-amber-400/80 text-xs">+{quest.reward.gold} Gold</p>
-                    {quest.reward.essence > 0 && <p className="text-purple-400/80 text-xs">+{quest.reward.essence} ESS</p>}
+                    {quest.reward.essence > 0 && <p className="text-rose-400/80 text-xs">+{quest.reward.essence} ESS</p>}
                   </div>
                 </div>
 
                 {!done && (
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-[11px] mb-1">
-                      <span className="text-[#5050a0]">Progress</span>
-                      <span className="text-[#7070a0]">{progress}/{needed}</span>
+                      <span className="text-[#6a4040]">Progress</span>
+                      <span className="text-[#7a5050]">{progress}/{needed}</span>
                     </div>
                     <div className="h-1.5 bg-[#0a0a1a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-amber-500' : 'bg-violet-700/70'}`}
+                      <div className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-amber-500' : 'bg-red-700/70'}`}
                         style={{ width: `${pct}%` }} />
                     </div>
                   </div>
@@ -210,7 +210,7 @@ export function QuestsTab() {
                       {loading ? '...' : '🎁 Claim Reward'}
                     </button>
                   ) : (
-                    <span className="text-[#4040a0] text-xs">Invite {needed - progress} more</span>
+                    <span className="text-[#4a3030] text-xs">Invite {needed - progress} more</span>
                   )}
                 </div>
               </div>
@@ -220,7 +220,7 @@ export function QuestsTab() {
       )}
       {activeSection === 'dungeons' && (
         <div className="space-y-5">
-          <p className="text-[#5050a0] text-xs px-1">Reach milestone floors in each dungeon to earn rewards. Progress is saved from your deepest run.</p>
+          <p className="text-[#6a4040] text-xs px-1">Reach milestone floors in each dungeon to earn rewards. Progress is saved from your deepest run.</p>
           {Object.entries(floorQuestsByDungeon).map(([dungeonName, quests]) => {
             const allDone = quests.every(q => data.completed.includes(q.id));
             return (
@@ -240,7 +240,7 @@ export function QuestsTab() {
 
                     return (
                       <div key={quest.id}
-                        className={`bg-[#0f0f22] border rounded-xl p-3.5 transition-all ${done ? 'border-emerald-700/30 opacity-70' : canClaim ? 'border-amber-600/40' : 'border-[rgba(120,110,200,0.15)]'}`}>
+                        className={`bg-[#130909] border rounded-xl p-3.5 transition-all ${done ? 'border-emerald-700/30 opacity-70' : canClaim ? 'border-amber-600/40' : 'border-[rgba(200,70,70,0.15)]'}`}>
                         <div className="flex items-center gap-3">
                           <div className="text-xl w-8 text-center shrink-0">{quest.icon}</div>
                           <div className="flex-1 min-w-0">
@@ -248,7 +248,7 @@ export function QuestsTab() {
                               <p className={`font-semibold text-sm ${done ? 'text-emerald-400' : 'text-slate-200'}`}>{quest.title}</p>
                               <p className="text-amber-400/80 text-xs shrink-0">+{quest.reward.gold}g{quest.reward.essence > 0 ? ` +${quest.reward.essence} ESS` : ''}</p>
                             </div>
-                            <p className="text-[#5050a0] text-xs mt-0.5">Floor {required}</p>
+                            <p className="text-[#6a4040] text-xs mt-0.5">Floor {required}</p>
                           </div>
                           <div className="shrink-0">
                             {done ? (
@@ -261,14 +261,14 @@ export function QuestsTab() {
                                 {loading ? '...' : '🎁 Claim'}
                               </button>
                             ) : (
-                              <span className="text-[#4040a0] text-xs tabular-nums">{floor}/{required}</span>
+                              <span className="text-[#4a3030] text-xs tabular-nums">{floor}/{required}</span>
                             )}
                           </div>
                         </div>
                         {!done && floor < required && (
                           <div className="mt-2">
                             <div className="h-1 bg-[#0a0a1a] rounded-full overflow-hidden">
-                              <div className="h-full bg-violet-700/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                              <div className="h-full bg-red-700/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
                             </div>
                           </div>
                         )}

@@ -16,7 +16,7 @@ const FILTERS: { id: Filter; label: string; color: string }[] = [
   { id: 'common',    label: 'Common',    color: 'text-slate-400'  },
   { id: 'uncommon',  label: 'Uncommon',  color: 'text-emerald-400'},
   { id: 'rare',      label: 'Rare',      color: 'text-blue-400'   },
-  { id: 'epic',      label: 'Epic',      color: 'text-purple-400' },
+  { id: 'epic',      label: 'Epic',      color: 'text-rose-400' },
   { id: 'legendary', label: 'Legendary', color: 'text-amber-400'  },
 ];
 
@@ -24,7 +24,7 @@ const SALVAGE_RARITIES: { rarity: Rarity; label: string; color: string; borderCo
   { rarity: 'common',    label: 'Common',    color: 'text-slate-400',   borderColor: 'border-slate-600/40'  },
   { rarity: 'uncommon',  label: 'Uncommon',  color: 'text-emerald-400', borderColor: 'border-emerald-700/40'},
   { rarity: 'rare',      label: 'Rare',      color: 'text-blue-400',    borderColor: 'border-blue-700/40'   },
-  { rarity: 'epic',      label: 'Epic',      color: 'text-purple-400',  borderColor: 'border-purple-700/40' },
+  { rarity: 'epic',      label: 'Epic',      color: 'text-rose-400',  borderColor: 'border-red-700/40' },
   { rarity: 'legendary', label: 'Legendary', color: 'text-amber-400',   borderColor: 'border-amber-700/40'  },
 ];
 
@@ -112,20 +112,20 @@ export function InventoryTab({ state, onRefresh }: Props) {
               <button key={id} onClick={() => setFilter(id)}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all ${
                   isActive
-                    ? 'bg-[#1e1e3d] border-[rgba(120,110,200,0.4)]'
-                    : 'bg-[#14142a] border-[rgba(120,110,200,0.15)]'
+                    ? 'bg-[#1e0e0e] border-[rgba(200,70,70,0.4)]'
+                    : 'bg-[#180c0c] border-[rgba(200,70,70,0.15)]'
                 }`}>
-                <span className={isActive ? color : 'text-[#7070a0]'}>{label}</span>
-                <span className={`font-mono text-[10px] ${isActive ? color : 'text-[#5050a0]'}`}>{count}</span>
+                <span className={isActive ? color : 'text-[#7a5050]'}>{label}</span>
+                <span className={`font-mono text-[10px] ${isActive ? color : 'text-[#6a4040]'}`}>{count}</span>
               </button>
             );
           })}
         </div>
 
         {/* Desktop: vertical filter panel */}
-        <div className="hidden md:block bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
-          <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="text-purple-500">◆</span> Filter
+        <div className="hidden md:block bg-[#180c0c] border border-[rgba(200,70,70,0.2)] rounded-xl p-4">
+          <p className="text-[11px] text-[#5a3535] uppercase tracking-widest mb-3 flex items-center gap-2">
+            <span className="text-rose-500">◆</span> Filter
           </p>
           <div className="space-y-1">
             {FILTERS.map(({ id, label, color }) => {
@@ -133,10 +133,10 @@ export function InventoryTab({ state, onRefresh }: Props) {
               return (
                 <button key={id} onClick={() => setFilter(id)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
-                    filter === id ? 'bg-[#1e1e3d] border border-[rgba(120,110,200,0.3)]' : 'hover:bg-[#1a1a30]'
+                    filter === id ? 'bg-[#1e0e0e] border border-[rgba(200,70,70,0.3)]' : 'hover:bg-[#1e1010]'
                   }`}>
-                  <span className={filter === id ? color : 'text-[#7070a0]'}>{label}</span>
-                  <span className={`text-xs font-mono ${filter === id ? color : 'text-[#5050a0]'}`}>{count}</span>
+                  <span className={filter === id ? color : 'text-[#7a5050]'}>{label}</span>
+                  <span className={`text-xs font-mono ${filter === id ? color : 'text-[#6a4040]'}`}>{count}</span>
                 </button>
               );
             })}
@@ -144,23 +144,23 @@ export function InventoryTab({ state, onRefresh }: Props) {
         </div>
 
         {/* Inventory count */}
-        <div className="hidden md:block bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
-          <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3">Inventory</p>
+        <div className="hidden md:block bg-[#180c0c] border border-[rgba(200,70,70,0.2)] rounded-xl p-4">
+          <p className="text-[11px] text-[#5a3535] uppercase tracking-widest mb-3">Inventory</p>
           <div className="space-y-2 text-xs">
-            <div className="flex justify-between text-[#7070a0]">
+            <div className="flex justify-between text-[#7a5050]">
               <span>Items</span>
               <span className="text-slate-300">{inventory.length}/20</span>
             </div>
-            <div className="h-1.5 bg-[#0f0f22] rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-violet-600 to-purple-500 rounded-full"
+            <div className="h-1.5 bg-[#130909] rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-red-700 to-purple-500 rounded-full"
                 style={{ width: `${(inventory.length / 20) * 100}%` }} />
             </div>
           </div>
         </div>
 
         {/* Salvage by rarity */}
-        <div className="bg-[#14142a] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
-          <p className="text-[11px] text-[#6060a0] uppercase tracking-widest mb-3 flex items-center gap-2">
+        <div className="bg-[#180c0c] border border-[rgba(200,70,70,0.2)] rounded-xl p-4">
+          <p className="text-[11px] text-[#5a3535] uppercase tracking-widest mb-3 flex items-center gap-2">
             <span className="text-red-500">⚒</span> Salvage All
           </p>
           {/* Mobile: horizontal row */}
@@ -173,23 +173,23 @@ export function InventoryTab({ state, onRefresh }: Props) {
               return (
                 <div key={rarity}>
                   {isConfirming ? (
-                    <div className={`rounded-lg border ${borderColor} bg-[#0f0f22] px-2 py-1.5 flex items-center gap-1.5`}>
+                    <div className={`rounded-lg border ${borderColor} bg-[#130909] px-2 py-1.5 flex items-center gap-1.5`}>
                       <span className={`text-xs ${color}`}>{label}?</span>
                       <button onClick={() => handleSalvageRarity(rarity)} className="text-[10px] bg-red-900/50 text-red-300 px-1.5 py-0.5 rounded">Yes</button>
-                      <button onClick={() => setConfirmRarity(null)} className="text-[10px] text-[#7070a0]">No</button>
+                      <button onClick={() => setConfirmRarity(null)} className="text-[10px] text-[#7a5050]">No</button>
                     </div>
                   ) : (
                     <button disabled={isPending} onClick={() => setConfirmRarity(rarity)}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border ${borderColor} bg-[#0f0f22] hover:bg-[#141428] transition-all disabled:opacity-50`}>
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border ${borderColor} bg-[#130909] hover:bg-[#180c0c] transition-all disabled:opacity-50`}>
                       <span className={color}>{isPending ? '...' : label}</span>
-                      <span className="text-[#5050a0] font-mono">×{count}</span>
+                      <span className="text-[#6a4040] font-mono">×{count}</span>
                     </button>
                   )}
                 </div>
               );
             })}
             {SALVAGE_RARITIES.every(({ rarity }) => rarityCount(rarity) === 0) && (
-              <p className="text-xs text-[#4040a0]">Nothing to salvage</p>
+              <p className="text-xs text-[#4a3030]">Nothing to salvage</p>
             )}
           </div>
           {/* Desktop: vertical list */}
@@ -202,25 +202,25 @@ export function InventoryTab({ state, onRefresh }: Props) {
               return (
                 <div key={rarity}>
                   {isConfirming ? (
-                    <div className={`rounded-lg border ${borderColor} bg-[#0f0f22] p-2`}>
+                    <div className={`rounded-lg border ${borderColor} bg-[#130909] p-2`}>
                       <p className={`text-xs ${color} mb-1.5`}>Salvage {count} {label}?</p>
                       <div className="flex gap-1">
                         <button onClick={() => handleSalvageRarity(rarity)} className="flex-1 py-1 text-xs bg-red-900/50 hover:bg-red-900/70 text-red-300 rounded transition-colors">Yes</button>
-                        <button onClick={() => setConfirmRarity(null)} className="flex-1 py-1 text-xs bg-[#1a1a30] hover:bg-[#222240] text-[#7070a0] rounded transition-colors">No</button>
+                        <button onClick={() => setConfirmRarity(null)} className="flex-1 py-1 text-xs bg-[#1e1010] hover:bg-[#222240] text-[#7a5050] rounded transition-colors">No</button>
                       </div>
                     </div>
                   ) : (
                     <button disabled={isPending} onClick={() => setConfirmRarity(rarity)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs border ${borderColor} bg-[#0f0f22] hover:bg-[#141428] transition-all disabled:opacity-50`}>
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs border ${borderColor} bg-[#130909] hover:bg-[#180c0c] transition-all disabled:opacity-50`}>
                       <span className={color}>{isPending ? '...' : label}</span>
-                      <span className="text-[#5050a0] font-mono">×{count}</span>
+                      <span className="text-[#6a4040] font-mono">×{count}</span>
                     </button>
                   )}
                 </div>
               );
             })}
             {SALVAGE_RARITIES.every(({ rarity }) => rarityCount(rarity) === 0) && (
-              <p className="text-xs text-[#4040a0] text-center py-1">Nothing to salvage</p>
+              <p className="text-xs text-[#4a3030] text-center py-1">Nothing to salvage</p>
             )}
           </div>
         </div>
@@ -229,7 +229,7 @@ export function InventoryTab({ state, onRefresh }: Props) {
       {/* Item grid */}
       <div className="flex-1 md:overflow-y-auto">
         {onRun && (
-          <div className="mb-3 px-4 py-2.5 bg-[#14142a] border border-violet-700/30 rounded-xl text-violet-400 text-sm text-center">
+          <div className="mb-3 px-4 py-2.5 bg-[#180c0c] border border-red-700/30 rounded-xl text-red-400 text-sm text-center">
             ⚔ Hero is on a run — equipment is locked
           </div>
         )}
@@ -242,9 +242,9 @@ export function InventoryTab({ state, onRefresh }: Props) {
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-5xl mb-4">🎒</p>
-            <p className="text-[#5050a0]">No items{filter !== 'all' ? ` of this rarity` : ''}</p>
+            <p className="text-[#6a4040]">No items{filter !== 'all' ? ` of this rarity` : ''}</p>
             {filter !== 'all' && (
-              <button onClick={() => setFilter('all')} className="mt-2 text-xs text-purple-400 hover:text-purple-300">Clear filter</button>
+              <button onClick={() => setFilter('all')} className="mt-2 text-xs text-rose-400 hover:text-rose-300">Clear filter</button>
             )}
           </div>
         ) : (

@@ -183,26 +183,26 @@ export function RunTimer({ run, onComplete }: Props) {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* ── Main dungeon scene card ── */}
-      <div className="relative bg-[#0d0d20] border border-[rgba(120,110,200,0.25)] rounded-2xl overflow-hidden flex-shrink-0">
+      <div className="relative bg-[#120808] border border-[rgba(200,70,70,0.25)] rounded-2xl overflow-hidden flex-shrink-0">
 
         {/* Atmospheric background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1e] to-[#0f0f28] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1e] to-[#130909] pointer-events-none" />
 
         {/* Header */}
         <div className="relative z-10 flex items-center justify-between px-5 py-3">
           <div>
-            <p className="text-[10px] text-[#6060a0] uppercase tracking-widest">On Expedition</p>
+            <p className="text-[10px] text-[#5a3535] uppercase tracking-widest">On Expedition</p>
             <h3 className="text-slate-100 font-bold text-base mt-0.5">{run.dungeonName}</h3>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-[#6060a0] uppercase tracking-widest">
+            <p className="text-[10px] text-[#5a3535] uppercase tracking-widest">
               {completed ? 'Completed' : 'Current Floor'}
             </p>
             <div className="flex items-baseline gap-2 justify-end mt-0.5">
-              <span className="text-2xl font-bold text-violet-300 tabular-nums leading-none">
+              <span className="text-2xl font-bold text-red-300 tabular-nums leading-none">
                 {completed ? '🏆' : currentFloor}
                 {!completed && floorsAttempted > 1 && (
-                  <span className="text-sm text-[#6060a0] font-normal ml-1">/ {startFloor + floorsAttempted - 1}</span>
+                  <span className="text-sm text-[#5a3535] font-normal ml-1">/ {startFloor + floorsAttempted - 1}</span>
                 )}
               </span>
               {!completed && (
@@ -225,7 +225,7 @@ export function RunTimer({ run, onComplete }: Props) {
               return (
                 <div key={i} className="flex-1 text-center">
                   <span className={`text-[9px] transition-all ${
-                    isCurrent ? 'text-violet-300 font-bold' : isCleared ? 'text-[#6060a0]' : 'text-[#3a3a60]'
+                    isCurrent ? 'text-red-300 font-bold' : isCleared ? 'text-[#5a3535]' : 'text-[#3a3a60]'
                   }`}>
                     {floorsAttempted <= 5 ? `F${floorNum}` : (isCurrent ? `F${floorNum}` : '')}
                   </span>
@@ -241,7 +241,7 @@ export function RunTimer({ run, onComplete }: Props) {
               const isCleared = completed || i < currentFloorIdx;
               const segWidth = isCurrent ? floorLocalProgress : (isCleared ? 1 : 0);
               return (
-                <div key={i} className="flex-1 bg-[#0a0a1f] rounded-sm overflow-hidden border border-[rgba(120,110,200,0.12)]">
+                <div key={i} className="flex-1 bg-[#0a0a1f] rounded-sm overflow-hidden border border-[rgba(200,70,70,0.12)]">
                   <div
                     className="h-full rounded-sm transition-all duration-1000"
                     style={{
@@ -263,7 +263,7 @@ export function RunTimer({ run, onComplete }: Props) {
           </div>
 
           {/* Progress text — floor progress left, total time right */}
-          <div className="flex justify-between text-[10px] text-[#5050a0] mt-1">
+          <div className="flex justify-between text-[10px] text-[#6a4040] mt-1">
             <span>
               {completed
                 ? `All ${floorsAttempted} floor${floorsAttempted > 1 ? 's' : ''} done`
@@ -275,14 +275,14 @@ export function RunTimer({ run, onComplete }: Props) {
       </div>
 
       {/* ── Event log ── */}
-      <div className="flex-1 bg-[#0d0d20] border border-[rgba(120,110,200,0.15)] rounded-xl p-4 overflow-hidden">
-        <p className="text-[10px] text-[#5050a0] uppercase tracking-widest mb-3 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse inline-block" />
+      <div className="flex-1 bg-[#120808] border border-[rgba(200,70,70,0.15)] rounded-xl p-4 overflow-hidden">
+        <p className="text-[10px] text-[#6a4040] uppercase tracking-widest mb-3 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse inline-block" />
           Journey Log
         </p>
 
         {visibleEvents.length === 0 ? (
-          <p className="text-[#4040a0] text-sm italic">Preparing to depart...</p>
+          <p className="text-[#4a3030] text-sm italic">Preparing to depart...</p>
         ) : (
           <div className="space-y-2">
             {visibleEvents.map((ev, i) => {
@@ -297,12 +297,12 @@ export function RunTimer({ run, onComplete }: Props) {
                   style={i === 0 ? { animation: 'event-slide-in 0.4s ease-out' } : {}}>
                   <span className={`mt-0.5 text-xs shrink-0 ${
                     i === 0
-                      ? isFloorClear ? 'text-violet-400'
+                      ? isFloorClear ? 'text-red-400'
                         : isLoot ? ''
                         : isResource ? 'text-emerald-400'
-                        : isEssence ? 'text-purple-400'
-                        : 'text-purple-400'
-                      : 'text-[#4040a0]'
+                        : isEssence ? 'text-rose-400'
+                        : 'text-rose-400'
+                      : 'text-[#4a3030]'
                   }`}
                     style={i === 0 && rarityColor ? { color: rarityColor } : undefined}>
                     {i === 0 ? (isFloorClear ? '✓' : isLoot ? '◆' : isResource ? '⬡' : '▸') : '·'}
@@ -310,9 +310,9 @@ export function RunTimer({ run, onComplete }: Props) {
                   <span className="text-sm" style={i === 0 && rarityColor ? { color: rarityColor } : undefined}>
                     <span className={
                       i > 0 ? 'text-[#5555a0]'
-                        : isFloorClear ? 'text-violet-300 font-semibold'
+                        : isFloorClear ? 'text-red-300 font-semibold'
                         : isResource ? 'text-emerald-300'
-                        : isEssence ? 'text-purple-300'
+                        : isEssence ? 'text-rose-300'
                         : 'text-slate-300'
                     }>
                       {ev.preview?.type === 'resource' && ev.preview.resourceId && (

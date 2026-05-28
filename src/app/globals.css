@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --bg-base:    #09091a;
-  --bg-surface: #0f0f22;
-  --bg-card:    #14142a;
-  --bg-raised:  #1a1a34;
-  --bg-hover:   #1f1f3d;
-  --border:     rgba(120,110,200,0.15);
-  --border-bright: rgba(140,120,220,0.30);
-  --purple:     #7c5ff0;
-  --purple-dim: #3d2e80;
+  --bg-base:    #0d0808;
+  --bg-surface: #130909;
+  --bg-card:    #180c0c;
+  --bg-raised:  #1e1010;
+  --bg-hover:   #220f0f;
+  --border:     rgba(200,70,70,0.15);
+  --border-bright: rgba(200,70,70,0.30);
+  --accent:     #cc2020;
+  --accent-dim: #6a1010;
   --gold:       #f5be42;
-  --essence:    #a78bfa;
+  --essence:    #f87171;
 }
 
 * { box-sizing: border-box; }
 
 body {
   background: var(--bg-base);
-  color: #ddd8f8;
+  color: #ddd0d0;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
@@ -44,8 +44,8 @@ body {
   50%       { transform: translateY(-3px); }
 }
 @keyframes complete-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 95, 240, 0.4); }
-  50%       { box-shadow: 0 0 0 12px rgba(124, 95, 240, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 50, 50, 0.4); }
+  50%       { box-shadow: 0 0 0 12px rgba(200, 50, 50, 0); }
 }
 @keyframes shimmer {
   0%   { background-position: -200% center; }
@@ -55,7 +55,7 @@ body {
 /* Thin scrollbars */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a2a55; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #3a1515; border-radius: 2px; }
 
 /* Glowing card */
 .card {

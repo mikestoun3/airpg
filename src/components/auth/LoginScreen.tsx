@@ -103,30 +103,30 @@ export function LoginScreen({ onLogin }: Props) {
   }[status];
 
   return (
-    <div className="h-[100dvh] flex items-center justify-center bg-[#09091a]">
+    <div className="h-[100dvh] flex items-center justify-center bg-[#0d0808]">
       <div className="flex flex-col items-center gap-8 max-w-sm w-full px-6">
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-900 flex items-center justify-center text-3xl font-black text-white shadow-2xl shadow-purple-900/60">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-700 to-rose-900 flex items-center justify-center text-3xl font-black text-white shadow-2xl shadow-red-950/60">
             A
           </div>
           <div className="text-center">
             <p className="text-slate-100 font-black text-2xl tracking-wide">AirPG</p>
-            <p className="text-[#5050a0] text-sm tracking-widest uppercase">Idle Dungeon</p>
+            <p className="text-[#6a4040] text-sm tracking-widest uppercase">Idle Dungeon</p>
           </div>
         </div>
 
         {/* Card */}
-        <div className="w-full bg-[#0f0f22] border border-[rgba(120,110,200,0.25)] rounded-2xl p-6 flex flex-col gap-5">
+        <div className="w-full bg-[#130909] border border-[rgba(200,70,70,0.25)] rounded-2xl p-6 flex flex-col gap-5">
           <div className="text-center">
             <p className="text-slate-200 font-semibold text-lg">Sign in with MetaMask</p>
-            <p className="text-[#5050a0] text-sm mt-1">Your wallet is your account. No password needed.</p>
+            <p className="text-[#6a4040] text-sm mt-1">Your wallet is your account. No password needed.</p>
           </div>
 
           {statusLabel && (
-            <div className="flex items-center justify-center gap-2 text-purple-400 text-sm">
-              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center justify-center gap-2 text-rose-400 text-sm">
+              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
               {statusLabel}
             </div>
           )}
@@ -142,7 +142,7 @@ export function LoginScreen({ onLogin }: Props) {
             <button
               onClick={handleConnect}
               disabled={status === 'connecting' || status === 'signing' || status === 'verifying'}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
               <MetaMaskIcon />
               Connect MetaMask
             </button>
@@ -160,20 +160,20 @@ export function LoginScreen({ onLogin }: Props) {
 
           {/* Mobile hint when MetaMask IS injected (inside MM browser) */}
           {isMobile && hasEthereum && (
-            <p className="text-center text-[#4a4a7a] text-xs">
+            <p className="text-center text-[#5a3535] text-xs">
               Running inside MetaMask browser ✓
             </p>
           )}
 
           {/* Mobile: also show "open in MM" as secondary option if on desktop no ethereum */}
           {isMobile && !hasEthereum && (
-            <p className="text-center text-[#3a3a6a] text-xs">
+            <p className="text-center text-[#4a2a2a] text-xs">
               This opens the site inside MetaMask&apos;s built-in browser where your wallet is available.
             </p>
           )}
 
           {!isMobile && (
-            <p className="text-center text-[#3a3a6a] text-xs">
+            <p className="text-center text-[#4a2a2a] text-xs">
               A new hero is created for each wallet address.
             </p>
           )}

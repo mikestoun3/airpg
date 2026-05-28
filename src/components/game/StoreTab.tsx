@@ -140,10 +140,10 @@ export function StoreTab({ state, onRefresh }: Props) {
       {/* Result modal (gold/essence packs) */}
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={() => setResult(null)}>
-          <div className="bg-[#0f0f22] border border-[rgba(120,110,200,0.3)] rounded-2xl p-6 max-w-sm w-full text-center space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-[#130909] border border-[rgba(200,70,70,0.3)] rounded-2xl p-6 max-w-sm w-full text-center space-y-4" onClick={e => e.stopPropagation()}>
             <div className="text-4xl">🎉</div>
             <p className="text-slate-200 font-bold text-lg">Purchase Successful!</p>
-            <p className="text-[#7070a0] text-sm">{result.name}</p>
+            <p className="text-[#7a5050] text-sm">{result.name}</p>
 
             {result.reward.type === 'gold' && (
               <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-3">
@@ -151,21 +151,21 @@ export function StoreTab({ state, onRefresh }: Props) {
               </div>
             )}
             {result.reward.type === 'essence' && (
-              <div className="bg-purple-900/20 border border-purple-700/30 rounded-xl px-4 py-3">
-                <p className="text-purple-400 font-bold text-xl">+{result.reward.amount?.toLocaleString()} Essence</p>
+              <div className="bg-purple-900/20 border border-red-700/30 rounded-xl px-4 py-3">
+                <p className="text-rose-400 font-bold text-xl">+{result.reward.amount?.toLocaleString()} Essence</p>
               </div>
             )}
             {result.reward.type === 'loot_case' && result.item && (
               <div className={`border ${RARITY_BORDER[result.item.rarity]} ${RARITY_BG[result.item.rarity]} ${RARITY_GLOW[result.item.rarity]} rounded-xl px-4 py-3`}>
                 <RarityText rarity={result.item.rarity} className="font-bold text-base block">{result.item.name}</RarityText>
-                <p className="text-[#6060a0] text-xs mt-1 capitalize">{result.item.rarity} · GS {result.item.gearScore}</p>
+                <p className="text-[#5a3535] text-xs mt-1 capitalize">{result.item.rarity} · GS {result.item.gearScore}</p>
                 <p className="text-slate-300 text-sm mt-1">+{result.item.primaryValue} {result.item.primaryStat.toUpperCase()}</p>
                 <p className="text-emerald-400/80 text-xs mt-1">Added to Inventory</p>
               </div>
             )}
 
             <button onClick={() => setResult(null)}
-              className="w-full py-2.5 bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white rounded-xl font-semibold text-sm transition-all">
+              className="w-full py-2.5 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 text-white rounded-xl font-semibold text-sm transition-all">
               Great!
             </button>
           </div>
@@ -173,16 +173,16 @@ export function StoreTab({ state, onRefresh }: Props) {
       )}
 
       {/* Header */}
-      <div className="bg-[#0f0f22] border border-[rgba(120,110,200,0.2)] rounded-xl p-4">
+      <div className="bg-[#130909] border border-[rgba(200,70,70,0.2)] rounded-xl p-4">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🏬</span>
           <div className="flex-1">
             <p className="text-slate-200 font-bold">Store</p>
-            <p className="text-[#5050a0] text-xs">Purchase Gold, Essence, and Loot Cases with POL (Polygon)</p>
+            <p className="text-[#6a4040] text-xs">Purchase Gold, Essence, and Loot Cases with POL (Polygon)</p>
           </div>
           <div className="text-right">
             <p className="text-amber-400 font-bold text-sm">{state.character.gold.toLocaleString()} G</p>
-            {state.character.essence > 0 && <p className="text-purple-400 text-xs">{state.character.essence} ESS</p>}
+            {state.character.essence > 0 && <p className="text-rose-400 text-xs">{state.character.essence} ESS</p>}
           </div>
         </div>
       </div>
@@ -200,8 +200,8 @@ export function StoreTab({ state, onRefresh }: Props) {
           <button key={cat} onClick={() => setCategory(cat)}
             className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               category === cat
-                ? 'bg-violet-700 text-white'
-                : 'bg-[#0f0f22] text-[#6060a0] hover:text-[#9090c0] border border-[rgba(120,110,200,0.15)]'
+                ? 'bg-red-700 text-white'
+                : 'bg-[#130909] text-[#5a3535] hover:text-[#a07070] border border-[rgba(200,70,70,0.15)]'
             }`}>
             {CATEGORY_LABELS[cat]}
           </button>
@@ -213,7 +213,7 @@ export function StoreTab({ state, onRefresh }: Props) {
         {filtered.map(item => {
           const isLootCase = item.category === 'loot_case';
           return (
-            <div key={item.id} className="bg-[#0f0f22] border border-[rgba(120,110,200,0.18)] rounded-xl p-4 flex flex-col gap-3 relative">
+            <div key={item.id} className="bg-[#130909] border border-[rgba(200,70,70,0.18)] rounded-xl p-4 flex flex-col gap-3 relative">
               {item.badge && (
                 <span className="absolute top-2.5 right-2.5 text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-900/50 text-amber-400 border border-amber-700/30">
                   {item.badge}
@@ -221,12 +221,12 @@ export function StoreTab({ state, onRefresh }: Props) {
               )}
 
               <div className="flex items-center gap-3">
-                <div className="text-3xl w-12 h-12 flex items-center justify-center bg-[#080818] rounded-xl border border-[rgba(120,110,200,0.1)]">
+                <div className="text-3xl w-12 h-12 flex items-center justify-center bg-[#080818] rounded-xl border border-[rgba(200,70,70,0.1)]">
                   {item.icon}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-slate-200 font-semibold text-sm">{item.name}</p>
-                  <p className="text-[#5050a0] text-xs">{item.description}</p>
+                  <p className="text-[#6a4040] text-xs">{item.description}</p>
                 </div>
               </div>
 
@@ -237,12 +237,12 @@ export function StoreTab({ state, onRefresh }: Props) {
                     .map(([rarity, weight]) => {
                       const colors: Record<string, string> = {
                         common: 'text-slate-400', uncommon: 'text-green-400',
-                        rare: 'text-blue-400', epic: 'text-purple-400', legendary: 'text-amber-400',
+                        rare: 'text-blue-400', epic: 'text-rose-400', legendary: 'text-amber-400',
                       };
                       return (
                         <div key={rarity} className="text-center">
                           <p className={`text-[10px] font-bold ${colors[rarity] ?? 'text-slate-400'}`}>{weight}%</p>
-                          <p className="text-[9px] text-[#4040a0] capitalize truncate">{rarity.slice(0, 4)}</p>
+                          <p className="text-[9px] text-[#4a3030] capitalize truncate">{rarity.slice(0, 4)}</p>
                         </div>
                       );
                     })}
@@ -254,7 +254,7 @@ export function StoreTab({ state, onRefresh }: Props) {
                 <button
                   onClick={() => handleBuy(item)}
                   disabled={buying === item.id || !STORE_ADDRESS}
-                  className="px-4 py-1.5 text-xs bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-all">
+                  className="px-4 py-1.5 text-xs bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-all">
                   {buying === item.id ? '⏳ Sending...' : !STORE_ADDRESS ? 'Soon™' : 'Buy'}
                 </button>
               </div>
@@ -263,7 +263,7 @@ export function StoreTab({ state, onRefresh }: Props) {
         })}
       </div>
 
-      <p className="text-center text-[#3a3a6a] text-xs pb-2">
+      <p className="text-center text-[#4a2a2a] text-xs pb-2">
         Payments are sent on Polygon network. Ensure your MetaMask is connected to Polygon.
       </p>
     </div>

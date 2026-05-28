@@ -24,30 +24,21 @@ export function ItemCard({ item, onEquip, onSalvage, onUpgrade, canAffordUpgrade
   if (compact) {
     return (
       <div className={`border ${RARITY_BORDER[item.rarity]} ${RARITY_BG[item.rarity]} ${RARITY_GLOW[item.rarity]} rounded-lg p-2.5 flex items-center gap-3`}>
-        <div className="w-8 h-8 shrink-0 flex items-center justify-center">
-          <img
-            src={`/icons/items/item_${item.slot}_${item.rarity}.png`}
-            alt={item.name}
-            width={32} height={32}
-            style={{ imageRendering: 'pixelated' }}
-          />
+        <div className="w-9 h-9 shrink-0 flex items-center justify-center">
+          <img src={`/icons/items/item_${item.slot}_${item.rarity}.png`} alt={item.name} className="w-9 h-9 object-contain" />
         </div>
         <div className="min-w-0 flex-1">
-          <RarityText rarity={item.rarity} className="text-sm font-semibold truncate block">
-            {item.name}
-          </RarityText>
-          <span className="text-[11px] text-[#6060a0]">{SLOT_LABELS[item.slot]} · GS {item.gearScore}</span>
+          <RarityText rarity={item.rarity} className="text-sm font-semibold truncate block">{item.name}</RarityText>
+          <span className="text-[11px] text-[#5a3535]">{SLOT_LABELS[item.slot]} · GS {item.gearScore}</span>
         </div>
         <div className="flex gap-1.5 shrink-0">
           {onEquip && (
-            <button onClick={onEquip}
-              className="px-3 py-1 text-xs bg-[#252545] hover:bg-[#2e2e55] text-slate-200 rounded-lg transition-colors font-medium">
+            <button onClick={onEquip} className="px-3 py-1 text-xs bg-red-900/40 hover:bg-red-900/60 text-red-300 rounded-lg transition-colors font-medium">
               Equip
             </button>
           )}
           {onSalvage && (
-            <button onClick={onSalvage}
-              className="px-3 py-1 text-xs bg-red-950/50 hover:bg-red-900/50 text-red-400 rounded-lg transition-colors font-medium">
+            <button onClick={onSalvage} className="px-3 py-1 text-xs bg-red-950/50 hover:bg-red-900/50 text-red-400 rounded-lg transition-colors font-medium">
               Salvage
             </button>
           )}
@@ -60,20 +51,15 @@ export function ItemCard({ item, onEquip, onSalvage, onUpgrade, canAffordUpgrade
     <div className={`border ${RARITY_BORDER[item.rarity]} ${RARITY_BG[item.rarity]} ${RARITY_GLOW[item.rarity]} rounded-xl p-4`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start gap-2.5 flex-1 min-w-0">
-          <div className="w-10 h-10 shrink-0 flex items-center justify-center mt-0.5">
-            <img
-              src={`/icons/items/item_${item.slot}_${item.rarity}.png`}
-              alt={item.name}
-              width={40} height={40}
-              style={{ imageRendering: 'pixelated' }}
-            />
+          <div className="w-11 h-11 shrink-0 flex items-center justify-center mt-0.5">
+            <img src={`/icons/items/item_${item.slot}_${item.rarity}.png`} alt={item.name} className="w-11 h-11 object-contain" />
           </div>
           <div className="flex-1 min-w-0">
           <RarityText rarity={item.rarity} className="font-bold text-sm leading-tight block truncate">
             {item.name}
           </RarityText>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] text-[#6060a0]">{SLOT_LABELS[item.slot]}</span>
+            <span className="text-[11px] text-[#5a3535]">{SLOT_LABELS[item.slot]}</span>
             {item.gearTier && (
               <span className="text-[10px] px-1.5 py-0.5 rounded font-bold"
                 style={{ color: TIER_COLORS[item.gearTier], background: TIER_COLORS[item.gearTier] + '18' }}>
@@ -90,21 +76,21 @@ export function ItemCard({ item, onEquip, onSalvage, onUpgrade, canAffordUpgrade
 
       <div className="space-y-1.5 mb-3">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-[#9090c0]">{STAT_ICONS[item.primaryStat]}</span>
-          <span className="text-[#9090c0] text-xs">{STAT_LABELS[item.primaryStat]}</span>
+          <span className="text-[#a07070]">{STAT_ICONS[item.primaryStat]}</span>
+          <span className="text-[#a07070] text-xs">{STAT_LABELS[item.primaryStat]}</span>
           <span className="ml-auto text-slate-200 font-bold">+{item.primaryValue}</span>
         </div>
         {item.secondaryStats.map((s) => (
           <div key={s.stat} className="flex items-center gap-2 text-xs">
-            <span className="text-[#6060a0]">{STAT_ICONS[s.stat]}</span>
-            <span className="text-[#6060a0]">{STAT_LABELS[s.stat]}</span>
-            <span className="ml-auto text-[#9090c0]">+{s.value}</span>
+            <span className="text-[#5a3535]">{STAT_ICONS[s.stat]}</span>
+            <span className="text-[#5a3535]">{STAT_LABELS[s.stat]}</span>
+            <span className="ml-auto text-[#a07070]">+{s.value}</span>
           </div>
         ))}
       </div>
 
       {item.specialEffects.length > 0 && (
-        <div className="border-t border-[rgba(120,100,200,0.15)] pt-2.5 mb-3 space-y-1.5">
+        <div className="border-t border-[rgba(200,70,70,0.15)] pt-2.5 mb-3 space-y-1.5">
           {item.specialEffects.map((e) => (
             <div key={e.id} className="flex items-start gap-1.5 text-xs text-amber-400/90">
               <span className="shrink-0 mt-0.5">✦</span>
@@ -122,13 +108,13 @@ export function ItemCard({ item, onEquip, onSalvage, onUpgrade, canAffordUpgrade
         return (
           <div className="mb-2">
             <div className="flex items-center justify-between text-[10px] mb-1">
-              <span className="text-[#5050a0]">Tempering</span>
+              <span className="text-[#6a4040]">Tempering</span>
               {tempered
                 ? <span className="text-emerald-400 font-semibold">✓ Tempered</span>
-                : <span className="text-[#6060a0]">{runs}/{needed} runs</span>
+                : <span className="text-[#5a3535]">{runs}/{needed} runs</span>
               }
             </div>
-            <div className="h-1 bg-[#0f0f22] rounded-full overflow-hidden">
+            <div className="h-1 bg-[#130909] rounded-full overflow-hidden">
               <div className={`h-full rounded-full transition-all ${tempered ? 'bg-emerald-500' : 'bg-amber-500/70'}`}
                 style={{ width: `${pct}%` }} />
             </div>
@@ -138,35 +124,35 @@ export function ItemCard({ item, onEquip, onSalvage, onUpgrade, canAffordUpgrade
 
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-[#5050a0]">GS {item.gearScore}</span>
+          <span className="text-[11px] text-[#6a4040]">GS {item.gearScore}</span>
           {upgradeLevel > 0 && (
             <span className="text-[10px] text-amber-400 font-bold">+{upgradeLevel}</span>
           )}
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5 justify-end">
           {onUpgrade && upgradeLevel < UPGRADE_MAX && (
             <button onClick={onUpgrade} disabled={!canAffordUpgrade}
-              className={`px-2.5 py-1.5 text-[11px] rounded-lg font-semibold transition-all ${
+              className={`px-2 py-1 text-[10px] rounded-lg font-semibold transition-all ${
                 canAffordUpgrade
                   ? 'bg-amber-900/40 hover:bg-amber-900/60 text-amber-400 border border-amber-700/40'
-                  : 'bg-[#1a1a2a] text-[#4a4a6a] border border-[rgba(120,110,200,0.1)] cursor-not-allowed'
+                  : 'bg-[#180c0c] text-[#4a3030] border border-[rgba(200,70,70,0.1)] cursor-not-allowed'
               }`}
               title={canAffordUpgrade ? `Upgrade for ${upgradeCost}g` : `Need ${upgradeCost}g`}>
               ▲ {upgradeCost}g
             </button>
           )}
           {onUpgrade && upgradeLevel >= UPGRADE_MAX && (
-            <span className="text-[10px] text-amber-500/60 px-2 py-1.5">Max</span>
+            <span className="text-[10px] text-amber-500/60 px-1.5 py-1">Max</span>
           )}
           {onEquip && (
             <button onClick={onEquip}
-              className="px-3 py-1.5 text-xs bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white rounded-lg transition-all font-semibold">
+              className="px-2.5 py-1 text-[11px] bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 text-white rounded-lg transition-all font-semibold">
               Equip
             </button>
           )}
           {onSalvage && (
             <button onClick={onSalvage}
-              className="px-3 py-1.5 text-xs bg-red-950/60 hover:bg-red-900/60 text-red-400 rounded-lg transition-colors font-medium">
+              className="px-2.5 py-1 text-[11px] bg-red-950/60 hover:bg-red-900/60 text-red-400 rounded-lg transition-colors font-medium">
               Salvage
             </button>
           )}

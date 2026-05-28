@@ -32,11 +32,11 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-6">
-      <div className="bg-[#0f0f22] border border-[rgba(120,110,200,0.25)] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl shadow-black/60">
+      <div className="bg-[#130909] border border-[rgba(200,70,70,0.25)] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl shadow-black/60">
 
         {/* Header */}
         <div className={`h-1.5 bg-gradient-to-r ${cfg.bar} rounded-t-2xl`} />
-        <div className="px-6 py-5 border-b border-[rgba(120,110,200,0.12)]">
+        <div className="px-6 py-5 border-b border-[rgba(200,70,70,0.12)]">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] text-[#7070b0] uppercase tracking-widest">
@@ -54,28 +54,28 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
                 </p>
               )}
             </div>
-            <div className="text-right text-xs text-[#5050a0] mt-1">
+            <div className="text-right text-xs text-[#6a4040] mt-1">
               <div>Roll: <span className={result.combatRoll >= result.dc ? 'text-emerald-400' : 'text-red-400'}>{result.combatRoll}</span></div>
-              <div>Need: <span className="text-[#9090c0]">{result.dc}</span></div>
+              <div>Need: <span className="text-[#a07070]">{result.dc}</span></div>
             </div>
           </div>
         </div>
 
         {/* Rewards strip */}
-        <div className="px-6 py-4 flex gap-3 border-b border-[rgba(120,110,200,0.10)]">
-          <div className="flex-1 bg-[#14142a] rounded-xl p-3 text-center">
+        <div className="px-6 py-4 flex gap-3 border-b border-[rgba(200,70,70,0.10)]">
+          <div className="flex-1 bg-[#180c0c] rounded-xl p-3 text-center">
             <p className="text-amber-400 font-bold text-xl">+{result.goldGained}</p>
-            <p className="text-[#6060a0] text-[11px] mt-0.5">Gold</p>
+            <p className="text-[#5a3535] text-[11px] mt-0.5">Gold</p>
           </div>
           {result.essenceGained > 0 && (
-            <div className="flex-1 bg-[#14142a] rounded-xl p-3 text-center">
-              <p className="text-purple-400 font-bold text-xl">+{result.essenceGained}</p>
-              <p className="text-[#6060a0] text-[11px] mt-0.5">Essence</p>
+            <div className="flex-1 bg-[#180c0c] rounded-xl p-3 text-center">
+              <p className="text-rose-400 font-bold text-xl">+{result.essenceGained}</p>
+              <p className="text-[#5a3535] text-[11px] mt-0.5">Essence</p>
             </div>
           )}
-          <div className="flex-1 bg-[#14142a] rounded-xl p-3 text-center">
+          <div className="flex-1 bg-[#180c0c] rounded-xl p-3 text-center">
             <p className="text-blue-400 font-bold text-xl">+{result.xpGained}</p>
-            <p className="text-[#6060a0] text-[11px] mt-0.5">XP</p>
+            <p className="text-[#5a3535] text-[11px] mt-0.5">XP</p>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
                           {floor.items.map((item) => (
                             <span
                               key={item.id}
-                              className="text-[11px] px-1.5 py-0.5 rounded bg-[#0f0f22]/60"
+                              className="text-[11px] px-1.5 py-0.5 rounded bg-[#130909]/60"
                               style={{ color: RARITY_COLORS[item.rarity] }}
                             >
                               {item.name}
@@ -143,7 +143,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
                       {(floor.gold > 0 || floor.essence > 0) && (
                         <div className="flex gap-2 mt-1 text-[11px] opacity-70">
                           {floor.gold > 0 && <span className="text-amber-400">+{floor.gold}g</span>}
-                          {floor.essence > 0 && <span className="text-purple-400">+{floor.essence} ess</span>}
+                          {floor.essence > 0 && <span className="text-rose-400">+{floor.essence} ess</span>}
                         </div>
                       )}
 
@@ -170,7 +170,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
             </div>
           ) : (
             !hasFloorResults && (
-              <div className="text-center py-6 text-[#5050a0]">
+              <div className="text-center py-6 text-[#6a4040]">
                 <p className="text-3xl mb-2">—</p>
                 <p className="text-sm">No loot this time</p>
               </div>
@@ -183,7 +183,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
               <div className="flex flex-wrap gap-2">
                 {result.resourcesGained.map((r) => (
                   <div key={r.resourceId}
-                    className="flex items-center gap-1.5 bg-[#0f0f22] border border-[rgba(120,110,200,0.15)] rounded-lg px-3 py-1.5 text-sm">
+                    className="flex items-center gap-1.5 bg-[#130909] border border-[rgba(200,70,70,0.15)] rounded-lg px-3 py-1.5 text-sm">
                     <ResIcon resourceId={r.resourceId} fallback={r.icon} size={18} />
                     <span className="text-slate-300">{r.name}</span>
                     <span className="text-emerald-400 font-bold">×{r.quantity}</span>
@@ -194,9 +194,9 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-[rgba(120,110,200,0.10)]">
+        <div className="px-6 py-4 border-t border-[rgba(200,70,70,0.10)]">
           <button onClick={onClose}
-            className="w-full py-3.5 bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white font-bold rounded-xl transition-all text-sm tracking-wide">
+            className="w-full py-3.5 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 text-white font-bold rounded-xl transition-all text-sm tracking-wide">
             Continue
           </button>
         </div>
