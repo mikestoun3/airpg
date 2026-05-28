@@ -103,7 +103,7 @@ export function LoginScreen({ onLogin }: Props) {
   }[status];
 
   return (
-    <div className="h-[100dvh] flex items-center justify-center bg-[#0d0808]">
+    <div className="h-[100dvh] flex items-center justify-center bg-[#0b0b0f]">
       <div className="flex flex-col items-center gap-8 max-w-sm w-full px-6">
 
         {/* Logo */}
@@ -113,15 +113,15 @@ export function LoginScreen({ onLogin }: Props) {
           </div>
           <div className="text-center">
             <p className="text-slate-100 font-black text-2xl tracking-wide">AirPG</p>
-            <p className="text-[#6a4040] text-sm tracking-widest uppercase">Idle Dungeon</p>
+            <p className="text-[#606068] text-sm tracking-widest uppercase">Idle Dungeon</p>
           </div>
         </div>
 
         {/* Card */}
-        <div className="w-full bg-[#130909] border border-[rgba(200,70,70,0.25)] rounded-2xl p-6 flex flex-col gap-5">
+        <div className="w-full bg-[#111118] border border-[rgba(200,70,70,0.25)] rounded-2xl p-6 flex flex-col gap-5">
           <div className="text-center">
             <p className="text-slate-200 font-semibold text-lg">Sign in with MetaMask</p>
-            <p className="text-[#6a4040] text-sm mt-1">Your wallet is your account. No password needed.</p>
+            <p className="text-[#606068] text-sm mt-1">Your wallet is your account. No password needed.</p>
           </div>
 
           {statusLabel && (
@@ -160,20 +160,20 @@ export function LoginScreen({ onLogin }: Props) {
 
           {/* Mobile hint when MetaMask IS injected (inside MM browser) */}
           {isMobile && hasEthereum && (
-            <p className="text-center text-[#5a3535] text-xs">
+            <p className="text-center text-[#505058] text-xs">
               Running inside MetaMask browser ✓
             </p>
           )}
 
           {/* Mobile: also show "open in MM" as secondary option if on desktop no ethereum */}
           {isMobile && !hasEthereum && (
-            <p className="text-center text-[#4a2a2a] text-xs">
+            <p className="text-center text-[#404048] text-xs">
               This opens the site inside MetaMask&apos;s built-in browser where your wallet is available.
             </p>
           )}
 
           {!isMobile && (
-            <p className="text-center text-[#4a2a2a] text-xs">
+            <p className="text-center text-[#404048] text-xs">
               A new hero is created for each wallet address.
             </p>
           )}

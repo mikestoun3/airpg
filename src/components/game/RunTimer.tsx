@@ -186,23 +186,23 @@ export function RunTimer({ run, onComplete }: Props) {
       <div className="relative bg-[#120808] border border-[rgba(200,70,70,0.25)] rounded-2xl overflow-hidden flex-shrink-0">
 
         {/* Atmospheric background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1e] to-[#130909] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1e] to-[#111118] pointer-events-none" />
 
         {/* Header */}
         <div className="relative z-10 flex items-center justify-between px-5 py-3">
           <div>
-            <p className="text-[10px] text-[#5a3535] uppercase tracking-widest">On Expedition</p>
+            <p className="text-[10px] text-[#505058] uppercase tracking-widest">On Expedition</p>
             <h3 className="text-slate-100 font-bold text-base mt-0.5">{run.dungeonName}</h3>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-[#5a3535] uppercase tracking-widest">
+            <p className="text-[10px] text-[#505058] uppercase tracking-widest">
               {completed ? 'Completed' : 'Current Floor'}
             </p>
             <div className="flex items-baseline gap-2 justify-end mt-0.5">
               <span className="text-2xl font-bold text-red-300 tabular-nums leading-none">
                 {completed ? '🏆' : currentFloor}
                 {!completed && floorsAttempted > 1 && (
-                  <span className="text-sm text-[#5a3535] font-normal ml-1">/ {startFloor + floorsAttempted - 1}</span>
+                  <span className="text-sm text-[#505058] font-normal ml-1">/ {startFloor + floorsAttempted - 1}</span>
                 )}
               </span>
               {!completed && (
@@ -225,7 +225,7 @@ export function RunTimer({ run, onComplete }: Props) {
               return (
                 <div key={i} className="flex-1 text-center">
                   <span className={`text-[9px] transition-all ${
-                    isCurrent ? 'text-red-300 font-bold' : isCleared ? 'text-[#5a3535]' : 'text-[#3a3a60]'
+                    isCurrent ? 'text-red-300 font-bold' : isCleared ? 'text-[#505058]' : 'text-[#3a3a60]'
                   }`}>
                     {floorsAttempted <= 5 ? `F${floorNum}` : (isCurrent ? `F${floorNum}` : '')}
                   </span>
@@ -241,7 +241,7 @@ export function RunTimer({ run, onComplete }: Props) {
               const isCleared = completed || i < currentFloorIdx;
               const segWidth = isCurrent ? floorLocalProgress : (isCleared ? 1 : 0);
               return (
-                <div key={i} className="flex-1 bg-[#0a0a1f] rounded-sm overflow-hidden border border-[rgba(200,70,70,0.12)]">
+                <div key={i} className="flex-1 bg-[#0a0a1f] rounded-sm overflow-hidden border border-[rgba(255,255,255,0.07)]">
                   <div
                     className="h-full rounded-sm transition-all duration-1000"
                     style={{
@@ -263,7 +263,7 @@ export function RunTimer({ run, onComplete }: Props) {
           </div>
 
           {/* Progress text — floor progress left, total time right */}
-          <div className="flex justify-between text-[10px] text-[#6a4040] mt-1">
+          <div className="flex justify-between text-[10px] text-[#606068] mt-1">
             <span>
               {completed
                 ? `All ${floorsAttempted} floor${floorsAttempted > 1 ? 's' : ''} done`
@@ -275,14 +275,14 @@ export function RunTimer({ run, onComplete }: Props) {
       </div>
 
       {/* ── Event log ── */}
-      <div className="flex-1 bg-[#120808] border border-[rgba(200,70,70,0.15)] rounded-xl p-4 overflow-hidden">
-        <p className="text-[10px] text-[#6a4040] uppercase tracking-widest mb-3 flex items-center gap-1.5">
+      <div className="flex-1 bg-[#120808] border border-[rgba(255,255,255,0.08)] rounded-xl p-4 overflow-hidden">
+        <p className="text-[10px] text-[#606068] uppercase tracking-widest mb-3 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse inline-block" />
           Journey Log
         </p>
 
         {visibleEvents.length === 0 ? (
-          <p className="text-[#4a3030] text-sm italic">Preparing to depart...</p>
+          <p className="text-[#44444e] text-sm italic">Preparing to depart...</p>
         ) : (
           <div className="space-y-2">
             {visibleEvents.map((ev, i) => {
@@ -302,7 +302,7 @@ export function RunTimer({ run, onComplete }: Props) {
                         : isResource ? 'text-emerald-400'
                         : isEssence ? 'text-rose-400'
                         : 'text-rose-400'
-                      : 'text-[#4a3030]'
+                      : 'text-[#44444e]'
                   }`}
                     style={i === 0 && rarityColor ? { color: rarityColor } : undefined}>
                     {i === 0 ? (isFloorClear ? '✓' : isLoot ? '◆' : isResource ? '⬡' : '▸') : '·'}

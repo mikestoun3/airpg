@@ -140,7 +140,7 @@ export function CraftTab({ state, onRefresh }: Props) {
 
       {/* LEFT: materials + forge status */}
       <div className="w-full md:w-56 md:flex-shrink-0 flex flex-col gap-4">
-        <p className="text-[11px] text-[#5a3535] uppercase tracking-widest flex items-center gap-2">
+        <p className="text-[11px] text-[#505058] uppercase tracking-widest flex items-center gap-2">
           <span className="text-rose-500">◆</span> Materials
         </p>
 
@@ -151,7 +151,7 @@ export function CraftTab({ state, onRefresh }: Props) {
             const rarityColor = res.rarity === 'rare' ? '#60a5fa' : res.rarity === 'uncommon' ? '#4ade80' : '#9ca3af';
             return (
               <div key={res.id}
-                className="flex-shrink-0 flex items-center gap-2 bg-[#180c0c] border border-[rgba(200,70,70,0.12)] rounded-lg px-3 py-2">
+                className="flex-shrink-0 flex items-center gap-2 bg-[#16161f] border border-[rgba(255,255,255,0.07)] rounded-lg px-3 py-2">
                 <ResIcon resourceId={res.id} fallback={res.icon} size={18} />
                 <div>
                   <p className="text-xs text-slate-300 whitespace-nowrap">{res.name}</p>
@@ -168,7 +168,7 @@ export function CraftTab({ state, onRefresh }: Props) {
             const rarityColor = res.rarity === 'rare' ? '#60a5fa' : res.rarity === 'uncommon' ? '#4ade80' : '#9ca3af';
             return (
               <div key={res.id}
-                className="flex items-center justify-between bg-[#180c0c] border border-[rgba(200,70,70,0.12)] rounded-lg px-3 py-2">
+                className="flex items-center justify-between bg-[#16161f] border border-[rgba(255,255,255,0.07)] rounded-lg px-3 py-2">
                 <div className="flex items-center gap-2">
                   <ResIcon resourceId={res.id} fallback={res.icon} size={20} />
                   <div>
@@ -176,15 +176,15 @@ export function CraftTab({ state, onRefresh }: Props) {
                     <p className="text-[10px]" style={{ color: rarityColor }}>{res.rarity}</p>
                   </div>
                 </div>
-                <span className={`font-bold text-sm ${qty > 0 ? 'text-slate-100' : 'text-[#4a3030]'}`}>{qty}</span>
+                <span className={`font-bold text-sm ${qty > 0 ? 'text-slate-100' : 'text-[#44444e]'}`}>{qty}</span>
               </div>
             );
           })}
         </div>
 
         {/* Forge level */}
-        <div className="bg-[#180c0c] border border-[rgba(200,70,70,0.2)] rounded-xl p-3">
-          <p className="text-[11px] text-[#5a3535] uppercase tracking-widest mb-2">Forge Level</p>
+        <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-3">
+          <p className="text-[11px] text-[#505058] uppercase tracking-widest mb-2">Forge Level</p>
           <div className="flex gap-1 mb-2">
             {[1, 2, 3, 4].map(lvl => (
               <div key={lvl}
@@ -201,19 +201,19 @@ export function CraftTab({ state, onRefresh }: Props) {
       {/* RIGHT: recipes */}
       <div className="flex-1 flex flex-col gap-4 md:overflow-y-auto md:pr-1">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <p className="text-[11px] text-[#5a3535] uppercase tracking-widest flex items-center gap-2">
+          <p className="text-[11px] text-[#505058] uppercase tracking-widest flex items-center gap-2">
             <span className="text-rose-500">◆</span> Recipes
           </p>
           {/* Tier filter */}
           <div className="flex gap-1.5">
             <button onClick={() => setTierFilter(null)}
               className={`px-2.5 py-1 text-[11px] rounded-lg border transition-all ${
-                tierFilter === null ? 'bg-[#1e0e0e] text-slate-200 border-[rgba(200,70,70,0.3)]' : 'text-[#6a4040] border-transparent'
+                tierFilter === null ? 'bg-[#1c1c28] text-slate-200 border-[rgba(200,70,70,0.3)]' : 'text-[#606068] border-transparent'
               }`}>All</button>
             {[1, 2, 3, 4].map(t => (
               <button key={t} onClick={() => setTierFilter(tierFilter === t ? null : t)}
                 className={`px-2.5 py-1 text-[11px] rounded-lg border transition-all ${
-                  tierFilter === t ? 'bg-[#1e0e0e] border-current' : 'border-transparent hover:bg-[#180c0c]'
+                  tierFilter === t ? 'bg-[#1c1c28] border-current' : 'border-transparent hover:bg-[#16161f]'
                 }`}
                 style={{ color: TIER_COLORS[t], borderColor: tierFilter === t ? TIER_COLORS[t] + '60' : undefined }}>
                 T{t} {TIER_NAMES[t]}
@@ -233,22 +233,22 @@ export function CraftTab({ state, onRefresh }: Props) {
         )}
 
         {/* Alchemy: resource conversions */}
-        <div className="bg-[#180c0c] border border-[rgba(200,70,70,0.15)] rounded-xl overflow-hidden">
+        <div className="bg-[#16161f] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden">
           <div className="px-4 pt-3 pb-2 flex items-center gap-2">
             <span className="text-rose-500">◆</span>
-            <p className="text-[11px] text-[#5a3535] uppercase tracking-widest">Alchemy — Resource Conversion (3:1)</p>
+            <p className="text-[11px] text-[#505058] uppercase tracking-widest">Alchemy — Resource Conversion (3:1)</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[rgba(200,70,70,0.08)]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[rgba(255,255,255,0.05)]">
             {CONVERSION_RECIPES.map(conv => {
               const have = stock[conv.fromResourceId] ?? 0;
               const canConvert = have >= conv.fromQuantity;
               const isConverting = converting === conv.id;
               return (
-                <div key={conv.id} className="bg-[#180c0c] px-4 py-3 flex items-center gap-3">
+                <div key={conv.id} className="bg-[#16161f] px-4 py-3 flex items-center gap-3">
                   <div className="flex items-center gap-1.5 flex-1 min-w-0 text-sm">
-                    <span className="text-[#7a5050]">{conv.fromQuantity}×</span>
+                    <span className="text-[#78788a]">{conv.fromQuantity}×</span>
                     <span className="text-slate-300 truncate">{conv.fromName}</span>
-                    <span className="text-[#6a4040] mx-1">→</span>
+                    <span className="text-[#606068] mx-1">→</span>
                     <span className="text-red-300 font-semibold truncate">{conv.toName}</span>
                   </div>
                   <div className="shrink-0 flex items-center gap-2">
@@ -284,7 +284,7 @@ export function CraftTab({ state, onRefresh }: Props) {
 
             return (
               <div key={recipe.id}
-                className={`bg-[#180c0c] rounded-xl border ${RARITY_BORDER[recipe.rarity]} overflow-hidden flex flex-col ${!forgeOk ? 'opacity-50' : ''}`}>
+                className={`bg-[#16161f] rounded-xl border ${RARITY_BORDER[recipe.rarity]} overflow-hidden flex flex-col ${!forgeOk ? 'opacity-50' : ''}`}>
                 <div className="h-0.5" style={{ background: `linear-gradient(90deg, ${rarityColor}80, transparent)` }} />
                 <div className="p-4 flex flex-col gap-3 flex-1">
                   <div>
@@ -293,24 +293,24 @@ export function CraftTab({ state, onRefresh }: Props) {
                         style={{ color: tierColor, background: tierColor + '18', border: `1px solid ${tierColor}30` }}>
                         T{recipe.gearTier} {TIER_NAMES[recipe.gearTier]}
                       </span>
-                      <span className="text-[10px] text-[#6a4040] bg-[#130909] px-1.5 py-0.5 rounded">{recipe.slot}</span>
+                      <span className="text-[10px] text-[#606068] bg-[#111118] px-1.5 py-0.5 rounded">{recipe.slot}</span>
                     </div>
                     <h3 className="text-slate-100 font-semibold text-sm">{recipe.name}</h3>
-                    <p className="text-[11px] text-[#5a3535] mt-0.5">{recipe.description}</p>
+                    <p className="text-[11px] text-[#505058] mt-0.5">{recipe.description}</p>
                   </div>
 
                   {/* Output stats */}
-                  <div className="bg-[#130909] rounded-lg p-2.5 space-y-1">
-                    <p className="text-[10px] text-[#6a4040] uppercase tracking-wide mb-1.5">Output</p>
+                  <div className="bg-[#111118] rounded-lg p-2.5 space-y-1">
+                    <p className="text-[10px] text-[#606068] uppercase tracking-wide mb-1.5">Output</p>
                     <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-[#a06060]">{STAT_ICONS[recipe.outputItem.primaryStat]}</span>
+                      <span className="text-[#848490]">{STAT_ICONS[recipe.outputItem.primaryStat]}</span>
                       <span className="text-slate-300">{recipe.outputItem.primaryStat.toUpperCase()}</span>
                       <span className="font-bold text-slate-100">+{recipe.outputItem.primaryValue}</span>
                     </div>
                     {recipe.outputItem.secondaryStats.map((s) => (
                       <div key={s.stat} className="flex items-center gap-1.5 text-xs">
-                        <span className="text-[#a06060]">{STAT_ICONS[s.stat]}</span>
-                        <span className="text-[#7a5050]">{s.stat.toUpperCase()}</span>
+                        <span className="text-[#848490]">{STAT_ICONS[s.stat]}</span>
+                        <span className="text-[#78788a]">{s.stat.toUpperCase()}</span>
                         <span className="text-[#9090b0]">+{s.value}</span>
                       </div>
                     ))}
@@ -320,7 +320,7 @@ export function CraftTab({ state, onRefresh }: Props) {
                   <div className="space-y-1">
                     {recipe.goldCost > 0 && (
                       <div className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-1 text-[#a06060]">
+                        <span className="flex items-center gap-1 text-[#848490]">
                           <img src="/icons/res_gold.png" alt="gold" width={16} height={16} style={{ imageRendering: 'pixelated' }} />
                           <span>Gold</span>
                         </span>
@@ -335,7 +335,7 @@ export function CraftTab({ state, onRefresh }: Props) {
                       const def = RESOURCES.find((r) => r.id === ing.resourceId);
                       return (
                         <div key={ing.resourceId} className="flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1 text-[#a06060]">
+                          <span className="flex items-center gap-1 text-[#848490]">
                             <ResIcon resourceId={ing.resourceId} fallback={def?.icon ?? '?'} size={16} />
                             <span>{ing.name}</span>
                           </span>
@@ -350,32 +350,32 @@ export function CraftTab({ state, onRefresh }: Props) {
                   {/* Ingredient item picker for T2+ */}
                   {recipe.requiredItemTier && (
                     <div className="space-y-1.5">
-                      <p className="text-[10px] text-[#6a4040] uppercase tracking-wide">
+                      <p className="text-[10px] text-[#606068] uppercase tracking-wide">
                         Absorb T{recipe.requiredItemTier} {TIER_NAMES[recipe.requiredItemTier]} {recipe.slot}
-                        <span className="text-[#4a2a2a] ml-1">({ATTUNEMENT_RUNS_REQUIRED[recipe.requiredItemTier as 1|2|3]} runs needed)</span>
+                        <span className="text-[#404048] ml-1">({ATTUNEMENT_RUNS_REQUIRED[recipe.requiredItemTier as 1|2|3]} runs needed)</span>
                       </p>
 
                       {eligible.length === 0 ? (
-                        <p className="text-[11px] text-[#4a3030] italic">No eligible items</p>
+                        <p className="text-[11px] text-[#44444e] italic">No eligible items</p>
                       ) : (
                         <>
                           <button
                             onClick={() => setShowIngredientPicker(isPickerOpen ? null : recipe.id)}
-                            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#130909] border border-[rgba(200,70,70,0.2)] text-xs hover:border-red-600/30 transition-all">
+                            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#111118] border border-[rgba(255,255,255,0.09)] text-xs hover:border-red-600/30 transition-all">
                             {chosenItem ? (
                               <span style={{ color: RARITY_COLORS[chosenItem.rarity] }}>{chosenItem.name}
-                                <span className="text-[#6a4040] ml-1">
+                                <span className="text-[#606068] ml-1">
                                   ({chosenItem.attunementRuns ?? 0}/{ATTUNEMENT_RUNS_REQUIRED[recipe.requiredItemTier as 1|2|3]} runs)
                                 </span>
                               </span>
                             ) : (
-                              <span className="text-[#6a4040]">— select —</span>
+                              <span className="text-[#606068]">— select —</span>
                             )}
-                            <span className="text-[#6a4040]">{isPickerOpen ? '▲' : '▼'}</span>
+                            <span className="text-[#606068]">{isPickerOpen ? '▲' : '▼'}</span>
                           </button>
 
                           {isPickerOpen && (
-                            <div className="bg-[#0a0a1e] border border-[rgba(200,70,70,0.2)] rounded-lg overflow-hidden">
+                            <div className="bg-[#0a0a1e] border border-[rgba(255,255,255,0.09)] rounded-lg overflow-hidden">
                               {eligible.map(item => {
                                 const runs = item.attunementRuns ?? 0;
                                 const needed = ATTUNEMENT_RUNS_REQUIRED[recipe.requiredItemTier as 1|2|3];
@@ -386,7 +386,7 @@ export function CraftTab({ state, onRefresh }: Props) {
                                       setSelectedIngredient(prev => ({ ...prev, [recipe.id]: item.id }));
                                       setShowIngredientPicker(null);
                                     }}
-                                    className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-[#180c0c] transition-colors border-b border-[rgba(200,70,70,0.08)] last:border-0">
+                                    className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-[#16161f] transition-colors border-b border-[rgba(255,255,255,0.05)] last:border-0">
                                     <span style={{ color: RARITY_COLORS[item.rarity] }}>{item.name}</span>
                                     <div className="text-right">
                                       {tempered
@@ -409,10 +409,10 @@ export function CraftTab({ state, onRefresh }: Props) {
                     disabled={!affordable || isCrafting || state.character.status === 'on_run'}
                     className={`mt-auto w-full py-2 rounded-lg text-xs font-bold border transition-all ${
                       !forgeOk
-                        ? 'border-[rgba(200,70,70,0.1)] bg-transparent text-[#3030a0] cursor-not-allowed'
+                        ? 'border-[rgba(255,255,255,0.06)] bg-transparent text-[#3030a0] cursor-not-allowed'
                         : affordable
                         ? 'border-red-600/40 bg-red-900/20 text-red-300 hover:bg-red-900/40 hover:border-red-600/60'
-                        : 'border-[rgba(200,70,70,0.1)] bg-transparent text-[#4a3030] cursor-not-allowed'
+                        : 'border-[rgba(255,255,255,0.06)] bg-transparent text-[#44444e] cursor-not-allowed'
                     }`}>
                     {isCrafting ? 'Crafting…' : !forgeOk ? `🔒 ${FORGE_NAMES[recipe.requiredForgeLevel]}` : affordable ? '⚒ Craft' : reason}
                   </button>

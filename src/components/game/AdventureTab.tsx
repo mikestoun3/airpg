@@ -36,7 +36,7 @@ const DUNGEON_FALLBACK: Record<string, string> = {
   ruined_watchtower: 'from-[#1e1606] via-[#16100a] to-[#100c06]',
   collapsed_mine:    'from-[#161616] via-[#101010] to-[#0c0c0c]',
   cursed_catacombs:  'from-[#18081e] via-[#100614] to-[#0c040e]',
-  bandit_stronghold: 'from-[#200808] via-[#160606] to-[#100404]',
+  bandit_stronghold: 'from-[#121220] via-[#160606] to-[#100404]',
 };
 
 const DUNGEON_SUBTITLE: Record<string, string> = {
@@ -111,13 +111,13 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
 
       {/* ── LEFT: dungeon list ── */}
       <div className="flex-1 flex flex-col gap-3 md:overflow-y-auto md:pr-1">
-        <p className="text-[10px] text-[#7a5050] uppercase tracking-[0.2em] flex items-center gap-2">
+        <p className="text-[10px] text-[#78788a] uppercase tracking-[0.2em] flex items-center gap-2">
           <span className="w-1 h-1 rounded-full bg-red-700 inline-block" />
           Available Dungeons
         </p>
 
         {isInjured && character.injuredUntil ? (
-          <div className="bg-[#160c0c] border border-red-900/40 rounded-xl p-6 text-center">
+          <div className="bg-[#16161f] border border-red-900/40 rounded-xl p-6 text-center">
             <span className="text-3xl">🩹</span>
             <p className="text-red-400 font-semibold mt-3">Hero is Injured</p>
             <p className="text-red-400/50 text-sm mt-1">
@@ -139,18 +139,18 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   className={`rounded-xl border overflow-hidden transition-all ${
                     isSel
                       ? 'border-red-700/50 bg-[#1c0c0c]'
-                      : 'border-[rgba(200,80,80,0.12)] bg-[#160c0c] hover:border-[rgba(200,80,80,0.25)] hover:bg-[#190e0e]'
+                      : 'border-[rgba(255,255,255,0.07)] bg-[#16161f] hover:border-[rgba(200,80,80,0.25)] hover:bg-[#190e0e]'
                   }`}>
                   <div className="flex items-stretch">
                     {/* Thumbnail */}
-                    <div className={`w-28 min-h-[96px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a0a0a] to-[#0d0606]'}`}>
+                    <div className={`w-28 min-h-[96px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a0a0a] to-[#0a0a12]'}`}>
                       {imgSrc && (
                         <img src={imgSrc} alt={dungeon.name}
                           className="absolute inset-0 w-full h-full object-cover opacity-80"
                           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#160c0c]/60" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#16161f]/60" />
                       <div className="absolute bottom-1.5 left-1.5">
                         <span className={`text-[9px] font-bold uppercase tracking-wide drop-shadow ${TIER_BADGE[dungeon.tier]}`}>
                           {TIER_LABELS[dungeon.tier]}
@@ -169,7 +169,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-[#6a4040] mt-0.5 truncate">
+                        <p className="text-[11px] text-[#606068] mt-0.5 truncate">
                           {DUNGEON_SUBTITLE[dungeon.id] ?? dungeon.lootFocus}
                         </p>
                       </div>
@@ -177,7 +177,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                       {/* Odds + duration */}
                       <div className="text-right shrink-0">
                         <p className={`text-sm font-bold ${oddsColor(odds)}`}>~{odds}%</p>
-                        <p className="text-[10px] text-[#5a3535] mt-0.5">{dungeon.durationMinutes}m/fl</p>
+                        <p className="text-[10px] text-[#505058] mt-0.5">{dungeon.durationMinutes}m/fl</p>
                       </div>
 
                       {/* ENTER button */}
@@ -204,13 +204,13 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                 : c.minLevel ? `Lv. ${character.level}/${c.minLevel}` : '';
               return (
                 <div key={dungeon.id}
-                  className="rounded-xl border border-[rgba(200,80,80,0.07)] bg-[#110909] opacity-50 overflow-hidden">
+                  className="rounded-xl border border-[rgba(255,255,255,0.04)] bg-[#110909] opacity-50 overflow-hidden">
                   <div className="flex items-stretch">
-                    <div className={`w-28 min-h-[96px] shrink-0 bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#140808] to-[#0a0505]'} opacity-40`} />
+                    <div className={`w-28 min-h-[96px] shrink-0 bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#140808] to-[#090910]'} opacity-40`} />
                     <div className="flex-1 flex items-center justify-between px-3 py-3">
                       <div>
-                        <p className="text-[#5a3535] font-medium text-sm">🔒 {dungeon.name}</p>
-                        <p className="text-[11px] text-[#3d2222] mt-0.5">{hint}</p>
+                        <p className="text-[#505058] font-medium text-sm">🔒 {dungeon.name}</p>
+                        <p className="text-[11px] text-[#383840] mt-0.5">{hint}</p>
                       </div>
                       <span className={`text-[10px] uppercase tracking-wide ${TIER_BADGE[dungeon.tier]} opacity-50`}>
                         {TIER_LABELS[dungeon.tier]}
@@ -228,14 +228,14 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
       <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-2.5">
 
         {/* Portrait */}
-        <div className="rounded-xl border border-[rgba(200,80,80,0.18)] overflow-hidden">
-          <div className="relative h-52 bg-gradient-to-br from-[#200a0a] via-[#160808] to-[#0e0505] overflow-hidden">
+        <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
+          <div className="relative h-52 bg-gradient-to-br from-[#1a1a26] via-[#12121e] to-[#0b0b0f] overflow-hidden">
             <img src="/icons/character_portrait.png" alt="portrait"
               className="absolute inset-0 w-full h-full object-cover object-top" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#140a0a] via-[#140a0a]/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#111118] via-[#111118]/30 to-transparent" />
             {/* Level badge */}
-            <div className="absolute top-2.5 right-2.5 bg-[#0d0808]/80 border border-[rgba(200,80,80,0.3)] rounded-lg px-2 py-1 backdrop-blur-sm">
-              <span className="text-[10px] text-[#7a5050] uppercase tracking-wide">Lv.</span>
+            <div className="absolute top-2.5 right-2.5 bg-[#0b0b0f]/80 border border-[rgba(200,80,80,0.3)] rounded-lg px-2 py-1 backdrop-blur-sm">
+              <span className="text-[10px] text-[#78788a] uppercase tracking-wide">Lv.</span>
               <span className="text-slate-100 font-black text-sm ml-1">{character.level}</span>
             </div>
             {/* Name overlay */}
@@ -243,7 +243,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-slate-100 font-black text-lg leading-tight tracking-wide">{character.name}</p>
-                  <p className="text-[11px] text-[#7a5050] mt-0.5">Wanderer</p>
+                  <p className="text-[11px] text-[#78788a] mt-0.5">Wanderer</p>
                 </div>
                 <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${
                   character.status === 'on_run'
@@ -260,20 +260,20 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
           </div>
 
           {/* CR + GS */}
-          <div className="grid grid-cols-2 divide-x divide-[rgba(200,80,80,0.10)] bg-[#140a0a] border-t border-[rgba(200,80,80,0.12)]">
+          <div className="grid grid-cols-2 divide-x divide-[rgba(255,255,255,0.06)] bg-[#111118] border-t border-[rgba(255,255,255,0.07)]">
             {([['Combat Rating', cr], ['Gear Score', character.gearScore]] as [string, number][]).map(([label, value]) => (
               <div key={label} className="px-3 py-2.5 text-center">
-                <p className="text-[9px] text-[#5a3535] uppercase tracking-widest">{label}</p>
+                <p className="text-[9px] text-[#505058] uppercase tracking-widest">{label}</p>
                 <p className="text-slate-100 font-black text-lg leading-tight mt-0.5">{value}</p>
               </div>
             ))}
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-5 divide-x divide-[rgba(200,80,80,0.07)] bg-[#110808] border-t border-[rgba(200,80,80,0.08)]">
+          <div className="grid grid-cols-5 divide-x divide-[rgba(255,255,255,0.04)] bg-[#110808] border-t border-[rgba(255,255,255,0.05)]">
             {(['pwr', 'end', 'lck', 'spd', 'ins'] as const).map(stat => (
               <div key={stat} className="py-2 text-center">
-                <p className="text-[9px] text-[#4a2a2a] uppercase tracking-wide">{STAT_LABEL[stat]}</p>
+                <p className="text-[9px] text-[#404048] uppercase tracking-wide">{STAT_LABEL[stat]}</p>
                 <p className="text-slate-300 font-bold text-sm mt-0.5">{character[stat]}</p>
               </div>
             ))}
@@ -281,10 +281,10 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
         </div>
 
         {/* Equipment */}
-        <div className="rounded-xl border border-[rgba(200,80,80,0.14)] bg-[#120909] p-3">
+        <div className="rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0e0e14] p-3">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-red-600 font-bold uppercase tracking-widest">Equipment</p>
-            <p className="text-[9px] text-[#4a2a2a] uppercase tracking-widest">Set Bonus</p>
+            <p className="text-[9px] text-[#404048] uppercase tracking-widest">Set Bonus</p>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {SLOTS.map(slot => {
@@ -296,7 +296,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               return (
                 <div key={slot}
                   className={`relative h-24 rounded-lg flex flex-col items-center justify-center overflow-hidden ${
-                    item ? 'bg-[#1c0e0e]' : 'bg-[#130808]'
+                    item ? 'bg-[#1a1a26]' : 'bg-[#130808]'
                   }`}>
                   {/* Corner brackets */}
                   <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-red-700/60 rounded-tl" />
@@ -304,7 +304,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-red-700/60 rounded-bl" />
                   <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-red-700/60 rounded-br" />
                   {/* Slot label */}
-                  <span className="absolute top-1.5 left-2 text-[8px] text-[#5a3030] uppercase tracking-wide font-semibold leading-none">
+                  <span className="absolute top-1.5 left-2 text-[8px] text-[#4e4e58] uppercase tracking-wide font-semibold leading-none">
                     {SLOT_LABEL[slot]}
                   </span>
                   {/* Item or ghost */}
@@ -319,7 +319,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   <div className="absolute bottom-1.5 flex gap-1">
                     {Array.from({ length: dots }).map((_, i) => (
                       <span key={i} className={`w-1 h-1 rounded-full ${
-                        i < filledDots ? 'bg-red-600' : 'bg-[#2a1010]'
+                        i < filledDots ? 'bg-red-600' : 'bg-[#1e1e28]'
                       }`} />
                     ))}
                   </div>
@@ -336,9 +336,9 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
 
         {/* Floor picker + SEND */}
         {selected && !isInjured ? (
-          <div className="rounded-xl border border-[rgba(200,80,80,0.2)] bg-[#160c0c] p-3 flex flex-col gap-3">
+          <div className="rounded-xl border border-[rgba(200,80,80,0.2)] bg-[#16161f] p-3 flex flex-col gap-3">
             <div>
-              <p className="text-[10px] text-[#6a4040] uppercase tracking-[0.2em] mb-0.5">Selected</p>
+              <p className="text-[10px] text-[#606068] uppercase tracking-[0.2em] mb-0.5">Selected</p>
               <p className="text-slate-200 font-semibold text-sm">{selected.name}</p>
               {savedFloor > 0 && (
                 <p className="text-[11px] text-red-500/60 mt-0.5">Checkpoint: Floor {savedFloor}</p>
@@ -346,14 +346,14 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
             </div>
 
             <div>
-              <p className="text-[10px] text-[#6a4040] uppercase tracking-[0.2em] mb-2">Floor Depth</p>
+              <p className="text-[10px] text-[#606068] uppercase tracking-[0.2em] mb-2">Floor Depth</p>
               <div className="grid grid-cols-5 gap-1.5">
                 {[1,2,3,4,5,6,7,8,9,10].map(n => (
                   <button key={n} onClick={() => setFloorsToAttempt(n)}
                     className={`aspect-square rounded-lg text-xs font-bold border transition-all ${
                       floorsToAttempt === n
                         ? 'border-red-600/60 bg-red-900/40 text-red-200'
-                        : 'border-[rgba(200,80,80,0.12)] bg-transparent text-[#6a4040] hover:border-[rgba(200,80,80,0.3)] hover:text-slate-300'
+                        : 'border-[rgba(255,255,255,0.07)] bg-transparent text-[#606068] hover:border-[rgba(200,80,80,0.3)] hover:text-slate-300'
                     }`}>
                     {n}
                   </button>
@@ -361,27 +361,27 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               </div>
             </div>
 
-            <div className="bg-[#120909] rounded-lg px-3 py-2.5 space-y-1.5">
+            <div className="bg-[#0e0e14] rounded-lg px-3 py-2.5 space-y-1.5">
               <div className="flex justify-between text-[11px]">
-                <span className="text-[#5a3535]">Floors</span>
+                <span className="text-[#505058]">Floors</span>
                 <span className="text-slate-300 font-semibold">{startFloor}{startFloor !== endFloor ? `–${endFloor}` : ''}</span>
               </div>
               <div className="flex justify-between text-[11px]">
-                <span className="text-[#5a3535]">Duration</span>
+                <span className="text-[#505058]">Duration</span>
                 <span className="text-slate-300 font-semibold">~{estimatedDuration} min</span>
               </div>
               <div className="flex justify-between text-[11px]">
-                <span className="text-[#5a3535]">Entry odds</span>
+                <span className="text-[#505058]">Entry odds</span>
                 <span className={`font-bold ${oddsColor(firstFloorOdds)}`}>~{firstFloorOdds}%</span>
               </div>
               {startFloor !== endFloor && (
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-[#5a3535]">Last floor DC</span>
+                  <span className="text-[#505058]">Last floor DC</span>
                   <span className="text-slate-400 font-semibold">{lastFloorDC}</span>
                 </div>
               )}
               {bossFloors.length > 0 && (
-                <div className="pt-1.5 border-t border-[rgba(200,80,80,0.08)]">
+                <div className="pt-1.5 border-t border-[rgba(255,255,255,0.05)]">
                   {bossFloors.map(f => (
                     <p key={f} className="text-amber-400/70 text-[10px]">⚠ Floor {f}: Boss</p>
                   ))}
@@ -394,13 +394,13 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
             )}
 
             <button onClick={handleSend} disabled={!isIdle || loading}
-              className="w-full py-3 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 disabled:from-[#2a1212] disabled:to-[#2a1212] disabled:text-[#5a3535] text-white font-bold rounded-xl transition-all text-sm tracking-widest uppercase shadow-lg shadow-red-950/40">
+              className="w-full py-3 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 disabled:from-[#1a1a26] disabled:to-[#1a1a26] disabled:text-[#505058] text-white font-bold rounded-xl transition-all text-sm tracking-widest uppercase shadow-lg shadow-red-950/40">
               {loading ? 'Sending...' : 'Send Hero →'}
             </button>
           </div>
         ) : !isInjured ? (
-          <div className="rounded-xl border border-[rgba(200,80,80,0.08)] bg-[#120909] p-4 text-center">
-            <p className="text-[#4a2a2a] text-sm">← Select a dungeon to begin</p>
+          <div className="rounded-xl border border-[rgba(255,255,255,0.05)] bg-[#0e0e14] p-4 text-center">
+            <p className="text-[#404048] text-sm">← Select a dungeon to begin</p>
           </div>
         ) : null}
       </div>

@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --bg-base:    #0d0808;
-  --bg-surface: #130909;
-  --bg-card:    #180c0c;
-  --bg-raised:  #1e1010;
-  --bg-hover:   #220f0f;
-  --border:     rgba(200,70,70,0.15);
+  --bg-base:    #0b0b0f;
+  --bg-surface: #111118;
+  --bg-card:    #16161f;
+  --bg-raised:  #1c1c28;
+  --bg-hover:   #1e1e2c;
+  --border:     rgba(255,255,255,0.08);
   --border-bright: rgba(200,70,70,0.30);
   --accent:     #cc2020;
   --accent-dim: #6a1010;
@@ -18,7 +18,7 @@
 
 body {
   background: var(--bg-base);
-  color: #ddd0d0;
+  color: #d0d0d8;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;

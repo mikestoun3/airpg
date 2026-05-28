@@ -180,7 +180,7 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
                 className="shrink-0 rounded-xl flex items-center justify-center"
                 style={{
                   width: ITEM_W, height: ITEM_W,
-                  background: active ? `linear-gradient(135deg, #1e1010 0%, #130909 100%)` : '#120808',
+                  background: active ? `linear-gradient(135deg, #1c1c28 0%, #111118 100%)` : '#120808',
                   border: `2px solid ${active ? RARITY_BORDER[ri.rarity] : RARITY_BORDER[ri.rarity] + '50'}`,
                   boxShadow: 'none',
                   opacity: faded ? 0.1 : 1,
@@ -218,13 +218,13 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
             <RarityText rarity={item.rarity} className="font-black text-2xl block tracking-wide">
               {item.name}
             </RarityText>
-            <p className="text-[#6a4040] text-xs capitalize mt-0.5">
+            <p className="text-[#606068] text-xs capitalize mt-0.5">
               {item.rarity} · {SLOT_LABELS[item.slot]} · GS {item.gearScore}
             </p>
             <div className="mt-3 space-y-1">
               <p className="text-slate-200 text-sm font-medium">+{item.primaryValue} {STAT_LABELS[item.primaryStat]}</p>
               {item.secondaryStats.map(s => (
-                <p key={s.stat} className="text-[#5a3535] text-xs">+{s.value} {STAT_LABELS[s.stat]}</p>
+                <p key={s.stat} className="text-[#505058] text-xs">+{s.value} {STAT_LABELS[s.stat]}</p>
               ))}
             </div>
             <p className="text-emerald-500/60 text-[11px] mt-3">Added to Inventory</p>
@@ -244,7 +244,7 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
         ) : phase === 'spin' ? (
           <button
             onClick={skipAnimation}
-            className="text-[#2a2a55] hover:text-[#6a4040] text-xs transition-colors"
+            className="text-[#2a2a55] hover:text-[#606068] text-xs transition-colors"
           >
             Skip
           </button>
