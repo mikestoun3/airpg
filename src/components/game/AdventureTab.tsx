@@ -50,6 +50,10 @@ const DUNGEON_SUBTITLE: Record<string, string> = {
 
 const SLOTS: EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
 const STAT_LABEL = { pwr: 'PWR', end: 'END', lck: 'LCK', spd: 'SPD', ins: 'INS' } as const;
+const SLOT_LABEL: Record<EquipmentSlot, string> = {
+  weapon: 'Blade', helmet: 'Helmet', chest: 'Chest',
+  boots: 'Boots', ring: 'Ring', trinket: 'Pendant',
+};
 
 function oddsColor(o: number) {
   return o >= 70 ? 'text-emerald-400' : o >= 45 ? 'text-amber-400' : 'text-red-400';
@@ -277,37 +281,56 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
         </div>
 
         {/* Equipment */}
-        <div className="rounded-xl border border-[rgba(200,80,80,0.12)] bg-[#140a0a] p-3">
-          <p className="text-[10px] text-[#6a4040] uppercase tracking-[0.2em] mb-2.5">Equipment</p>
+        <div className="rounded-xl border border-[rgba(200,80,80,0.14)] bg-[#120909] p-3">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-red-600 font-bold uppercase tracking-widest">Equipment</p>
+            <p className="text-[9px] text-[#4a2a2a] uppercase tracking-widest">Set Bonus</p>
+          </div>
           <div className="grid grid-cols-3 gap-2">
             {SLOTS.map(slot => {
               const item = equipment[slot];
+              const attRuns = item?.attunementRuns ?? 0;
+              const attNeeded = item?.gearTier && item.gearTier < 4 ? [5,10,15][item.gearTier - 1] : 3;
+              const dots = 3;
+              const filledDots = item ? Math.min(dots, Math.floor((attRuns / attNeeded) * dots)) : 0;
               return (
                 <div key={slot}
-                  className={`aspect-square rounded-xl border flex items-center justify-center relative overflow-hidden ${
-                    item
-                      ? 'border-[rgba(200,80,80,0.30)] bg-[#1e1010]'
-                      : 'border-[rgba(200,80,80,0.10)] bg-[#130909]'
+                  className={`relative h-24 rounded-lg flex flex-col items-center justify-center overflow-hidden ${
+                    item ? 'bg-[#1c0e0e]' : 'bg-[#130808]'
                   }`}>
+                  {/* Corner brackets */}
+                  <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-red-700/60 rounded-tl" />
+                  <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-red-700/60 rounded-tr" />
+                  <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-red-700/60 rounded-bl" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-red-700/60 rounded-br" />
+                  {/* Slot label */}
+                  <span className="absolute top-1.5 left-2 text-[8px] text-[#5a3030] uppercase tracking-wide font-semibold leading-none">
+                    {SLOT_LABEL[slot]}
+                  </span>
+                  {/* Item or ghost */}
                   {item ? (
-                    <>
-                      <img src={`/icons/items/item_${slot}_${item.rarity}.png`} alt={item.name}
-                        className="w-12 h-12 object-contain" />
-                      <span className="absolute bottom-1 right-1 w-2 h-2 rounded-full border border-black/40"
-                        style={{ backgroundColor: RARITY_COLORS[item.rarity] }} />
-                    </>
+                    <img src={`/icons/items/item_${slot}_${item.rarity}.png`} alt={item.name}
+                      className="w-11 h-11 object-contain mt-1" />
                   ) : (
                     <img src={`/icons/items/slot_${slot}.png`} alt={slot}
-                      className="w-9 h-9 opacity-15 object-contain" />
+                      className="w-9 h-9 object-contain opacity-10 mt-1" />
                   )}
+                  {/* Attunement / progress dots */}
+                  <div className="absolute bottom-1.5 flex gap-1">
+                    {Array.from({ length: dots }).map((_, i) => (
+                      <span key={i} className={`w-1 h-1 rounded-full ${
+                        i < filledDots ? 'bg-red-600' : 'bg-[#2a1010]'
+                      }`} />
+                    ))}
+                  </div>
                 </div>
               );
             })}
           </div>
           <button
             onClick={() => onNavigate?.('inventory')}
-            className="w-full mt-3 py-2 rounded-xl border border-[rgba(200,80,80,0.15)] bg-[#1a0c0c] text-[#7a5050] text-xs font-semibold uppercase tracking-widest hover:border-[rgba(200,80,80,0.3)] hover:text-slate-300 transition-all">
-            View Inventory →
+            className="w-full mt-3 py-2.5 rounded-lg bg-red-900/30 border border-red-800/40 hover:bg-red-900/50 hover:border-red-700/60 text-red-400 hover:text-red-200 text-xs font-bold uppercase tracking-widest transition-all">
+            View Inventory
           </button>
         </div>
 
