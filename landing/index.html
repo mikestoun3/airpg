@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AirPG — Idle Dungeon RPG</title>
+  <meta name="description" content="A Web3 idle RPG on Polygon. Your MetaMask wallet is your account. Send your hero into dungeons, collect loot, craft legendary gear." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #FC3154;
+      --red-dark: #d4294a;
+      --bg: #0b0b0f;
+      --bg2: #0e0e16;
+      --bg3: #13131e;
+      --border: rgba(255,255,255,0.07);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100dvh;
+      background: var(--bg);
+      color: #e2e2ee;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(11,11,15,0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .nav-logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--red-dark), #7f1d1d);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1rem; color: #fff;
+      box-shadow: 0 4px 16px rgba(252,49,84,0.3);
+    }
+    .nav-logo-text { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.01em; color: #fff; }
+    .nav-cta {
+      padding: 0.5rem 1.25rem;
+      background: var(--red);
+      color: #fff; font-weight: 700; font-size: 0.85rem;
+      border-radius: 8px; text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── HERO ─────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 2rem;
+      padding: 6rem 4rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; padding: 6rem 1.5rem 3rem; text-align: center; }
+      .hero-visual { order: -1; }
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background-image: url('https://app.testiruyu.com/dungeons/cursed_catacombs.png');
+      background-size: cover; background-position: center;
+      opacity: 0.08;
+    }
+    .hero-bg-gradient {
+      position: absolute; inset: 0; z-index: 1;
+      background: radial-gradient(ellipse at 70% 50%, rgba(252,49,84,0.06) 0%, transparent 60%),
+                  linear-gradient(to bottom, transparent 60%, var(--bg) 100%);
+    }
+
+    .hero-content { position: relative; z-index: 2; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border: 1px solid rgba(252,49,84,0.3);
+      background: rgba(252,49,84,0.08);
+      border-radius: 100px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--red);
+      margin-bottom: 1.5rem;
+    }
+    .hero-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: #fff;
+      margin-bottom: 1.25rem;
+    }
+    h1 span { color: var(--red); }
+
+    .hero-desc {
+      font-size: 1.05rem; line-height: 1.7;
+      color: #7070a0; max-width: 480px; margin-bottom: 2.5rem;
+    }
+    @media (max-width: 768px) { .hero-desc { margin: 0 auto 2rem; } }
+
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    @media (max-width: 768px) { .hero-actions { justify-content: center; } }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.9rem 2rem;
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: #fff; font-weight: 700; font-size: 1rem;
+      border-radius: 12px; text-decoration: none;
+      box-shadow: 0 8px 32px rgba(252,49,84,0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(252,49,84,0.45); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.9rem 1.5rem;
+      border: 1px solid var(--border); color: #8080a0;
+      font-weight: 600; font-size: 0.9rem;
+      border-radius: 12px; text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.2); color: #c0c0d0; }
+
+    .hero-stats {
+      display: flex; gap: 2rem; margin-top: 3rem; flex-wrap: wrap;
+    }
+    @media (max-width: 768px) { .hero-stats { justify-content: center; } }
+    .stat-item { }
+    .stat-num { font-size: 1.6rem; font-weight: 900; color: #fff; letter-spacing: -0.02em; }
+    .stat-label { font-size: 0.72rem; color: #505070; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.1rem; }
+
+    /* ── HERO VISUAL ─────────────────────────────────────────── */
+    .hero-visual {
+      position: relative; z-index: 2;
+      display: flex; justify-content: center; align-items: center;
+    }
+    .portrait-wrap {
+      position: relative;
+      width: min(380px, 90vw);
+    }
+    .portrait-glow {
+      position: absolute; inset: -40px;
+      background: radial-gradient(ellipse at center, rgba(252,49,84,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .portrait-img {
+      width: 100%; border-radius: 20px;
+      border: 1px solid rgba(252,49,84,0.2);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.8), 0 0 60px rgba(252,49,84,0.1);
+      display: block;
+    }
+
+    /* Floating gear items around portrait */
+    .gear-float {
+      position: absolute;
+      animation: float 4s ease-in-out infinite;
+    }
+    .gear-float img { width: 64px; height: 64px; object-fit: contain; display: block; }
+    .gear-float.legendary { filter: drop-shadow(0 0 12px rgba(251,191,36,0.7)) drop-shadow(0 0 24px rgba(251,191,36,0.35)); }
+    .gear-float.epic      { filter: drop-shadow(0 0 12px rgba(168,85,247,0.7)) drop-shadow(0 0 24px rgba(168,85,247,0.35)); }
+    .gear-float.rare      { filter: drop-shadow(0 0 12px rgba(59,130,246,0.7))  drop-shadow(0 0 24px rgba(59,130,246,0.35)); }
+    .gear-float.pos-tl { top: 10%; left: -18%; animation-delay: 0s; }
+    .gear-float.pos-tr { top: 20%; right: -16%; animation-delay: 1s; }
+    .gear-float.pos-bl { bottom: 25%; left: -20%; animation-delay: 2s; }
+    .gear-float.pos-br { bottom: 15%; right: -18%; animation-delay: 0.5s; }
+    .gear-float.pos-tm { top: -4%; left: 35%; animation-delay: 1.5s; }
+    @keyframes float {
+      0%,100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* ── ITEMS STRIP ─────────────────────────────────────────── */
+    .strip-section { padding: 3rem 0; overflow: hidden; border-top: 1px solid var(--border); }
+    .strip-label {
+      text-align: center; font-size: 0.7rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.2em;
+      color: #404058; margin-bottom: 1.5rem;
+    }
+    .strip-track {
+      display: flex; gap: 1rem;
+      animation: scroll-left 30s linear infinite;
+      width: max-content;
+    }
+    .strip-track:hover { animation-play-state: paused; }
+    @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .strip-item {
+      flex-shrink: 0;
+      width: 80px;
+      background: var(--bg3);
+      border-radius: 12px;
+      padding: 0.6rem;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .strip-item img { width: 52px; height: 52px; object-fit: contain; }
+    .strip-item.r-legendary { border-color: rgba(251,191,36,0.25); }
+    .strip-item.r-epic      { border-color: rgba(168,85,247,0.25); }
+    .strip-item.r-rare      { border-color: rgba(59,130,246,0.25); }
+    .strip-item.r-uncommon  { border-color: rgba(34,197,94,0.2); }
+
+    /* ── SECTION COMMON ──────────────────────────────────────── */
+    section { padding: 5rem 2rem; max-width: 1200px; margin: 0 auto; }
+    .section-tag {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.2em; color: var(--red); margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900;
+      letter-spacing: -0.02em; color: #fff; margin-bottom: 1rem;
+    }
+    .section-desc { color: #606080; font-size: 1rem; line-height: 1.7; max-width: 560px; }
+
+    /* ── DUNGEONS ─────────────────────────────────────────────── */
+    .dungeons-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+    @media (max-width: 900px) { .dungeons-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .dungeons-grid { grid-template-columns: 1fr; } }
+    .dungeon-card {
+      position: relative; overflow: hidden;
+      border-radius: 16px; border: 1px solid var(--border);
+      aspect-ratio: 16/10;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .dungeon-card:hover { transform: translateY(-4px); border-color: rgba(252,49,84,0.35); }
+    .dungeon-card img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s;
+    }
+    .dungeon-card:hover img { transform: scale(1.04); }
+    .dungeon-card-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(11,11,15,0.95) 0%, rgba(11,11,15,0.2) 60%, transparent 100%);
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 1rem 1.1rem;
+    }
+    .dungeon-tier {
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.15em; margin-bottom: 0.2rem;
+    }
+    .tier-1 { color: #94a3b8; }
+    .tier-2 { color: #60a5fa; }
+    .tier-3 { color: #c084fc; }
+    .dungeon-name { font-size: 0.95rem; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+    .dungeon-desc { font-size: 0.72rem; color: #505068; margin-top: 0.2rem; line-height: 1.4; }
+
+    /* ── GEAR TIERS ──────────────────────────────────────────── */
+    .tiers-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .tiers-inner { max-width: 1200px; margin: 0 auto; padding: 5rem 2rem; }
+    .tiers-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 3rem;
+    }
+    @media (max-width: 768px) { .tiers-grid { grid-template-columns: repeat(2, 1fr); } }
+    .tier-card {
+      background: var(--bg3); border-radius: 16px;
+      border: 1px solid var(--border); padding: 1.5rem 1.25rem;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .tier-card:hover { transform: translateY(-3px); }
+    .tier-card.t1 { border-color: rgba(148,163,184,0.2); }
+    .tier-card.t1:hover { border-color: rgba(148,163,184,0.4); }
+    .tier-card.t2 { border-color: rgba(96,165,250,0.2); }
+    .tier-card.t2:hover { border-color: rgba(96,165,250,0.4); }
+    .tier-card.t3 { border-color: rgba(192,132,252,0.2); }
+    .tier-card.t3:hover { border-color: rgba(192,132,252,0.4); }
+    .tier-card.t4 { border-color: rgba(251,191,36,0.25); box-shadow: 0 0 40px rgba(251,191,36,0.05); }
+    .tier-card.t4:hover { border-color: rgba(251,191,36,0.5); }
+    .tier-items { display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .tier-items img { width: 40px; height: 40px; object-fit: contain; }
+    .tier-name { font-size: 0.85rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .t1 .tier-name { color: #94a3b8; }
+    .t2 .tier-name { color: #60a5fa; }
+    .t3 .tier-name { color: #c084fc; }
+    .t4 .tier-name { color: #fbbf24; }
+    .tier-desc { font-size: 0.72rem; color: #505068; line-height: 1.5; }
+
+    /* ── FEATURES LIST ───────────────────────────────────────── */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem;
+    }
+    @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } }
+    .feature-card {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.75rem;
+      transition: border-color 0.2s;
+    }
+    .feature-card:hover { border-color: rgba(252,49,84,0.25); }
+    .feature-icon { font-size: 1.75rem; margin-bottom: 1rem; }
+    .feature-title { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+    .feature-text { font-size: 0.85rem; color: #505070; line-height: 1.65; }
+
+    /* ── WEB3 STRIP ──────────────────────────────────────────── */
+    .web3-strip {
+      background: linear-gradient(135deg, rgba(252,49,84,0.08) 0%, rgba(212,41,74,0.04) 100%);
+      border: 1px solid rgba(252,49,84,0.15);
+      border-radius: 20px; padding: 2.5rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 2rem; flex-wrap: wrap; margin-top: 2rem;
+    }
+    .web3-text h3 { font-size: 1.3rem; font-weight: 900; color: #fff; margin-bottom: 0.4rem; }
+    .web3-text p { font-size: 0.875rem; color: #606080; max-width: 420px; line-height: 1.6; }
+    .metamask-badge {
+      display: flex; align-items: center; gap: 0.75rem;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 0.75rem 1.25rem; flex-shrink: 0;
+    }
+    .metamask-badge img { width: 32px; height: 32px; }
+    .metamask-badge span { font-size: 0.85rem; font-weight: 700; color: #c0c0d0; }
+
+    /* ── FINAL CTA ───────────────────────────────────────────── */
+    .final-cta {
+      text-align: center; padding: 6rem 2rem;
+      background: radial-gradient(ellipse at center, rgba(252,49,84,0.08) 0%, transparent 70%);
+    }
+    .final-cta h2 {
+      font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900;
+      color: #fff; letter-spacing: -0.02em; margin-bottom: 1rem;
+    }
+    .final-cta p { color: #606080; font-size: 1rem; margin-bottom: 2.5rem; }
+
+    /* ── FOOTER ──────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      color: #303048; font-size: 0.8rem;
+    }
+    .footer-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: #505060; }
+    .footer-logo-icon {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: linear-gradient(135deg, var(--red-dark), #7f1d1d);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 900; color: #fff;
+    }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { color: #404058; text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: #8080a0; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">
+      <div class="nav-logo-icon">A</div>
+      <span class="nav-logo-text">AirPG</span>
+    </div>
+    <a href="https://app.testiruyu.com" class="nav-cta">Play Now →</a>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-bg-gradient"></div>
+
+    <div class="hero-content">
+      <div class="hero-tag">
+        <span class="hero-tag-dot"></span>
+        Live on Polygon
+      </div>
+      <h1>Explore.<br><span>Loot.</span><br>Dominate.</h1>
+      <p class="hero-desc">
+        A Web3 idle RPG where your MetaMask wallet is your account.
+        Send your hero into procedural dungeons, forge legendary gear,
+        and climb the season leaderboard.
+      </p>
+      <div class="hero-actions">
+        <a href="https://app.testiruyu.com" class="btn-primary">
+          ⚔ Play Now — Free
+        </a>
+        <a href="#features" class="btn-secondary">Learn more ↓</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-num">6</div>
+          <div class="stat-label">Dungeons</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">4</div>
+          <div class="stat-label">Gear Tiers</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">∞</div>
+          <div class="stat-label">Floor Depth</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">On-chain</div>
+          <div class="stat-label">Market</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="portrait-wrap">
+        <div class="portrait-glow"></div>
+        <img class="portrait-img" src="https://app.testiruyu.com/icons/character_portrait.png" alt="AirPG Hero" />
+
+        <!-- Floating gear -->
+        <div class="gear-float legendary pos-tl">
+          <img src="https://app.testiruyu.com/icons/items/item_weapon_legendary.png" alt="Legendary Weapon" />
+        </div>
+        <div class="gear-float epic pos-tr">
+          <img src="https://app.testiruyu.com/icons/items/item_helmet_epic.png" alt="Epic Helmet" />
+        </div>
+        <div class="gear-float rare pos-bl">
+          <img src="https://app.testiruyu.com/icons/items/item_chest_rare.png" alt="Rare Chest" />
+        </div>
+        <div class="gear-float legendary pos-br">
+          <img src="https://app.testiruyu.com/icons/items/item_boots_legendary.png" alt="Legendary Boots" />
+        </div>
+        <div class="gear-float epic pos-tm">
+          <img src="https://app.testiruyu.com/icons/items/item_ring_epic.png" alt="Epic Ring" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ITEMS STRIP -->
+  <div class="strip-section">
+    <div class="strip-label">Gear drops from every dungeon run</div>
+    <div style="overflow:hidden;">
+      <div class="strip-track">
+        <!-- Row repeated twice for infinite scroll -->
+        <div class="strip-item r-legendary"><img src="https://app.testiruyu.com/icons/items/item_weapon_legendary.png" alt=""></div>
+        <div class="strip-item r-epic"><img src="https://app.testiruyu.com/icons/items/item_helmet_epic.png" alt=""></div>
+        <div class="strip-item r-rare"><img src="https://app.testiruyu.com/icons/items/item_chest_rare.png" alt=""></div>
+        <div class="strip-item r-uncommon"><img src="https://app.testiruyu.com/icons/items/item_boots_uncommon.png" alt=""></div>
+        <div class="strip-item r-legendary"><img src="https://app.testiruyu.com/icons/items/item_ring_legendary.png" alt=""></div>
+        <div class="strip-item r-epic"><img src="https://app.testiruyu.com/icons/items/item_trinket_epic.png" alt=""></div>
+        <div class="strip-item r-rare"><img src="https://app.testiruyu.com/icons/items/item_weapon_rare.png" alt=""></div>
+        <div class="strip-item r-legendary"><img src="https://app.testiruyu.com/icons/items/item_chest_legendary.png" alt=""></div>
+        <div class="strip-item r-epic"><img src="https://app.testiruyu.com/icons/items/item_boots_epic.png" alt=""></div>
+        <div class="strip-item r-rare"><img src="https://app.testiruyu.com/icons/items/item_helmet_rare.png" alt=""></div>
+        <div class="strip-item r-legendary"><img src="https://app.testiruyu.com/icons/items/item_trinket_legendary.png" alt=""></div>
+        <div class="strip-item r-epic"><img src="https://app.testiruyu.com/icons/items/item_ring_epic.png" alt=""></div>
+        <!-- Duplicate for seamless loop -->
+        <div class="strip-item r-legendary"><img src="https://app.testiruyu.com/icons/items/item_weapon_legendary.png" alt=""></div>
+        <div class="strip-item r-epic"><img src="https://app.testiruyu.com/icons/items/item_helmet_epic.png" alt=""></div>
+        <div class="strip-item r-rare"><img src="https://app.testiruyu.com/icons/items/item_chest_rare.png" alt=""></div>
+        <div class="strip-item r-uncommon"><img src="https://app.testiruyu.com/icons/items/item_boots_uncommon.png" alt=""></div>
+        <div class="strip-item r-legendary"><img src="https://app.testiruyu.com/icons/items/item_ring_legendary.png" alt=""></div>
+        <div class="strip-item r-epic"><img src="https://app.testiruyu.com/icons/items/item_trinket_epic.png" alt=""></div>
+        <div class="strip-item r-rare"><img src="https://app.testiruyu.com/icons/items/item_weapon_rare.png" alt=""></div>
+        <div class="strip-item r-legendary"><img src="https://app.testiruyu.com/icons/items/item_chest_legendary.png" alt=""></div>
+        <div class="strip-item r-epic"><img src="https://app.testiruyu.com/icons/items/item_boots_epic.png" alt=""></div>
+        <div class="strip-item r-rare"><img src="https://app.testiruyu.com/icons/items/item_helmet_rare.png" alt=""></div>
+        <div class="strip-item r-legendary"><img src="https://app.testiruyu.com/icons/items/item_trinket_legendary.png" alt=""></div>
+        <div class="strip-item r-epic"><img src="https://app.testiruyu.com/icons/items/item_ring_epic.png" alt=""></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DUNGEONS -->
+  <section id="features">
+    <div class="section-tag">⚔ Dungeons</div>
+    <h2 class="section-title">6 handcrafted worlds.<br>Infinite floors.</h2>
+    <p class="section-desc">Each dungeon has its own loot pool, resource drops, and floor bosses. The deeper you go, the bigger the rewards — and the harder the fight.</p>
+
+    <div class="dungeons-grid">
+      <div class="dungeon-card">
+        <img src="https://app.testiruyu.com/dungeons/goblin_warrens.png" alt="Iron Hollows" loading="lazy" />
+        <div class="dungeon-card-overlay">
+          <div class="dungeon-tier tier-1">Tier I · Entry</div>
+          <div class="dungeon-name">Iron Hollows</div>
+          <div class="dungeon-desc">Iron ore &amp; leather · Floor bosses every 10</div>
+        </div>
+      </div>
+      <div class="dungeon-card">
+        <img src="https://app.testiruyu.com/dungeons/forgotten_cellar.png" alt="Echo Depths" loading="lazy" />
+        <div class="dungeon-card-overlay">
+          <div class="dungeon-tier tier-1">Tier I · Arcane</div>
+          <div class="dungeon-name">Echo Depths</div>
+          <div class="dungeon-desc">Arcane dust &amp; spirit thread</div>
+        </div>
+      </div>
+      <div class="dungeon-card">
+        <img src="https://app.testiruyu.com/dungeons/ruined_watchtower.png" alt="Rustfall Wastes" loading="lazy" />
+        <div class="dungeon-card-overlay">
+          <div class="dungeon-tier tier-2">Tier II · Military</div>
+          <div class="dungeon-name">Rustfall Wastes</div>
+          <div class="dungeon-desc">Quality ore &amp; uncommon gear</div>
+        </div>
+      </div>
+      <div class="dungeon-card">
+        <img src="https://app.testiruyu.com/dungeons/collapsed_mine.png" alt="Void Spire" loading="lazy" />
+        <div class="dungeon-card-overlay">
+          <div class="dungeon-tier tier-2">Tier II · Extraction</div>
+          <div class="dungeon-name">Void Spire</div>
+          <div class="dungeon-desc">High essence · Mithril shards</div>
+        </div>
+      </div>
+      <div class="dungeon-card">
+        <img src="https://app.testiruyu.com/dungeons/bandit_stronghold.png" alt="Solar Core" loading="lazy" />
+        <div class="dungeon-card-overlay">
+          <div class="dungeon-tier tier-3">Tier III · Gold</div>
+          <div class="dungeon-name">Solar Core</div>
+          <div class="dungeon-desc">Gold-heavy · Unique item chance</div>
+        </div>
+      </div>
+      <div class="dungeon-card">
+        <img src="https://app.testiruyu.com/dungeons/cursed_catacombs.png" alt="Nexus Prime" loading="lazy" />
+        <div class="dungeon-card-overlay">
+          <div class="dungeon-tier tier-3">Tier III · Endgame</div>
+          <div class="dungeon-name">Nexus Prime</div>
+          <div class="dungeon-desc">Rare &amp; Epic drops · Void shards</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GEAR TIERS -->
+  <div class="tiers-section">
+    <div class="tiers-inner">
+      <div class="section-tag">⚒ Crafting</div>
+      <h2 class="section-title">Forge your power.<br>Four tiers of gear.</h2>
+      <p class="section-desc">Collect dungeon resources to craft and upgrade your equipment. Each tier unlocks new dungeons and pushes deeper floors.</p>
+
+      <div class="tiers-grid">
+        <div class="tier-card t1">
+          <div class="tier-items">
+            <img src="https://app.testiruyu.com/icons/items/item_weapon_uncommon.png" alt="">
+            <img src="https://app.testiruyu.com/icons/items/item_helmet_uncommon.png" alt="">
+            <img src="https://app.testiruyu.com/icons/items/item_chest_uncommon.png" alt="">
+          </div>
+          <div class="tier-name">Iron — T1</div>
+          <div class="tier-desc">Uncommon gear from Iron Ore &amp; Rough Leather. First forge unlock.</div>
+        </div>
+        <div class="tier-card t2">
+          <div class="tier-items">
+            <img src="https://app.testiruyu.com/icons/items/item_weapon_rare.png" alt="">
+            <img src="https://app.testiruyu.com/icons/items/item_helmet_rare.png" alt="">
+            <img src="https://app.testiruyu.com/icons/items/item_chest_rare.png" alt="">
+          </div>
+          <div class="tier-name">Steel — T2</div>
+          <div class="tier-desc">Rare gear. Requires Quality Ore &amp; Spirit Thread. Reinforced Forge.</div>
+        </div>
+        <div class="tier-card t3">
+          <div class="tier-items">
+            <img src="https://app.testiruyu.com/icons/items/item_weapon_epic.png" alt="">
+            <img src="https://app.testiruyu.com/icons/items/item_helmet_epic.png" alt="">
+            <img src="https://app.testiruyu.com/icons/items/item_chest_epic.png" alt="">
+          </div>
+          <div class="tier-name">Mithril — T3</div>
+          <div class="tier-desc">Epic gear forged with Mithril Shards. Master Forge required.</div>
+        </div>
+        <div class="tier-card t4">
+          <div class="tier-items">
+            <img src="https://app.testiruyu.com/icons/items/item_weapon_legendary.png" alt="">
+            <img src="https://app.testiruyu.com/icons/items/item_helmet_legendary.png" alt="">
+            <img src="https://app.testiruyu.com/icons/items/item_chest_legendary.png" alt="">
+          </div>
+          <div class="tier-name">Void — T4</div>
+          <div class="tier-desc">Legendary power from Void Shards. The highest tier. Void Forge.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section>
+    <div class="section-tag">✦ Features</div>
+    <h2 class="section-title">Everything an idle RPG<br>should have.</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <div class="feature-title">Season Leaderboard</div>
+        <div class="feature-text">Earn season points from every floor run. Deeper dungeons, harder floors — more points. Compete globally for the top spot.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏕️</div>
+        <div class="feature-title">Base Building</div>
+        <div class="feature-text">Upgrade your camp to unlock crafting tiers, expand inventory, reduce run times, and gain strategic advantages.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛒</div>
+        <div class="feature-title">On-Chain Market</div>
+        <div class="feature-text">Trade your crafted gear with other players on Polygon. Real ownership, real transactions. 5% platform fee distributed back.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚗️</div>
+        <div class="feature-title">Alchemy System</div>
+        <div class="feature-text">Convert lower-tier resources into higher ones. Iron Ore → Quality Ore → Mithril Shards. Optimize your resource pipeline.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <div class="feature-title">Quest System</div>
+        <div class="feature-text">Milestone quests for dungeon depth, crafting, and exploration. Earn bonus gold and essence for hitting key progression markers.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🦊</div>
+        <div class="feature-title">Wallet = Account</div>
+        <div class="feature-text">No email. No password. Connect MetaMask and your character is created instantly. Your wallet address is your identity.</div>
+      </div>
+    </div>
+
+    <!-- Web3 callout -->
+    <div class="web3-strip">
+      <div class="web3-text">
+        <h3>Built on Polygon. No gas fees for gameplay.</h3>
+        <p>Only marketplace transactions touch the chain. All dungeon runs, crafting, and base building happen instantly — no waiting, no fees.</p>
+      </div>
+      <div class="metamask-badge">
+        <img src="https://app.testiruyu.com/icons/metamask.png" alt="MetaMask" />
+        <span>Sign in with MetaMask</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <div class="final-cta">
+    <h2>Your hero is waiting.</h2>
+    <p>No download. No signup. Connect your wallet and start playing in seconds.</p>
+    <a href="https://app.testiruyu.com" class="btn-primary" style="font-size:1.1rem; padding: 1rem 2.5rem;">
+      ⚔ Enter AirPG — Free
+    </a>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">
+      <div class="footer-logo-icon">A</div>
+      AirPG &copy; 2026
+    </div>
+    <div class="footer-links">
+      <a href="https://app.testiruyu.com">Play</a>
+      <a href="https://t.me/airpg" target="_blank">Telegram</a>
+    </div>
+  </footer>
+
+</body>
+</html>
