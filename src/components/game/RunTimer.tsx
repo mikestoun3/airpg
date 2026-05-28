@@ -84,6 +84,15 @@ const DUNGEON_EVENTS: Record<string, string[][]> = {
   ],
 };
 
+const DUNGEON_IMG: Record<string, string> = {
+  goblin_warrens:    '/dungeons/goblin_warrens.png',
+  forgotten_cellar:  '/dungeons/forgotten_cellar.png',
+  ruined_watchtower: '/dungeons/ruined_watchtower.png',
+  collapsed_mine:    '/dungeons/collapsed_mine.png',
+  cursed_catacombs:  '/dungeons/cursed_catacombs.png',
+  bandit_stronghold: '/dungeons/bandit_stronghold.png',
+};
+
 const GENERIC_EVENTS = Array.from({ length: 10 }, (_, i) => [
   `Venturing deeper — floor ${i + 1}...`,
   `Resistance on floor ${i + 1}!`,
@@ -145,7 +154,12 @@ export function RunTimer({ run, onComplete }: Props) {
       if (progress >= ev.revealAt && !triggeredRef.current.has(key)) {
         triggeredRef.current.add(key);
         setVisibleEvents((prev) => [{ text: ev.text, preview: ev.preview, isFloor: ev.isFloor }, ...prev].slice(0, 6));
-        if (ev.preview) {
+        // Only add actual loot (items with rarity, resources, essence) — not floor combat events
+        if (ev.preview && (
+          ev.preview.type === 'resource' ||
+          ev.preview.type === 'essence' ||
+          (ev.preview.type === 'item' && ev.preview.rarity)
+        )) {
           setLootLog((prev) => [...prev, ev.preview!]);
         }
       }
@@ -173,7 +187,13 @@ export function RunTimer({ run, onComplete }: Props) {
 
       {/* ── Main dungeon card ── */}
       <div className="relative bg-[#13131a] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden flex-shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0e0e18] to-[#13131a] pointer-events-none" />
+        {/* Dungeon artwork background */}
+        {DUNGEON_IMG[run.dungeonId] && (
+          <img src={DUNGEON_IMG[run.dungeonId]} alt=""
+            className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none select-none" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0e0e18]/95 via-[#0e0e18]/70 to-[#0e0e18]/50 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#13131a] pointer-events-none" />
 
         {/* Header */}
         <div className="relative z-10 flex items-center justify-between px-5 py-3">
@@ -256,6 +276,21 @@ export function RunTimer({ run, onComplete }: Props) {
             {!completed && <span>Total {fmt(secondsLeft)}</span>}
           </div>
         </div>
+
+        {/* Run stats strip */}
+        <div className="relative z-10 grid grid-cols-4 divide-x divide-[rgba(255,255,255,0.06)] border-t border-[rgba(255,255,255,0.06)]">
+          {[
+            { label: 'Dungeon', value: run.dungeonName },
+            { label: 'Floors', value: `${completed ? floorsAttempted : currentFloorIdx} / ${floorsAttempted}` },
+            { label: 'Items', value: String(lootItems.length) },
+            { label: 'Resources', value: String(lootResources.length + lootEssence.length) },
+          ].map(({ label, value }) => (
+            <div key={label} className="px-4 py-2 text-center">
+              <p className="text-[9px] text-[#404048] uppercase tracking-widest">{label}</p>
+              <p className="text-slate-300 font-semibold text-xs mt-0.5 truncate">{value}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── Main content row: log + loot ── */}
@@ -309,7 +344,7 @@ export function RunTimer({ run, onComplete }: Props) {
         </div>
 
         {/* Loot summary */}
-        <div className="w-44 bg-[#13131a] border border-[rgba(255,255,255,0.07)] rounded-xl p-3 flex flex-col">
+        <div className="w-60 bg-[#13131a] border border-[rgba(255,255,255,0.07)] rounded-xl p-3 flex flex-col">
           <p className="text-[10px] text-[#505058] uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
             <span>⬡</span> Loot
           </p>
