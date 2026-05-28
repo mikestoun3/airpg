@@ -27,6 +27,16 @@ const NAV = [
   { id: 'wiki' as Tab, label: 'Wiki', icon: '📖', section: null },
 ];
 
+// Mobile: 6 grouped nav items (no scroll)
+const MOBILE_NAV = [
+  { id: 'adventure', label: 'Adventure', icon: '⚔️', tabs: ['adventure'] as Tab[], subs: [] as string[] },
+  { id: 'hero',      label: 'Hero',      icon: '🛡️', tabs: ['character', 'inventory'] as Tab[], subs: ['Character', 'Inventory'] },
+  { id: 'base',      label: 'Base',      icon: '🏕️', tabs: ['camp', 'craft'] as Tab[],          subs: ['Camp', 'Forge'] },
+  { id: 'trade',     label: 'Trade',     icon: '🏪', tabs: ['market', 'store'] as Tab[],         subs: ['Market', 'Store'] },
+  { id: 'quests',    label: 'Quests',    icon: '📋', tabs: ['quests'] as Tab[],                  subs: [] as string[] },
+  { id: 'wiki',      label: 'Wiki',      icon: '📖', tabs: ['wiki'] as Tab[],                    subs: [] as string[] },
+];
+
 function shortAddr(addr: string) {
   return addr.slice(0, 6) + '…' + addr.slice(-4);
 }
@@ -348,6 +358,26 @@ export default function GamePage() {
         {/* Content */}
         <main className="flex-1 overflow-y-auto md:overflow-hidden p-3 md:p-6">
           <div className="md:h-full">
+            {/* Mobile sub-nav for grouped tabs */}
+            {(() => {
+              const group = MOBILE_NAV.find(g => g.tabs.includes(activeTab));
+              if (!group || group.subs.length === 0) return null;
+              return (
+                <div className="md:hidden flex gap-1.5 mb-3">
+                  {group.tabs.map((tabId, i) => (
+                    <button key={tabId} onClick={() => setActiveTab(tabId)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                        activeTab === tabId
+                          ? 'bg-[#1a1a38] text-slate-100 border-[rgba(120,110,200,0.35)]'
+                          : 'text-[#5050a0] border-transparent hover:text-[#8080b0]'
+                      }`}>
+                      {group.subs[i]}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
             {activeTab === 'adventure' && <AdventureTab state={state} onRunStart={handleRunStart} onRunComplete={handleRunComplete} onRefresh={fetchState} />}
             {activeTab === 'character' && <CharacterTab state={state} onRefresh={fetchState} />}
             {activeTab === 'inventory' && <InventoryTab state={state} onRefresh={fetchState} />}
@@ -360,20 +390,24 @@ export default function GamePage() {
           </div>
         </main>
 
-        {/* ── Bottom nav (mobile only) ── */}
-        <nav className="md:hidden flex-shrink-0 bg-[#0c0c1e] border-t border-[rgba(120,110,200,0.12)] flex items-stretch overflow-x-auto">
-          {NAV.map((item) => {
-            const isActive = activeTab === item.id;
-            const showBadge = item.id === 'inventory' && invBadge && !isActive;
+        {/* ── Bottom nav (mobile only, 6 groups — no scroll) ── */}
+        <nav className="md:hidden flex-shrink-0 bg-[#0c0c1e] border-t border-[rgba(120,110,200,0.12)] flex items-stretch">
+          {MOBILE_NAV.map((group) => {
+            const isActive = group.tabs.includes(activeTab);
+            const showBadge = group.id === 'hero' && invBadge && !isActive;
             return (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
-                className={`flex-shrink-0 flex flex-col items-center justify-center py-2 gap-0.5 relative transition-colors w-14 ${
+              <button key={group.id}
+                onClick={() => {
+                  if (!isActive) { setActiveTab(group.tabs[0]); }
+                  // if already active and has sub-tabs, sub-nav handles switching
+                }}
+                className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative transition-colors ${
                   isActive ? 'text-slate-100' : 'text-[#4040a0]'
                 }`}>
-                {isActive && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-purple-500 rounded-full" />}
-                <span className="text-lg leading-none">{item.icon}</span>
-                <span className="text-[9px] font-medium truncate w-full text-center px-0.5">{item.label}</span>
-                {showBadge && <span className="absolute top-1.5 right-2 w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                {isActive && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-purple-500 rounded-full" />}
+                <span className="text-base leading-none">{group.icon}</span>
+                <span className="text-[9px] font-medium">{group.label}</span>
+                {showBadge && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />}
               </button>
             );
           })}
