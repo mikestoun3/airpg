@@ -10,6 +10,7 @@ interface Props {
   onRunStart: (run: GameState['activeRun']) => void;
   onRunComplete: () => void;
   onRefresh: () => void;
+  onNavigate?: (tab: string) => void;
 }
 
 const TIER_LABELS = ['', 'Tier I', 'Tier II', 'Tier III', 'Tier IV'];
@@ -54,7 +55,7 @@ function oddsColor(o: number) {
   return o >= 70 ? 'text-emerald-400' : o >= 45 ? 'text-amber-400' : 'text-red-400';
 }
 
-export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
+export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: Props) {
   const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
   const [floorsToAttempt, setFloorsToAttempt] = useState(3);
   const [loading, setLoading] = useState(false);
@@ -138,16 +139,16 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
                   }`}>
                   <div className="flex items-stretch">
                     {/* Thumbnail */}
-                    <div className={`w-20 shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a0a0a] to-[#0d0606]'}`}>
+                    <div className={`w-24 min-h-[76px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a0a0a] to-[#0d0606]'}`}>
                       {imgSrc && (
                         <img src={imgSrc} alt={dungeon.name}
                           className="absolute inset-0 w-full h-full object-cover opacity-80"
                           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#160c0c]/50" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#160c0c]/60" />
                       <div className="absolute bottom-1.5 left-1.5">
-                        <span className={`text-[9px] font-bold uppercase tracking-wide ${TIER_BADGE[dungeon.tier]}`}>
+                        <span className={`text-[9px] font-bold uppercase tracking-wide drop-shadow ${TIER_BADGE[dungeon.tier]}`}>
                           {TIER_LABELS[dungeon.tier]}
                         </span>
                       </div>
@@ -201,7 +202,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
                 <div key={dungeon.id}
                   className="rounded-xl border border-[rgba(200,80,80,0.07)] bg-[#110909] opacity-50 overflow-hidden">
                   <div className="flex items-stretch">
-                    <div className={`w-20 h-16 shrink-0 bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#140808] to-[#0a0505]'} opacity-40`} />
+                    <div className={`w-24 min-h-[76px] shrink-0 bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#140808] to-[#0a0505]'} opacity-40`} />
                     <div className="flex-1 flex items-center justify-between px-3 py-3">
                       <div>
                         <p className="text-[#5a3535] font-medium text-sm">🔒 {dungeon.name}</p>
@@ -220,76 +221,94 @@ export function AdventureTab({ state, onRunStart, onRunComplete }: Props) {
       </div>
 
       {/* ── RIGHT: character panel ── */}
-      <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-3">
+      <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-2.5">
 
-        {/* Portrait + stats */}
-        <div className="rounded-xl border border-[rgba(200,80,80,0.15)] overflow-hidden">
-          <div className="relative h-36 bg-gradient-to-br from-[#200a0a] via-[#160808] to-[#0e0505] flex flex-col justify-end p-3 overflow-hidden">
+        {/* Portrait */}
+        <div className="rounded-xl border border-[rgba(200,80,80,0.18)] overflow-hidden">
+          <div className="relative h-52 bg-gradient-to-br from-[#200a0a] via-[#160808] to-[#0e0505] overflow-hidden">
             <img src="/icons/character_portrait.png" alt="portrait"
-              className="absolute inset-0 w-full h-full object-cover object-top opacity-90" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#160c0c] via-[#160c0c]/40 to-transparent" />
-            <div className="relative z-10">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-100 font-bold">{character.name}</span>
-                <span className={`text-[10px] font-medium ${
-                  character.status === 'on_run' ? 'text-blue-400' :
-                  character.status === 'injured' ? 'text-red-400' : 'text-emerald-400'
+              className="absolute inset-0 w-full h-full object-cover object-top" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#140a0a] via-[#140a0a]/30 to-transparent" />
+            {/* Level badge */}
+            <div className="absolute top-2.5 right-2.5 bg-[#0d0808]/80 border border-[rgba(200,80,80,0.3)] rounded-lg px-2 py-1 backdrop-blur-sm">
+              <span className="text-[10px] text-[#7a5050] uppercase tracking-wide">Lv.</span>
+              <span className="text-slate-100 font-black text-sm ml-1">{character.level}</span>
+            </div>
+            {/* Name overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-3">
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-slate-100 font-black text-lg leading-tight tracking-wide">{character.name}</p>
+                  <p className="text-[11px] text-[#7a5050] mt-0.5">Wanderer</p>
+                </div>
+                <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${
+                  character.status === 'on_run'
+                    ? 'text-blue-400 border-blue-800/40 bg-blue-950/40'
+                    : character.status === 'injured'
+                    ? 'text-red-400 border-red-800/40 bg-red-950/40'
+                    : 'text-emerald-400 border-emerald-800/40 bg-emerald-950/40'
                 }`}>
                   {character.status === 'on_run' ? '● Away' :
                    character.status === 'injured' ? '✖ Hurt' : '● Idle'}
                 </span>
               </div>
-              <p className="text-[11px] text-[#6a4040]">Level {character.level} Wanderer</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 divide-x divide-[rgba(200,80,80,0.08)] bg-[#160c0c] border-t border-[rgba(200,80,80,0.10)]">
+          {/* CR + GS */}
+          <div className="grid grid-cols-2 divide-x divide-[rgba(200,80,80,0.10)] bg-[#140a0a] border-t border-[rgba(200,80,80,0.12)]">
             {([['Combat Rating', cr], ['Gear Score', character.gearScore]] as [string, number][]).map(([label, value]) => (
-              <div key={label} className="px-3 py-2 text-center">
-                <p className="text-[9px] text-[#5a3535] uppercase tracking-wide">{label}</p>
-                <p className="text-slate-200 font-bold text-sm mt-0.5">{value}</p>
+              <div key={label} className="px-3 py-2.5 text-center">
+                <p className="text-[9px] text-[#5a3535] uppercase tracking-widest">{label}</p>
+                <p className="text-slate-100 font-black text-lg leading-tight mt-0.5">{value}</p>
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-5 divide-x divide-[rgba(200,80,80,0.07)] bg-[#140a0a] border-t border-[rgba(200,80,80,0.08)]">
+          {/* Stats */}
+          <div className="grid grid-cols-5 divide-x divide-[rgba(200,80,80,0.07)] bg-[#110808] border-t border-[rgba(200,80,80,0.08)]">
             {(['pwr', 'end', 'lck', 'spd', 'ins'] as const).map(stat => (
               <div key={stat} className="py-2 text-center">
-                <p className="text-[9px] text-[#5a3535] uppercase">{STAT_LABEL[stat]}</p>
-                <p className="text-slate-300 font-bold text-xs mt-0.5">{character[stat]}</p>
+                <p className="text-[9px] text-[#4a2a2a] uppercase tracking-wide">{STAT_LABEL[stat]}</p>
+                <p className="text-slate-300 font-bold text-sm mt-0.5">{character[stat]}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Equipment */}
-        <div className="rounded-xl border border-[rgba(200,80,80,0.12)] bg-[#160c0c] p-3">
+        <div className="rounded-xl border border-[rgba(200,80,80,0.12)] bg-[#140a0a] p-3">
           <p className="text-[10px] text-[#6a4040] uppercase tracking-[0.2em] mb-2.5">Equipment</p>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-3 gap-2">
             {SLOTS.map(slot => {
               const item = equipment[slot];
               return (
                 <div key={slot}
-                  className={`aspect-square rounded-lg border flex items-center justify-center relative overflow-hidden ${
+                  className={`aspect-square rounded-xl border flex items-center justify-center relative overflow-hidden ${
                     item
-                      ? 'border-[rgba(200,80,80,0.25)] bg-[#1c1010]'
-                      : 'border-[rgba(200,80,80,0.08)] bg-[#120a0a]'
+                      ? 'border-[rgba(200,80,80,0.30)] bg-[#1e1010]'
+                      : 'border-[rgba(200,80,80,0.10)] bg-[#130909]'
                   }`}>
                   {item ? (
                     <>
                       <img src={`/icons/items/item_${slot}_${item.rarity}.png`} alt={item.name}
-                        className="w-7 h-7" style={{ imageRendering: 'pixelated' }} />
-                      <span className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full"
+                        className="w-9 h-9" style={{ imageRendering: 'pixelated' }} />
+                      <span className="absolute bottom-1 right-1 w-2 h-2 rounded-full border border-black/40"
                         style={{ backgroundColor: RARITY_COLORS[item.rarity] }} />
                     </>
                   ) : (
                     <img src={`/icons/items/slot_${slot}.png`} alt={slot}
-                      className="w-6 h-6 opacity-20" style={{ imageRendering: 'pixelated' }} />
+                      className="w-8 h-8 opacity-15" style={{ imageRendering: 'pixelated' }} />
                   )}
                 </div>
               );
             })}
           </div>
+          <button
+            onClick={() => onNavigate?.('inventory')}
+            className="w-full mt-3 py-2 rounded-xl border border-[rgba(200,80,80,0.15)] bg-[#1a0c0c] text-[#7a5050] text-xs font-semibold uppercase tracking-widest hover:border-[rgba(200,80,80,0.3)] hover:text-slate-300 transition-all">
+            View Inventory →
+          </button>
         </div>
 
         {/* Floor picker + SEND */}

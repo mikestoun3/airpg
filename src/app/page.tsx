@@ -378,7 +378,7 @@ export default function GamePage() {
               );
             })()}
 
-            {activeTab === 'adventure' && <AdventureTab state={state} onRunStart={handleRunStart} onRunComplete={handleRunComplete} onRefresh={fetchState} />}
+            {activeTab === 'adventure' && <AdventureTab state={state} onRunStart={handleRunStart} onRunComplete={handleRunComplete} onRefresh={fetchState} onNavigate={(t) => setActiveTab(t as Tab)} />}
             {activeTab === 'character' && <CharacterTab state={state} onRefresh={fetchState} />}
             {activeTab === 'inventory' && <InventoryTab state={state} onRefresh={fetchState} />}
             {activeTab === 'camp' && <CampTab state={state} onRefresh={fetchState} />}
