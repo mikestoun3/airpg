@@ -62,28 +62,45 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
         </div>
 
         {/* Rewards strip */}
-        <div className="px-6 py-4 flex gap-3 border-b border-[rgba(255,255,255,0.06)]">
-          <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
-            <p className="text-amber-400 font-bold text-xl">+{result.goldGained}</p>
-            <p className="text-[#505058] text-[11px] mt-0.5">Gold</p>
-          </div>
-          {result.essenceGained > 0 && (
-            <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
-              <p className="text-[#FC3154] font-bold text-xl">+{result.essenceGained}</p>
-              <p className="text-[#505058] text-[11px] mt-0.5">Essence</p>
+        {(() => {
+          const isFailed = result.outcome === 'failure' || result.outcome === 'critical_failure';
+          const label = isFailed ? 'Salvaged' : 'Rewards';
+          return (
+            <div className="px-6 pt-3 pb-4 border-b border-[rgba(255,255,255,0.06)]">
+              <p className="text-[10px] text-[#404050] uppercase tracking-widest mb-2">{label}</p>
+              <div className="flex gap-3">
+                {result.goldGained > 0 && (
+                  <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
+                    <p className="text-amber-400 font-bold text-xl">+{result.goldGained}</p>
+                    <p className="text-[#505058] text-[11px] mt-0.5">Gold</p>
+                  </div>
+                )}
+                {result.essenceGained > 0 && (
+                  <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
+                    <p className="text-violet-400 font-bold text-xl">+{result.essenceGained}</p>
+                    <p className="text-[#505058] text-[11px] mt-0.5">Essence</p>
+                  </div>
+                )}
+                <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
+                  <p className={`font-bold text-xl ${isFailed ? 'text-[#505068]' : 'text-blue-400'}`}>+{result.xpGained}</p>
+                  <p className="text-[#505058] text-[11px] mt-0.5">XP</p>
+                </div>
+                {(result.seasonPoints ?? 0) > 0 && (
+                  <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
+                    <p className="text-[#FC3154] font-bold text-xl">+{result.seasonPoints}</p>
+                    <p className="text-[#505058] text-[11px] mt-0.5">Season Pts</p>
+                  </div>
+                )}
+                {result.goldGained === 0 && result.essenceGained === 0 && (result.seasonPoints ?? 0) === 0 && isFailed && (
+                  <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
+                    <p className="text-[#404050] font-bold text-xl">—</p>
+                    <p className="text-[#404050] text-[11px] mt-0.5">Gold</p>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-          <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
-            <p className="text-blue-400 font-bold text-xl">+{result.xpGained}</p>
-            <p className="text-[#505058] text-[11px] mt-0.5">XP</p>
-          </div>
-          {(result.seasonPoints ?? 0) > 0 && (
-            <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
-              <p className="text-[#FC3154] font-bold text-xl">+{result.seasonPoints}</p>
-              <p className="text-[#505058] text-[11px] mt-0.5">Season Pts</p>
-            </div>
-          )}
-        </div>
+          );
+        })()}
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
