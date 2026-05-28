@@ -247,6 +247,8 @@ function initSchema(db: Database.Database) {
       );
     `);
   } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE characters ADD COLUMN season_points INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE characters ADD COLUMN gear_score INTEGER DEFAULT 0'); } catch { /* already exists */ }
 
   // Migrate wallets table to allow nullable character_id (for pre-auth nonce storage)
   try {
@@ -450,6 +452,7 @@ function rowToCharacter(row: Record<string, unknown>) {
     nicknameSet: !!(row.nickname_set as number),
     banned: !!(row.banned as number),
     banReason: (row.ban_reason as string | undefined) ?? undefined,
+    seasonPoints: (row.season_points as number | undefined) ?? 0,
   };
 }
 
@@ -1389,4 +1392,67 @@ export function redeemPromoCode(code: string, characterId: string): RedeemResult
   });
 
   return grant();
+}
+
+// ── Season Points & Leaderboard ───────────────────────────────────────────────
+
+export function addSeasonPoints(characterId: string, points: number): void {
+  if (points <= 0) return;
+  const db = getDb();
+  db.prepare('UPDATE characters SET season_points = season_points + ? WHERE id = ?').run(points, characterId);
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  nickname: string | null;
+  shortWallet: string;
+  level: number;
+  seasonPoints: number;
+  gearScore: number;
+  combatRating: number;
+  isCurrentPlayer: boolean;
+}
+
+export function getLeaderboard(currentCharacterId?: string): {
+  bySeason: LeaderboardEntry[];
+  byPower: LeaderboardEntry[];
+} {
+  const db = getDb();
+
+  const rows = db.prepare(`
+    SELECT id, nickname, wallet_address, level, season_points,
+           COALESCE(gear_score, 0) as gear_score,
+           pwr, end_stat
+    FROM characters
+    WHERE banned = 0
+  `).all() as {
+    id: string; nickname: string | null; wallet_address: string | null;
+    level: number; season_points: number; gear_score: number;
+    pwr: number; end_stat: number;
+  }[];
+
+  const mapped = rows.map(r => ({
+    id: r.id,
+    nickname: r.nickname,
+    shortWallet: r.wallet_address
+      ? r.wallet_address.slice(0, 6) + '…' + r.wallet_address.slice(-4)
+      : '???',
+    level: r.level,
+    seasonPoints: r.season_points,
+    gearScore: r.gear_score,
+    combatRating: Math.floor(r.pwr * 1.5 + r.end_stat),
+    isCurrentPlayer: r.id === currentCharacterId,
+  }));
+
+  const bySeason = [...mapped]
+    .sort((a, b) => b.seasonPoints - a.seasonPoints || b.level - a.level)
+    .slice(0, 100)
+    .map((e, i) => ({ ...e, rank: i + 1 }));
+
+  const byPower = [...mapped]
+    .sort((a, b) => b.gearScore - a.gearScore || b.combatRating - a.combatRating || b.level - a.level)
+    .slice(0, 100)
+    .map((e, i) => ({ ...e, rank: i + 1 }));
+
+  return { bySeason, byPower };
 }

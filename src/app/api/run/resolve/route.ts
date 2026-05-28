@@ -16,6 +16,7 @@ import {
   saveFloorCheckpoint,
   incrementEquippedAttunement,
   getFloorProgress,
+  addSeasonPoints,
 } from '@/lib/db';
 import type { FloorRunData } from '@/lib/engine/loot-roller';
 import { getDungeon } from '@/lib/data/dungeons';
@@ -75,6 +76,19 @@ export async function POST(req: NextRequest) {
       addMaterials(char.id, result.resourcesGained);
     }
 
+    // Award season points: floor_number * dungeon_tier * 2 per completed floor (partial = half)
+    const dungeon = getDungeon(result.dungeonId);
+    if (dungeon && result.floorResults) {
+      let sp = 0;
+      for (const floor of result.floorResults) {
+        if (floor.outcome !== 'failure') {
+          const base = floor.floor * dungeon.tier * 2;
+          sp += floor.outcome === 'partial' ? Math.floor(base * 0.5) : base;
+        }
+      }
+      addSeasonPoints(char.id, sp);
+    }
+
     // Add XP
     const levelResult = addXpAndLevel(char.id, result.xpGained);
 
@@ -96,7 +110,6 @@ export async function POST(req: NextRequest) {
     incrementEquippedAttunement(char.id);
 
     // Record tier clear
-    const dungeon = getDungeon(result.dungeonId);
     if (dungeon && (result.outcome === 'success' || result.outcome === 'critical_success')) {
       recordClear(char.id, result.dungeonId, dungeon.tier);
     }

@@ -111,6 +111,7 @@ export interface Character {
   injuredUntil?: number;
   statPoints: number;
   nicknameSet: boolean;
+  seasonPoints: number;
 }
 
 export interface ResourceStack {

@@ -10,10 +10,11 @@ import { MarketTab } from '@/components/game/MarketTab';
 import { WikiTab } from '@/components/game/WikiTab';
 import { QuestsTab } from '@/components/game/QuestsTab';
 import { StoreTab } from '@/components/game/StoreTab';
+import { LeaderboardTab } from '@/components/game/LeaderboardTab';
 import { ResultModal } from '@/components/game/ResultModal';
 import { LoginScreen } from '@/components/auth/LoginScreen';
 
-type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft' | 'market' | 'wiki' | 'quests' | 'store';
+type Tab = 'adventure' | 'character' | 'inventory' | 'camp' | 'craft' | 'market' | 'wiki' | 'quests' | 'store' | 'leaderboard';
 
 const NAV = [
   { id: 'adventure' as Tab, label: 'Adventure', icon: '⚔️', section: 'Explore' },
@@ -24,17 +25,19 @@ const NAV = [
   { id: 'market' as Tab, label: 'Market', icon: '🏪', section: 'World' },
   { id: 'quests' as Tab, label: 'Quests', icon: '📋', section: null },
   { id: 'store' as Tab, label: 'Store', icon: '🏬', section: null },
+  { id: 'leaderboard' as Tab, label: 'Ranks', icon: '🏆', section: null },
   { id: 'wiki' as Tab, label: 'Wiki', icon: '📖', section: null },
 ];
 
-// Mobile: 6 grouped nav items (no scroll)
+// Mobile: 7 grouped nav items
 const MOBILE_NAV = [
-  { id: 'adventure', label: 'Adventure', icon: '⚔️', tabs: ['adventure'] as Tab[], subs: [] as string[] },
-  { id: 'hero',      label: 'Hero',      icon: '🛡️', tabs: ['character', 'inventory'] as Tab[], subs: ['Character', 'Inventory'] },
-  { id: 'base',      label: 'Base',      icon: '🏕️', tabs: ['camp', 'craft'] as Tab[],          subs: ['Camp', 'Forge'] },
-  { id: 'trade',     label: 'Trade',     icon: '🏪', tabs: ['market', 'store'] as Tab[],         subs: ['Market', 'Store'] },
-  { id: 'quests',    label: 'Quests',    icon: '📋', tabs: ['quests'] as Tab[],                  subs: [] as string[] },
-  { id: 'wiki',      label: 'Wiki',      icon: '📖', tabs: ['wiki'] as Tab[],                    subs: [] as string[] },
+  { id: 'adventure',    label: 'Adventure', icon: '⚔️', tabs: ['adventure'] as Tab[],           subs: [] as string[] },
+  { id: 'hero',         label: 'Hero',      icon: '🛡️', tabs: ['character', 'inventory'] as Tab[], subs: ['Character', 'Inventory'] },
+  { id: 'base',         label: 'Base',      icon: '🏕️', tabs: ['camp', 'craft'] as Tab[],        subs: ['Camp', 'Forge'] },
+  { id: 'trade',        label: 'Trade',     icon: '🏪', tabs: ['market', 'store'] as Tab[],       subs: ['Market', 'Store'] },
+  { id: 'quests',       label: 'Quests',    icon: '📋', tabs: ['quests'] as Tab[],               subs: [] as string[] },
+  { id: 'leaderboard',  label: 'Ranks',     icon: '🏆', tabs: ['leaderboard'] as Tab[],          subs: [] as string[] },
+  { id: 'wiki',         label: 'Wiki',      icon: '📖', tabs: ['wiki'] as Tab[],                 subs: [] as string[] },
 ];
 
 function shortAddr(addr: string) {
@@ -397,6 +400,7 @@ export default function GamePage() {
             {activeTab === 'market' && <MarketTab state={state} onRefresh={fetchState} />}
             {activeTab === 'quests' && <QuestsTab />}
             {activeTab === 'store' && <StoreTab state={state} onRefresh={fetchState} />}
+            {activeTab === 'leaderboard' && <LeaderboardTab state={state} />}
             {activeTab === 'wiki' && <WikiTab />}
           </div>
         </main>

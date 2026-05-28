@@ -109,8 +109,34 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
   return (
     <div className="flex flex-col md:flex-row gap-4 md:h-full">
 
+      {/* ── Mobile sticky send panel ── */}
+      {selected && !isInjured && (
+        <div className="md:hidden fixed bottom-14 left-0 right-0 z-20 bg-[#16161f] border-t border-[rgba(200,80,80,0.35)] px-3 pt-3 pb-3 shadow-2xl">
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-slate-200 font-semibold text-sm flex-1 truncate">{selected.name}</p>
+            {savedFloor > 0 && <p className="text-[10px] text-[#FC3154]/60 shrink-0">Fl.{savedFloor + 1}↑</p>}
+            <button onClick={() => setSelectedDungeon(null)} className="text-[#505058] hover:text-slate-400 text-sm shrink-0">✕</button>
+          </div>
+          <div className="flex gap-1 mb-2.5">
+            {[1,2,3,4,5,6,7,8,9,10].map(n => (
+              <button key={n} onClick={() => setFloorsToAttempt(n)}
+                className={`flex-1 py-1.5 rounded text-xs font-bold border transition-all ${
+                  floorsToAttempt === n
+                    ? 'border-[#FC3154]/60 bg-red-900/40 text-red-200'
+                    : 'border-[rgba(255,255,255,0.07)] bg-transparent text-[#606068]'
+                }`}>{n}</button>
+            ))}
+          </div>
+          {error && <p className="text-[#FC3154] text-xs mb-2">{error}</p>}
+          <button onClick={handleSend} disabled={!isIdle || loading}
+            className="w-full py-2.5 bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] disabled:from-[#1a1a26] disabled:to-[#1a1a26] disabled:text-[#505058] text-white font-bold rounded-xl text-sm tracking-widest uppercase transition-all">
+            {loading ? 'Sending...' : `Send Hero → ${floorsToAttempt} floor${floorsToAttempt > 1 ? 's' : ''}`}
+          </button>
+        </div>
+      )}
+
       {/* ── LEFT: dungeon list ── */}
-      <div className="flex-1 flex flex-col gap-3 md:overflow-y-auto md:pr-1">
+      <div className="flex-1 flex flex-col gap-3 md:overflow-y-auto md:pr-1 pb-36 md:pb-0">
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#FC3154]"
           style={{ textShadow: '0 0 10px rgba(252,49,84,0.6), 0 0 20px rgba(252,49,84,0.3)' }}>
           Available Dungeons
@@ -147,10 +173,10 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                       ? 'border-[#FC3154]/50'
                       : 'border-[rgba(255,255,255,0.07)] hover:border-[rgba(255,255,255,0.13)]'
                   } bg-[#13131a]`}>
-                  <div className="flex items-stretch h-[88px]">
+                  <div className="flex items-stretch h-[72px] sm:h-[88px]">
 
                     {/* Thumbnail */}
-                    <div className={`w-[260px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'}`}>
+                    <div className={`w-20 sm:w-[260px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'}`}>
                       {imgSrc && (
                         <img src={imgSrc} alt={dungeon.name}
                           className="absolute inset-0 w-full h-full object-cover"
@@ -175,8 +201,8 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                       )}
                     </div>
 
-                    {/* Stats: Reward Rate + Time */}
-                    <div className="flex items-center gap-5 sm:gap-8 px-4 sm:px-7 shrink-0">
+                    {/* Stats: Reward Rate + Time — hidden on mobile */}
+                    <div className="hidden sm:flex items-center gap-5 sm:gap-8 px-4 sm:px-7 shrink-0">
                       <div className="text-center">
                         <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest whitespace-nowrap">Reward Rate</p>
                         <p className={`text-base font-bold mt-1 ${rateColor}`}>
@@ -228,8 +254,8 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
         )}
       </div>
 
-      {/* ── RIGHT: character panel ── */}
-      <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-2.5">
+      {/* ── RIGHT: character panel (desktop only) ── */}
+      <div className="hidden md:flex w-full md:w-72 md:flex-shrink-0 flex-col gap-2.5">
 
         {/* Portrait */}
         <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
