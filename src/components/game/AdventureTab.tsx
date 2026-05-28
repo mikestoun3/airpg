@@ -137,11 +137,6 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               const timeLabel = estimatedMins >= 60
                 ? `${Math.floor(estimatedMins / 60)}h ${estimatedMins % 60 > 0 ? `${estimatedMins % 60}m` : ''}`.trim()
                 : `${estimatedMins}m`;
-              const diff = dungeon.tier === 1
-                ? { label: 'Easy',   cls: 'text-emerald-400 bg-emerald-900/30 border-emerald-700/40' }
-                : dungeon.tier === 2
-                ? { label: 'Normal', cls: 'text-sky-400 bg-sky-900/30 border-sky-700/40' }
-                : { label: 'Hard',   cls: 'text-red-400 bg-red-900/30 border-red-700/40' };
               const rateColor = rewardRate >= -20 ? 'text-emerald-400' : rewardRate >= -50 ? 'text-amber-400' : 'text-red-400';
               const imgSrc = DUNGEON_IMG[dungeon.id];
 
@@ -165,49 +160,46 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#13131a]/60" />
                     </div>
 
-                    {/* Name + subtitle + badge */}
+                    {/* Name + subtitle */}
                     <div className="flex-1 flex flex-col justify-center px-4 min-w-0">
                       <p className="text-slate-100 font-bold text-[15px] uppercase tracking-wide leading-tight truncate">
                         {dungeon.name}
                       </p>
-                      <p className="text-[10px] text-[#4a4a58] uppercase tracking-widest mt-0.5">
+                      <p className="text-[10px] text-[#4a4a58] uppercase tracking-widest mt-1">
                         {DUNGEON_SUBTITLE[dungeon.id]}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${diff.cls}`}>
-                          {diff.label}
+                      {dungeonSavedFloor > 0 && (
+                        <span className="mt-1.5 text-[9px] text-[#555565] border border-[rgba(255,255,255,0.08)] px-1.5 py-0.5 rounded self-start">
+                          Fl.{dungeonSavedFloor + 1}
                         </span>
-                        {dungeonSavedFloor > 0 && (
-                          <span className="text-[9px] text-[#555565] border border-[rgba(255,255,255,0.08)] px-1.5 py-0.5 rounded">
-                            Fl.{dungeonSavedFloor + 1}
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
 
                     {/* Stats: Reward Rate + Time */}
-                    <div className="flex items-center gap-6 px-5 shrink-0">
-                      <div>
-                        <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest">Reward Rate</p>
+                    <div className="flex items-center gap-5 sm:gap-8 px-4 sm:px-7 shrink-0">
+                      <div className="text-center">
+                        <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest whitespace-nowrap">Reward Rate</p>
                         <p className={`text-base font-bold mt-1 ${rateColor}`}>
                           {rewardRate >= 0 ? '+' : ''}{rewardRate}%
                         </p>
                       </div>
-                      <div>
+                      <div className="text-center">
                         <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest">Time</p>
                         <p className="text-base font-bold mt-1 text-slate-200">{timeLabel}</p>
                       </div>
                     </div>
 
-                    {/* ENTER button — full height */}
-                    <button
-                      onClick={() => { setSelectedDungeon(dungeon.id); setError(null); }}
-                      disabled={!isIdle}
-                      className={`w-[72px] shrink-0 flex items-center justify-center font-bold text-sm uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                        isSel ? 'bg-red-500 text-white' : 'bg-red-600 hover:bg-red-500 text-white'
-                      }`}>
-                      {isSel ? '✓' : 'Enter'}
-                    </button>
+                    {/* ENTER button */}
+                    <div className="flex items-center px-3 sm:px-4 shrink-0">
+                      <button
+                        onClick={() => { setSelectedDungeon(dungeon.id); setError(null); }}
+                        disabled={!isIdle}
+                        className={`px-4 sm:px-5 py-3 rounded-lg font-bold text-sm uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                          isSel ? 'bg-red-500 text-white' : 'bg-red-600 hover:bg-red-500 text-white'
+                        }`}>
+                        {isSel ? '✓' : 'Enter'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
