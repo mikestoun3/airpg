@@ -150,7 +150,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   <div className="flex items-stretch h-[88px]">
 
                     {/* Thumbnail */}
-                    <div className={`w-[140px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'}`}>
+                    <div className={`w-[260px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'}`}>
                       {imgSrc && (
                         <img src={imgSrc} alt={dungeon.name}
                           className="absolute inset-0 w-full h-full object-cover"
