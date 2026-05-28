@@ -1420,29 +1420,32 @@ export function getLeaderboard(currentCharacterId?: string): {
   const db = getDb();
 
   const rows = db.prepare(`
-    SELECT id, nickname, wallet_address, level, season_points,
+    SELECT id, name, nickname_set, wallet_address, level, season_points,
            COALESCE(gear_score, 0) as gear_score,
            pwr, end_stat
     FROM characters
     WHERE banned = 0
   `).all() as {
-    id: string; nickname: string | null; wallet_address: string | null;
+    id: string; name: string; nickname_set: number; wallet_address: string | null;
     level: number; season_points: number; gear_score: number;
     pwr: number; end_stat: number;
   }[];
 
-  const mapped = rows.map(r => ({
-    id: r.id,
-    nickname: r.nickname,
-    shortWallet: r.wallet_address
+  const mapped = rows.map(r => {
+    const shortWallet = r.wallet_address
       ? r.wallet_address.slice(0, 6) + '…' + r.wallet_address.slice(-4)
-      : '???',
-    level: r.level,
-    seasonPoints: r.season_points,
-    gearScore: r.gear_score,
-    combatRating: Math.floor(r.pwr * 1.5 + r.end_stat),
-    isCurrentPlayer: r.id === currentCharacterId,
-  }));
+      : '???';
+    return {
+      id: r.id,
+      nickname: r.nickname_set ? r.name : null,
+      shortWallet,
+      level: r.level,
+      seasonPoints: r.season_points,
+      gearScore: r.gear_score,
+      combatRating: Math.floor(r.pwr * 1.5 + r.end_stat),
+      isCurrentPlayer: r.id === currentCharacterId,
+    };
+  });
 
   const bySeason = [...mapped]
     .sort((a, b) => b.seasonPoints - a.seasonPoints || b.level - a.level)
