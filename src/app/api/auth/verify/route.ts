@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
-import { getNonce, getOrCreateCharacter } from '@/lib/db';
+import { getNonce, getOrCreateCharacter, rotateNonce } from '@/lib/db';
 import { makeSessionValue, COOKIE_NAME } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -22,6 +22,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Signature mismatch' }, { status: 401 });
     }
 
+    // Invalidate the used nonce so it can't be replayed
+    rotateNonce(addr);
+
     // Create or load character for this wallet
     const char = getOrCreateCharacter(addr);
 
@@ -32,6 +35,7 @@ export async function POST(req: NextRequest) {
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 30, // 30 days
+      secure: process.env.NODE_ENV === 'production',
     });
     return res;
   } catch (err) {

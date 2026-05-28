@@ -25,7 +25,14 @@ export async function POST(req: NextRequest) {
     };
 
     const wallet = getSessionWallet(req);
-    const char = getOrCreateCharacter(wallet ?? undefined);
+    if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
+    const char = getOrCreateCharacter(wallet);
+    if (char.banned) return NextResponse.json({ ok: false, error: 'Account suspended' }, { status: 403 });
+
+    const VALID_SLOTS = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'] as const;
+    if (body.action === 'unequip' && body.slot && !VALID_SLOTS.includes(body.slot as typeof VALID_SLOTS[number])) {
+      return NextResponse.json({ ok: false, error: 'Invalid slot' }, { status: 400 });
+    }
 
     if ((body.action === 'equip' || body.action === 'unequip') && getActiveRun(char.id)) {
       return NextResponse.json({ ok: false, error: 'Cannot change equipment while on a run.' }, { status: 400 });

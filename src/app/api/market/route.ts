@@ -25,6 +25,11 @@ export async function POST(req: NextRequest) {
     if (!itemId || !priceWei) {
       return NextResponse.json({ ok: false, error: 'Missing itemId or priceWei' }, { status: 400 });
     }
+    try {
+      if (BigInt(priceWei) <= BigInt(0)) throw new Error();
+    } catch {
+      return NextResponse.json({ ok: false, error: 'Invalid price' }, { status: 400 });
+    }
 
     const char = getOrCreateCharacter(wallet);
     const listing = listItem(char.id, wallet, itemId, priceWei);

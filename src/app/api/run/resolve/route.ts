@@ -25,7 +25,9 @@ import { resolveFloorRun } from '@/lib/engine/run-engine';
 export async function POST(req: NextRequest) {
   try {
     const wallet = getSessionWallet(req);
-    const char = getOrCreateCharacter(wallet ?? undefined);
+    if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
+    const char = getOrCreateCharacter(wallet);
+    if (char.banned) return NextResponse.json({ ok: false, error: 'Account suspended' }, { status: 403 });
     const runRow = getCompletedUnresolvedRun(char.id);
 
     if (!runRow) {

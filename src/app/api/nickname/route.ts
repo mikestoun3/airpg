@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
   }
 
   const char = getOrCreateCharacter(wallet);
+  if (char.nicknameSet) {
+    return NextResponse.json({ ok: false, error: 'Nickname already set and cannot be changed' }, { status: 400 });
+  }
   setNickname(char.id, trimmed);
 
   return NextResponse.json({ ok: true });

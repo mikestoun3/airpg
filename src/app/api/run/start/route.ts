@@ -24,7 +24,9 @@ export async function POST(req: NextRequest) {
     const floorsToAttempt = Math.min(10, Math.max(1, body.floorsToAttempt ?? 3));
 
     const wallet = getSessionWallet(req);
-    const char = getOrCreateCharacter(wallet ?? undefined);
+    if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
+    const char = getOrCreateCharacter(wallet);
+    if (char.banned) return NextResponse.json({ ok: false, error: 'Account suspended' }, { status: 403 });
 
     if (char.status !== 'idle') {
       return NextResponse.json({ ok: false, error: 'Character is not available.' }, { status: 400 });

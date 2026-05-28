@@ -7,13 +7,16 @@ import type { ItemInstance, GearTier } from '@/types/game';
 
 export async function POST(req: NextRequest) {
   try {
+    const wallet = getSessionWallet(req);
+    if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
+
     const { recipeId, ingredientItemId } = await req.json() as { recipeId: string; ingredientItemId?: string };
+    const char = getOrCreateCharacter(wallet);
+    if (char.banned) return NextResponse.json({ ok: false, error: 'Account suspended' }, { status: 403 });
 
     // Handle resource conversions
     const conversion = CONVERSION_RECIPES.find(c => c.id === recipeId);
     if (conversion) {
-      const wallet = getSessionWallet(req);
-      const char = getOrCreateCharacter(wallet ?? undefined);
       const spent = spendMaterials(char.id, [{ resourceId: conversion.fromResourceId, quantity: conversion.fromQuantity }]);
       if (!spent) return NextResponse.json({ ok: false, error: 'Not enough materials.' }, { status: 400 });
       addMaterials(char.id, [{ resourceId: conversion.toResourceId, quantity: conversion.toQuantity }]);
@@ -24,9 +27,6 @@ export async function POST(req: NextRequest) {
     if (!recipe) {
       return NextResponse.json({ ok: false, error: 'Unknown recipe.' }, { status: 400 });
     }
-
-    const wallet = getSessionWallet(req);
-    const char = getOrCreateCharacter(wallet ?? undefined);
 
     // Check forge level
     const builtIds = getBuiltUpgrades(char.id);

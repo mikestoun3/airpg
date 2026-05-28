@@ -295,6 +295,17 @@ export function getNonce(address: string): string | null {
   return row?.nonce ?? null;
 }
 
+export function rotateNonce(address: string): void {
+  const newNonce = require('crypto').randomBytes(16).toString('hex');
+  saveNonce(address, newNonce);
+}
+
+export function isCharacterBanned(characterId: string): boolean {
+  const db = getDb();
+  const row = db.prepare('SELECT banned FROM characters WHERE id = ?').get(characterId) as { banned: number } | undefined;
+  return !!(row?.banned);
+}
+
 export function getCharacterIdByWallet(address: string): string | null {
   const db = getDb();
   const row = db.prepare('SELECT character_id FROM wallets WHERE address = ? AND character_id IS NOT NULL').get(address) as { character_id: string } | undefined;
@@ -369,24 +380,26 @@ export function addResources(id: string, gold: number, essence: number, relics: 
 
 export function upgradeItemInInventory(characterId: string, itemId: string): { ok: boolean; error?: string; item?: ItemInstance; goldSpent?: number } {
   const db = getDb();
-  const row = db.prepare('SELECT item_json FROM inventory WHERE id = ? AND character_id = ?').get(itemId, characterId) as { item_json: string } | undefined;
-  if (!row) return { ok: false, error: 'Item not found.' };
+  return db.transaction(() => {
+    const row = db.prepare('SELECT item_json FROM inventory WHERE id = ? AND character_id = ?').get(itemId, characterId) as { item_json: string } | undefined;
+    if (!row) return { ok: false as const, error: 'Item not found.' };
 
-  const item = JSON.parse(row.item_json) as ItemInstance;
-  const level = item.upgradeLevel ?? 0;
-  if (level >= 5) return { ok: false, error: 'Item is fully upgraded.' };
+    const item = JSON.parse(row.item_json) as ItemInstance;
+    const level = item.upgradeLevel ?? 0;
+    if (level >= 5) return { ok: false as const, error: 'Item is fully upgraded.' };
 
-  const UPGRADE_GOLD_BASE: Record<string, number> = { common: 50, uncommon: 120, rare: 300, epic: 700, legendary: 1800 };
-  const cost = UPGRADE_GOLD_BASE[item.rarity] * (level + 1);
+    const UPGRADE_GOLD_BASE: Record<string, number> = { common: 50, uncommon: 120, rare: 300, epic: 700, legendary: 1800 };
+    const cost = UPGRADE_GOLD_BASE[item.rarity] * (level + 1);
 
-  const char = db.prepare('SELECT gold FROM characters WHERE id = ?').get(characterId) as { gold: number };
-  if (char.gold < cost) return { ok: false, error: `Not enough gold. Need ${cost}g.` };
+    // Atomic gold deduction — fails if insufficient
+    const result = db.prepare('UPDATE characters SET gold = gold - ? WHERE id = ? AND gold >= ?').run(cost, characterId, cost);
+    if (result.changes === 0) return { ok: false as const, error: `Not enough gold. Need ${cost}g.` };
 
-  const upgraded: ItemInstance = { ...item, upgradeLevel: level + 1, gearScore: item.gearScore + 4, primaryValue: item.primaryValue + 3 };
-  db.prepare('UPDATE inventory SET item_json = ? WHERE id = ? AND character_id = ?').run(JSON.stringify(upgraded), itemId, characterId);
-  db.prepare('UPDATE characters SET gold = gold - ? WHERE id = ?').run(cost, characterId);
+    const upgraded: ItemInstance = { ...item, upgradeLevel: level + 1, gearScore: item.gearScore + 4, primaryValue: item.primaryValue + 3 };
+    db.prepare('UPDATE inventory SET item_json = ? WHERE id = ? AND character_id = ?').run(JSON.stringify(upgraded), itemId, characterId);
 
-  return { ok: true, item: upgraded, goldSpent: cost };
+    return { ok: true as const, item: upgraded, goldSpent: cost };
+  })();
 }
 
 export function addXpAndLevel(id: string, xpGained: number) {
@@ -501,14 +514,19 @@ export function equipItem(characterId: string, item: ItemInstance): ItemInstance
   return prevItem;
 }
 
+const VALID_SLOTS: readonly EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
+
 export function unequipItem(characterId: string, slot: EquipmentSlot) {
+  if (!VALID_SLOTS.includes(slot)) throw new Error('Invalid slot');
   const db = getDb();
-  const row = db.prepare(`SELECT ${slot} FROM equipment WHERE character_id = ?`).get(characterId) as Record<string, string | null>;
-  const json = row?.[slot];
+  // Use a known-safe column name from the allowlist, never interpolate user input directly
+  const safeSlot = VALID_SLOTS[VALID_SLOTS.indexOf(slot)];
+  const row = db.prepare(`SELECT ${safeSlot} FROM equipment WHERE character_id = ?`).get(characterId) as Record<string, string | null>;
+  const json = row?.[safeSlot];
   if (!json) return;
 
   const item: ItemInstance = JSON.parse(json);
-  db.prepare(`UPDATE equipment SET ${slot} = NULL WHERE character_id = ?`).run(characterId);
+  db.prepare(`UPDATE equipment SET ${safeSlot} = NULL WHERE character_id = ?`).run(characterId);
   db.prepare('INSERT INTO inventory (id, character_id, item_json) VALUES (?, ?, ?)')
     .run(item.id, characterId, json);
   recomputeGearScore(characterId);
@@ -535,7 +553,10 @@ export function getGearScore(characterId: string): number {
 
 // Returns base stats + all bonuses from equipped items
 export function getEffectiveStats(characterId: string) {
-  const char = getOrCreateCharacter();
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM characters WHERE id = ?').get(characterId) as Record<string, unknown> | undefined;
+  if (!row) throw new Error(`Character not found: ${characterId}`);
+  const char = rowToCharacter(row);
   const equip = getEquipment(characterId);
   const slots: EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
 
@@ -778,17 +799,15 @@ export function spendMaterials(
   ingredients: { resourceId: string; quantity: number }[]
 ): boolean {
   const db = getDb();
-  const rows = db.prepare('SELECT resource_id, quantity FROM materials WHERE character_id = ?')
-    .all(characterId) as { resource_id: string; quantity: number }[];
-  const stock = Object.fromEntries(rows.map((r) => [r.resource_id, r.quantity]));
-  for (const ing of ingredients) {
-    if ((stock[ing.resourceId] ?? 0) < ing.quantity) return false;
-  }
-  for (const ing of ingredients) {
-    db.prepare('UPDATE materials SET quantity = quantity - ? WHERE character_id = ? AND resource_id = ?')
-      .run(ing.quantity, characterId, ing.resourceId);
-  }
-  return true;
+  return db.transaction(() => {
+    for (const ing of ingredients) {
+      const result = db.prepare(
+        'UPDATE materials SET quantity = quantity - ? WHERE character_id = ? AND resource_id = ? AND quantity >= ?'
+      ).run(ing.quantity, characterId, ing.resourceId, ing.quantity);
+      if (result.changes === 0) return false;
+    }
+    return true;
+  })();
 }
 
 export function spendGold(characterId: string, amount: number): boolean {

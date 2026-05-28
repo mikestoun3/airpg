@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ethers } from 'ethers';
 import { getSessionWallet } from '@/lib/auth';
 import { getOrCreateCharacter, addResources, addItemToInventory, recordStorePurchase } from '@/lib/db';
 import { STORE_ITEMS } from '@/lib/data/store';
 import { RARITY_ORDER } from '@/types/game';
 import type { Rarity, EquipmentSlot } from '@/types/game';
 import { rollFreeItem } from '@/lib/engine/loot-roller';
+
+const POLYGON_RPC      = process.env.POLYGON_RPC_URL ?? 'https://polygon-bor-rpc.publicnode.com';
+const POLYGON_CHAIN_ID = 137;
+const STORE_ADDRESS    = (process.env.STORE_ADDRESS ?? '').toLowerCase();
 
 const SLOTS: EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
 
@@ -23,6 +28,13 @@ function rollCaseItem(rarityWeights: Record<string, number>) {
 
 export async function POST(req: NextRequest) {
   try {
+    const wallet = getSessionWallet(req);
+    if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
+
+    if (!STORE_ADDRESS) {
+      return NextResponse.json({ ok: false, error: 'Store not available yet' }, { status: 503 });
+    }
+
     const { storeItemId, txHash } = await req.json() as { storeItemId?: string; txHash?: string };
     if (!storeItemId || !txHash) {
       return NextResponse.json({ ok: false, error: 'Missing storeItemId or txHash' }, { status: 400 });
@@ -31,10 +43,32 @@ export async function POST(req: NextRequest) {
     const storeItem = STORE_ITEMS.find(i => i.id === storeItemId);
     if (!storeItem) return NextResponse.json({ ok: false, error: 'Unknown store item' }, { status: 400 });
 
-    const wallet = getSessionWallet(req);
-    if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
+    // Verify the transaction on-chain
+    const provider = new ethers.JsonRpcProvider(POLYGON_RPC, POLYGON_CHAIN_ID);
+
+    const [receipt, tx] = await Promise.all([
+      provider.getTransactionReceipt(txHash),
+      provider.getTransaction(txHash),
+    ]);
+
+    if (!receipt || receipt.status !== 1) {
+      return NextResponse.json({ ok: false, error: 'Transaction not confirmed or failed on Polygon' }, { status: 400 });
+    }
+    if (!tx) {
+      return NextResponse.json({ ok: false, error: 'Transaction not found' }, { status: 400 });
+    }
+    if (receipt.to?.toLowerCase() !== STORE_ADDRESS) {
+      return NextResponse.json({ ok: false, error: 'Transaction did not go to the store address' }, { status: 400 });
+    }
+    if (tx.from.toLowerCase() !== wallet.toLowerCase()) {
+      return NextResponse.json({ ok: false, error: 'Transaction sender does not match your wallet' }, { status: 400 });
+    }
+    if (tx.value < BigInt(storeItem.priceWei)) {
+      return NextResponse.json({ ok: false, error: 'Transaction value is less than item price' }, { status: 400 });
+    }
 
     const char = getOrCreateCharacter(wallet);
+    if (char.banned) return NextResponse.json({ ok: false, error: 'Account suspended' }, { status: 403 });
 
     let rewardSummary: Record<string, unknown> = {};
     let rolledItem = null;
