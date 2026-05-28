@@ -62,7 +62,7 @@ export function CharacterTab({ state, onRefresh }: Props) {
         {/* Portrait card */}
         <div className="flex-shrink-0 bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl overflow-hidden">
           <div className="relative h-36 md:h-40 overflow-hidden bg-[#0e0e14]">
-            <img src="/icons/character_portrait.png" alt="portrait"
+            <img src="/icons/character_avatar.png" alt="portrait"
               className="w-full h-full object-cover object-top" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#16161f] via-transparent to-transparent" />
           </div>
