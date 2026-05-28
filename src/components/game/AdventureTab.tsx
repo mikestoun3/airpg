@@ -310,10 +310,10 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   {/* Item or ghost */}
                   {item ? (
                     <img src={`/icons/items/item_${slot}_${item.rarity}.png`} alt={item.name}
-                      className="w-11 h-11 object-contain mt-1" />
+                      className="absolute inset-0 w-full h-full object-cover" />
                   ) : (
                     <img src={`/icons/items/slot_${slot}.png`} alt={slot}
-                      className="w-9 h-9 object-contain opacity-10 mt-1" />
+                      className="w-9 h-9 object-contain opacity-10" />
                   )}
                   {/* Attunement / progress dots */}
                   <div className="absolute bottom-1.5 flex gap-1">
