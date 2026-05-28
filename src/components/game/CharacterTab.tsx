@@ -61,11 +61,10 @@ export function CharacterTab({ state, onRefresh }: Props) {
       <div className="w-full md:w-72 md:flex-shrink-0 flex flex-col gap-4 md:overflow-y-auto md:pb-2">
         {/* Portrait card */}
         <div className="flex-shrink-0 bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl overflow-hidden">
-          {/* Avatar — fixed height, just the circle */}
-          <div className="bg-gradient-to-b from-[#1c1c28] to-[#111118] h-28 md:h-32 flex items-center justify-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-4xl border-2 border-[#FC3154]/40 shadow-lg shadow-[#1a0510]/40">
-              ⚔
-            </div>
+          <div className="relative h-36 md:h-40 overflow-hidden bg-[#0e0e14]">
+            <img src="/icons/character_portrait.png" alt="portrait"
+              className="w-full h-full object-cover object-top" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#16161f] via-transparent to-transparent" />
           </div>
           <div className="px-4 pt-3 pb-4">
             {/* Name + badges */}
