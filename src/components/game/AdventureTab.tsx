@@ -292,13 +292,13 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   {item ? (
                     <>
                       <img src={`/icons/items/item_${slot}_${item.rarity}.png`} alt={item.name}
-                        className="w-9 h-9" style={{ imageRendering: 'pixelated' }} />
+                        className="w-10 h-10 object-contain" />
                       <span className="absolute bottom-1 right-1 w-2 h-2 rounded-full border border-black/40"
                         style={{ backgroundColor: RARITY_COLORS[item.rarity] }} />
                     </>
                   ) : (
                     <img src={`/icons/items/slot_${slot}.png`} alt={slot}
-                      className="w-8 h-8 opacity-15" style={{ imageRendering: 'pixelated' }} />
+                      className="w-8 h-8 opacity-15 object-contain" />
                   )}
                 </div>
               );
