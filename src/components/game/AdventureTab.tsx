@@ -317,8 +317,8 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
           </div>
         </div>
 
-        {/* Equipment */}
-        <div className="rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0e0e14] p-3">
+        {/* Equipment — hidden when dungeon selected */}
+        <div className={`rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0e0e14] p-3 ${selected ? 'hidden' : ''}`}>
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-[#d4294a] font-bold uppercase tracking-widest">Equipment</p>
             <p className="text-[9px] text-[#404048] uppercase tracking-widest">Set Bonus</p>
