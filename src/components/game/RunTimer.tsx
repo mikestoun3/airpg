@@ -277,7 +277,7 @@ export function RunTimer({ run, onComplete }: Props) {
       {/* ── Event log ── */}
       <div className="flex-1 bg-[#120808] border border-[rgba(255,255,255,0.08)] rounded-xl p-4 overflow-hidden">
         <p className="text-[10px] text-[#606068] uppercase tracking-widest mb-3 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse inline-block" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FC3154] animate-pulse inline-block" />
           Journey Log
         </p>
 
@@ -297,11 +297,11 @@ export function RunTimer({ run, onComplete }: Props) {
                   style={i === 0 ? { animation: 'event-slide-in 0.4s ease-out' } : {}}>
                   <span className={`mt-0.5 text-xs shrink-0 ${
                     i === 0
-                      ? isFloorClear ? 'text-red-400'
+                      ? isFloorClear ? 'text-[#FC3154]'
                         : isLoot ? ''
                         : isResource ? 'text-emerald-400'
-                        : isEssence ? 'text-rose-400'
-                        : 'text-rose-400'
+                        : isEssence ? 'text-[#FC3154]'
+                        : 'text-[#FC3154]'
                       : 'text-[#44444e]'
                   }`}
                     style={i === 0 && rarityColor ? { color: rarityColor } : undefined}>

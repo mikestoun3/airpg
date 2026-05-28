@@ -63,7 +63,7 @@ export function CharacterTab({ state, onRefresh }: Props) {
         <div className="flex-shrink-0 bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl overflow-hidden">
           {/* Avatar — fixed height, just the circle */}
           <div className="bg-gradient-to-b from-[#1c1c28] to-[#111118] h-28 md:h-32 flex items-center justify-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-red-700 to-rose-900 flex items-center justify-center text-4xl border-2 border-red-600/40 shadow-lg shadow-red-950/40">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-4xl border-2 border-[#FC3154]/40 shadow-lg shadow-[#1a0510]/40">
               ⚔
             </div>
           </div>
@@ -72,12 +72,12 @@ export function CharacterTab({ state, onRefresh }: Props) {
             <div className="text-center mb-3">
               <h2 className="text-slate-100 font-black text-lg leading-tight truncate">{character.name}</h2>
               <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                <span className="text-[10px] font-bold text-red-300 bg-red-900/50 border border-red-700/40 px-2 py-0.5 rounded-full tracking-wide">
+                <span className="text-[10px] font-bold text-red-300 bg-red-900/50 border border-[#d4294a]/40 px-2 py-0.5 rounded-full tracking-wide">
                   LVL {character.level}
                 </span>
                 <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
-                  character.status === 'on_run'  ? 'text-red-300 bg-indigo-900/40 border-red-700/40' :
-                  character.status === 'injured' ? 'text-red-300 bg-red-900/40 border-red-700/40' :
+                  character.status === 'on_run'  ? 'text-red-300 bg-indigo-900/40 border-[#d4294a]/40' :
+                  character.status === 'injured' ? 'text-red-300 bg-red-900/40 border-[#d4294a]/40' :
                                                    'text-emerald-300 bg-emerald-900/40 border-emerald-700/40'
                 }`}>
                   {character.status === 'on_run' ? '⚔ In Dungeon' : character.status === 'injured' ? '✖ Injured' : '● Idle'}
@@ -93,7 +93,7 @@ export function CharacterTab({ state, onRefresh }: Props) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'Gear Score', value: character.gearScore, color: 'text-rose-400' },
+                { label: 'Gear Score', value: character.gearScore, color: 'text-[#FC3154]' },
                 { label: 'Combat Rating', value: character.combatRating, color: 'text-blue-400' },
                 { label: 'Gold', value: character.gold, color: 'text-amber-400' },
                 { label: 'Essence', value: character.essence, color: 'text-rose-300' },
@@ -110,8 +110,8 @@ export function CharacterTab({ state, onRefresh }: Props) {
         {/* Equipment */}
         <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-4">
           <p className="text-[11px] text-[#505058] uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="text-rose-500">◆</span> Equipment
-            {onRun && <span className="ml-auto text-[10px] text-red-400/70">⚔ on run</span>}
+            <span className="text-[#FC3154]">◆</span> Equipment
+            {onRun && <span className="ml-auto text-[10px] text-[#FC3154]/70">⚔ on run</span>}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-2">
             {slots.map((slot) => {
@@ -151,7 +151,7 @@ export function CharacterTab({ state, onRefresh }: Props) {
         <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[11px] text-[#505058] uppercase tracking-widest flex items-center gap-2">
-              <span className="text-rose-500">◆</span> Primary Attributes
+              <span className="text-[#FC3154]">◆</span> Primary Attributes
             </p>
             {character.statPoints > 0 && (
               <span className="text-xs px-3 py-1 bg-amber-900/30 text-amber-400 border border-amber-600/30 rounded-full font-medium">
@@ -168,14 +168,14 @@ export function CharacterTab({ state, onRefresh }: Props) {
                   <span className="text-slate-300 text-sm">{STAT_LABELS[stat]}</span>
                 </div>
                 <div className="flex-1 h-2 bg-[#111118] rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-red-700 to-purple-500 rounded-full transition-all"
+                  <div className="h-full bg-gradient-to-r from-[#d4294a] to-purple-500 rounded-full transition-all"
                     style={{ width: `${Math.min(100, (character[stat] / 30) * 100)}%` }} />
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-slate-100 font-bold font-mono w-8 text-right">{character[stat]}</span>
                   {character.statPoints > 0 && (
                     <button onClick={() => handleSpendStat(stat)} disabled={spending}
-                      className="w-7 h-7 flex items-center justify-center rounded-full bg-gradient-to-br from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 text-white text-sm font-bold transition-all disabled:opacity-50 shadow-md shadow-red-950/30">
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-gradient-to-br from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] hover:to-[#e02a49] text-white text-sm font-bold transition-all disabled:opacity-50 shadow-md shadow-[#1a0510]/30">
                       +
                     </button>
                   )}
@@ -185,14 +185,14 @@ export function CharacterTab({ state, onRefresh }: Props) {
           </div>
           {tooltip && (
             <div className="mt-4 p-3 bg-[#111118] rounded-lg border border-[rgba(255,255,255,0.08)] text-[#848490] text-xs">
-              <span className="text-rose-400 font-semibold">{STAT_LABELS[tooltip]}:</span> {STAT_DESC[tooltip]}
+              <span className="text-[#FC3154] font-semibold">{STAT_LABELS[tooltip]}:</span> {STAT_DESC[tooltip]}
             </div>
           )}
         </div>
 
         <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-5">
           <p className="text-[11px] text-[#505058] uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span className="text-rose-500">◆</span> Combat Stats
+            <span className="text-[#FC3154]">◆</span> Combat Stats
           </p>
           <div className="grid grid-cols-3 gap-3">
             {[

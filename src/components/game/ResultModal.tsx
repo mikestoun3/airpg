@@ -8,8 +8,8 @@ const OUTCOME_CONFIG = {
   critical_success: { label: 'Critical Success!', icon: '⚡', color: 'text-amber-400',   bar: 'from-amber-500 to-yellow-500' },
   success:          { label: 'Success',           icon: '✓',  color: 'text-emerald-400', bar: 'from-emerald-600 to-teal-500' },
   partial:          { label: 'Partial Success',   icon: '◎',  color: 'text-blue-400',    bar: 'from-blue-600 to-sky-500' },
-  failure:          { label: 'Failed',            icon: '✗',  color: 'text-red-400',     bar: 'from-red-700 to-rose-600' },
-  critical_failure: { label: 'Disaster!',         icon: '💀', color: 'text-red-500',     bar: 'from-red-800 to-red-600' },
+  failure:          { label: 'Failed',            icon: '✗',  color: 'text-[#FC3154]',     bar: 'from-[#d4294a] to-[#e02a49]' },
+  critical_failure: { label: 'Disaster!',         icon: '💀', color: 'text-[#FC3154]',     bar: 'from-[#a02038] to-red-600' },
 };
 
 interface Props {
@@ -55,7 +55,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
               )}
             </div>
             <div className="text-right text-xs text-[#606068] mt-1">
-              <div>Roll: <span className={result.combatRoll >= result.dc ? 'text-emerald-400' : 'text-red-400'}>{result.combatRoll}</span></div>
+              <div>Roll: <span className={result.combatRoll >= result.dc ? 'text-emerald-400' : 'text-[#FC3154]'}>{result.combatRoll}</span></div>
               <div>Need: <span className="text-[#848490]">{result.dc}</span></div>
             </div>
           </div>
@@ -69,7 +69,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
           </div>
           {result.essenceGained > 0 && (
             <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
-              <p className="text-rose-400 font-bold text-xl">+{result.essenceGained}</p>
+              <p className="text-[#FC3154] font-bold text-xl">+{result.essenceGained}</p>
               <p className="text-[#505058] text-[11px] mt-0.5">Essence</p>
             </div>
           )}
@@ -89,11 +89,11 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
           )}
 
           {result.injured && (
-            <div className="bg-red-950/40 border border-red-700/30 rounded-xl p-3 flex items-center gap-3">
+            <div className="bg-red-950/40 border border-[#d4294a]/30 rounded-xl p-3 flex items-center gap-3">
               <span className="text-2xl">🩹</span>
               <div>
-                <p className="text-red-400 font-semibold text-sm">Hero Injured</p>
-                <p className="text-red-400/60 text-xs">Recovering for {result.injuryDurationMinutes} minutes</p>
+                <p className="text-[#FC3154] font-semibold text-sm">Hero Injured</p>
+                <p className="text-[#FC3154]/60 text-xs">Recovering for {result.injuryDurationMinutes} minutes</p>
               </div>
             </div>
           )}
@@ -110,7 +110,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
                   const outcomeIcon = isSuccess ? '✓' : isPartial ? '◎' : '✗';
                   const outcomeColor = isSuccess ? 'text-emerald-400 border-emerald-700/30 bg-emerald-950/20'
                     : isPartial ? 'text-blue-400 border-blue-700/30 bg-blue-950/20'
-                    : 'text-red-400 border-red-700/30 bg-red-950/20';
+                    : 'text-[#FC3154] border-[#d4294a]/30 bg-red-950/20';
 
                   return (
                     <div key={floor.floor} className={`rounded-lg border p-2.5 ${outcomeColor}`}>
@@ -143,7 +143,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
                       {(floor.gold > 0 || floor.essence > 0) && (
                         <div className="flex gap-2 mt-1 text-[11px] opacity-70">
                           {floor.gold > 0 && <span className="text-amber-400">+{floor.gold}g</span>}
-                          {floor.essence > 0 && <span className="text-rose-400">+{floor.essence} ess</span>}
+                          {floor.essence > 0 && <span className="text-[#FC3154]">+{floor.essence} ess</span>}
                         </div>
                       )}
 
@@ -196,7 +196,7 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
 
         <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.06)]">
           <button onClick={onClose}
-            className="w-full py-3.5 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 text-white font-bold rounded-xl transition-all text-sm tracking-wide">
+            className="w-full py-3.5 bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] text-white font-bold rounded-xl transition-all text-sm tracking-wide">
             Continue
           </button>
         </div>

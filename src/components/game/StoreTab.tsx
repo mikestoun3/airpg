@@ -151,8 +151,8 @@ export function StoreTab({ state, onRefresh }: Props) {
               </div>
             )}
             {result.reward.type === 'essence' && (
-              <div className="bg-purple-900/20 border border-red-700/30 rounded-xl px-4 py-3">
-                <p className="text-rose-400 font-bold text-xl">+{result.reward.amount?.toLocaleString()} Essence</p>
+              <div className="bg-purple-900/20 border border-[#d4294a]/30 rounded-xl px-4 py-3">
+                <p className="text-[#FC3154] font-bold text-xl">+{result.reward.amount?.toLocaleString()} Essence</p>
               </div>
             )}
             {result.reward.type === 'loot_case' && result.item && (
@@ -165,7 +165,7 @@ export function StoreTab({ state, onRefresh }: Props) {
             )}
 
             <button onClick={() => setResult(null)}
-              className="w-full py-2.5 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 text-white rounded-xl font-semibold text-sm transition-all">
+              className="w-full py-2.5 bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] text-white rounded-xl font-semibold text-sm transition-all">
               Great!
             </button>
           </div>
@@ -182,14 +182,14 @@ export function StoreTab({ state, onRefresh }: Props) {
           </div>
           <div className="text-right">
             <p className="text-amber-400 font-bold text-sm">{state.character.gold.toLocaleString()} G</p>
-            {state.character.essence > 0 && <p className="text-rose-400 text-xs">{state.character.essence} ESS</p>}
+            {state.character.essence > 0 && <p className="text-[#FC3154] text-xs">{state.character.essence} ESS</p>}
           </div>
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-950/40 border border-red-700/30 rounded-xl px-4 py-3 text-red-400 text-sm">
+        <div className="bg-red-950/40 border border-[#d4294a]/30 rounded-xl px-4 py-3 text-[#FC3154] text-sm">
           {error}
         </div>
       )}
@@ -200,7 +200,7 @@ export function StoreTab({ state, onRefresh }: Props) {
           <button key={cat} onClick={() => setCategory(cat)}
             className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               category === cat
-                ? 'bg-red-700 text-white'
+                ? 'bg-[#d4294a] text-white'
                 : 'bg-[#111118] text-[#505058] hover:text-[#848490] border border-[rgba(255,255,255,0.08)]'
             }`}>
             {CATEGORY_LABELS[cat]}
@@ -237,7 +237,7 @@ export function StoreTab({ state, onRefresh }: Props) {
                     .map(([rarity, weight]) => {
                       const colors: Record<string, string> = {
                         common: 'text-slate-400', uncommon: 'text-green-400',
-                        rare: 'text-blue-400', epic: 'text-rose-400', legendary: 'text-amber-400',
+                        rare: 'text-blue-400', epic: 'text-[#FC3154]', legendary: 'text-amber-400',
                       };
                       return (
                         <div key={rarity} className="text-center">
@@ -254,7 +254,7 @@ export function StoreTab({ state, onRefresh }: Props) {
                 <button
                   onClick={() => handleBuy(item)}
                   disabled={buying === item.id || !STORE_ADDRESS}
-                  className="px-4 py-1.5 text-xs bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-all">
+                  className="px-4 py-1.5 text-xs bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-all">
                   {buying === item.id ? '⏳ Sending...' : !STORE_ADDRESS ? 'Soon™' : 'Buy'}
                 </button>
               </div>

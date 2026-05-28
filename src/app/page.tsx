@@ -81,7 +81,7 @@ function NicknameModal({ onDone }: { onDone: () => void }) {
       <div className="w-full max-w-sm bg-[#16161f] border border-[rgba(200,70,70,0.25)] rounded-2xl overflow-hidden shadow-2xl">
         <div className="px-6 pt-8 pb-6">
           <div className="text-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-700 to-rose-900 flex items-center justify-center text-2xl mx-auto mb-4">⚔️</div>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-2xl mx-auto mb-4">⚔️</div>
             <h2 className="text-slate-100 font-black text-xl tracking-wide">Выберите никнейм</h2>
             <p className="text-[#606068] text-sm mt-1">Это имя увидят другие игроки</p>
           </div>
@@ -95,7 +95,7 @@ function NicknameModal({ onDone }: { onDone: () => void }) {
               placeholder="Hero_123"
               maxLength={13}
               className={`w-full bg-[#1a1a26] border rounded-xl px-4 py-3 text-slate-100 text-sm font-mono tracking-wide outline-none transition-colors ${
-                error ? 'border-red-500/60 focus:border-red-500' : 'border-[rgba(200,70,70,0.25)] focus:border-red-600'
+                error ? 'border-[#FC3154]/60 focus:border-[#FC3154]' : 'border-[rgba(200,70,70,0.25)] focus:border-[#FC3154]'
               }`}
             />
             <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono ${value.length >= 13 ? 'text-amber-400' : 'text-[#44444e]'}`}>
@@ -104,13 +104,13 @@ function NicknameModal({ onDone }: { onDone: () => void }) {
           </div>
 
           {error ? (
-            <p className="text-red-400 text-xs mb-4 px-1">{error}</p>
+            <p className="text-[#FC3154] text-xs mb-4 px-1">{error}</p>
           ) : (
             <p className="text-[#44444e] text-xs mb-4 px-1">Латиница, цифры и _ · 3–13 символов · навсегда</p>
           )}
 
           <button onClick={submit} disabled={loading || value.length < 3 || !!error}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm transition-all">
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] hover:to-[#e02a49] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm transition-all">
             {loading ? 'Проверяем…' : 'Начать игру'}
           </button>
         </div>
@@ -188,7 +188,7 @@ export default function GamePage() {
     return (
       <div className="h-[100dvh] flex items-center justify-center bg-[#0b0b0f]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-red-700 border-t-transparent animate-spin" />
+          <div className="w-12 h-12 rounded-full border-2 border-[#d4294a] border-t-transparent animate-spin" />
           <p className="text-[#606068] text-sm">Entering the dungeon...</p>
         </div>
       </div>
@@ -232,7 +232,7 @@ export default function GamePage() {
   if (!state) {
     return (
       <div className="h-[100dvh] flex items-center justify-center bg-[#0b0b0f]">
-        <p className="text-red-400">Failed to load game state.</p>
+        <p className="text-[#FC3154]">Failed to load game state.</p>
       </div>
     );
   }
@@ -252,7 +252,7 @@ export default function GamePage() {
       <aside className="hidden md:flex w-56 flex-shrink-0 bg-[#0e0e14] border-r border-[rgba(255,255,255,0.07)] flex-col">
         <div className="px-5 py-5 border-b border-[rgba(255,255,255,0.06)]">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-700 to-rose-900 flex items-center justify-center text-sm font-bold">A</div>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-sm font-bold">A</div>
             <div>
               <p className="text-slate-100 font-black text-base leading-none tracking-wide">AirPG</p>
               <p className="text-[#606068] text-[10px] tracking-widest uppercase">Idle Dungeon</p>
@@ -281,14 +281,14 @@ export default function GamePage() {
                   }`}>
                   {isActive && (
                     <>
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-red-500 rounded-r-full shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
-                      <span className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-red-600/10 to-transparent rounded-l-xl" />
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#FC3154] rounded-r-full shadow-[0_0_8px_rgba(252,49,84,0.9)]" />
+                      <span className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#FC3154]/10 to-transparent rounded-l-xl" />
                     </>
                   )}
-                  <span className={`text-base w-5 text-center ${isActive ? 'text-red-400' : ''}`}>{item.icon}</span>
+                  <span className={`text-base w-5 text-center ${isActive ? 'text-[#FC3154]' : ''}`}>{item.icon}</span>
                   <span
-                    className={isActive ? 'text-red-400 uppercase tracking-wider text-xs' : ''}
-                    style={isActive ? { textShadow: '0 0 8px rgba(239,68,68,0.7), 0 0 16px rgba(239,68,68,0.3)' } : undefined}>
+                    className={isActive ? 'text-[#FC3154] uppercase tracking-wider text-xs' : ''}
+                    style={isActive ? { textShadow: '0 0 8px rgba(252,49,84,0.7), 0 0 16px rgba(252,49,84,0.3)' } : undefined}>
                     {item.label === 'Camp' ? 'Base Camp' : item.label}
                   </span>
                   {showBadge && <span className="ml-auto w-2 h-2 rounded-full bg-emerald-400 shrink-0" />}
@@ -300,13 +300,13 @@ export default function GamePage() {
 
         <div className="px-3 py-3 border-t border-[rgba(255,255,255,0.06)] space-y-2">
           <div className="flex items-center gap-2 px-2 py-2 rounded-xl bg-[#16161f]">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-800 to-rose-950 flex items-center justify-center text-sm shrink-0">⚔</div>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#a02038] to-rose-950 flex items-center justify-center text-sm shrink-0">⚔</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <p className="text-slate-300 text-xs font-semibold truncate">{character.name}</p>
                 <span className={`text-[10px] shrink-0 ml-1 ${
                   character.status === 'on_run' ? 'text-blue-400' :
-                  character.status === 'injured' ? 'text-red-400' : 'text-emerald-400'
+                  character.status === 'injured' ? 'text-[#FC3154]' : 'text-emerald-400'
                 }`}>
                   {character.status === 'on_run' ? '● Away' : character.status === 'injured' ? '✖ Hurt' : '● Idle'}
                 </span>
@@ -328,7 +328,7 @@ export default function GamePage() {
         <header className="h-12 md:h-14 flex-shrink-0 bg-[#0e0e14] border-b border-[rgba(255,255,255,0.07)] flex items-center justify-between px-3 md:px-6 relative">
           <div className="flex items-center gap-2">
             {/* Mobile: mini logo */}
-            <div className="md:hidden w-6 h-6 rounded-md bg-gradient-to-br from-red-700 to-rose-900 flex items-center justify-center text-xs font-bold shrink-0">A</div>
+            <div className="md:hidden w-6 h-6 rounded-md bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-xs font-bold shrink-0">A</div>
             <h1 className="text-slate-300 font-semibold text-sm capitalize">
               {NAV.find(n => n.id === activeTab)?.label === 'Camp' ? 'Base Camp' : NAV.find(n => n.id === activeTab)?.label}
             </h1>
@@ -349,7 +349,7 @@ export default function GamePage() {
             {character.essence > 0 && (
               <div className="hidden sm:flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 bg-[#16161f] rounded-xl border border-[rgba(255,255,255,0.07)]">
                 <span className="text-xs">🔮</span>
-                <span className="text-rose-400 font-bold text-xs md:text-sm">{character.essence}</span>
+                <span className="text-[#FC3154] font-bold text-xs md:text-sm">{character.essence}</span>
               </div>
             )}
             <div className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 bg-[#16161f] rounded-xl border border-[rgba(255,255,255,0.07)]">
@@ -411,15 +411,15 @@ export default function GamePage() {
                   // if already active and has sub-tabs, sub-nav handles switching
                 }}
                 className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative transition-colors ${
-                  isActive ? 'text-red-400' : 'text-[#44444e]'
+                  isActive ? 'text-[#FC3154]' : 'text-[#44444e]'
                 }`}>
                 {isActive && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-red-500 rounded-full shadow-[0_0_6px_rgba(239,68,68,0.9)]" />
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FC3154] rounded-full shadow-[0_0_6px_rgba(252,49,84,0.9)]" />
                 )}
-                <span className={`text-base leading-none ${isActive ? 'drop-shadow-[0_0_4px_rgba(239,68,68,0.8)]' : ''}`}>{group.icon}</span>
+                <span className={`text-base leading-none ${isActive ? 'drop-shadow-[0_0_4px_rgba(252,49,84,0.8)]' : ''}`}>{group.icon}</span>
                 <span
                   className="text-[9px] font-medium"
-                  style={isActive ? { textShadow: '0 0 6px rgba(239,68,68,0.7)' } : undefined}>
+                  style={isActive ? { textShadow: '0 0 6px rgba(252,49,84,0.7)' } : undefined}>
                   {group.label}
                 </span>
                 {showBadge && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />}

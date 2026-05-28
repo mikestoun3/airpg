@@ -94,7 +94,7 @@ export function QuestsTab() {
           <button key={s} onClick={() => setActiveSection(s)}
             className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
               activeSection === s
-                ? 'bg-gradient-to-r from-red-700 to-rose-700 text-white'
+                ? 'bg-gradient-to-r from-[#d4294a] to-[#d4294a] text-white'
                 : 'text-[#505058] hover:text-[#848490]'
             }`}>
             {label}
@@ -123,10 +123,10 @@ export function QuestsTab() {
                   {done ? (
                     <span className="text-emerald-400 text-sm font-bold">✓ Done</span>
                   ) : isMsg && claimMsg ? (
-                    <span className={`text-xs font-semibold ${claimMsg.ok ? 'text-emerald-400' : 'text-red-400'}`}>{claimMsg.msg}</span>
+                    <span className={`text-xs font-semibold ${claimMsg.ok ? 'text-emerald-400' : 'text-[#FC3154]'}`}>{claimMsg.msg}</span>
                   ) : (
                     <button onClick={() => handleClaim(quest)} disabled={loading}
-                      className="px-3 py-1.5 text-xs bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 text-white rounded-lg font-semibold transition-all">
+                      className="px-3 py-1.5 text-xs bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:opacity-50 text-white rounded-lg font-semibold transition-all">
                       {loading ? '...' : 'Complete →'}
                     </button>
                   )}
@@ -157,7 +157,7 @@ export function QuestsTab() {
             </div>
             <div className="flex items-center gap-2">
               <div className="text-[#606068] text-xs">Your code:</div>
-              <div className="text-red-400 font-mono font-bold text-sm tracking-widest">{data.referralCode}</div>
+              <div className="text-[#FC3154] font-mono font-bold text-sm tracking-widest">{data.referralCode}</div>
               <div className="ml-auto text-[#505058] text-xs">{data.referralCount} referred</div>
             </div>
           </div>
@@ -182,7 +182,7 @@ export function QuestsTab() {
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-amber-400/80 text-xs">+{quest.reward.gold} Gold</p>
-                    {quest.reward.essence > 0 && <p className="text-rose-400/80 text-xs">+{quest.reward.essence} ESS</p>}
+                    {quest.reward.essence > 0 && <p className="text-[#FC3154]/80 text-xs">+{quest.reward.essence} ESS</p>}
                   </div>
                 </div>
 
@@ -193,7 +193,7 @@ export function QuestsTab() {
                       <span className="text-[#78788a]">{progress}/{needed}</span>
                     </div>
                     <div className="h-1.5 bg-[#0a0a1a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-amber-500' : 'bg-red-700/70'}`}
+                      <div className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-amber-500' : 'bg-[#d4294a]/70'}`}
                         style={{ width: `${pct}%` }} />
                     </div>
                   </div>
@@ -203,7 +203,7 @@ export function QuestsTab() {
                   {done ? (
                     <span className="text-emerald-400 text-sm font-bold">✓ Claimed</span>
                   ) : isMsg && claimMsg ? (
-                    <span className={`text-xs font-semibold ${claimMsg.ok ? 'text-emerald-400' : 'text-red-400'}`}>{claimMsg.msg}</span>
+                    <span className={`text-xs font-semibold ${claimMsg.ok ? 'text-emerald-400' : 'text-[#FC3154]'}`}>{claimMsg.msg}</span>
                   ) : canClaim ? (
                     <button onClick={() => handleClaim(quest)} disabled={loading}
                       className="px-4 py-1.5 text-xs bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 disabled:opacity-50 text-white rounded-lg font-semibold transition-all">
@@ -254,7 +254,7 @@ export function QuestsTab() {
                             {done ? (
                               <span className="text-emerald-400 text-sm font-bold">✓</span>
                             ) : isMsg && claimMsg ? (
-                              <span className={`text-xs font-semibold ${claimMsg.ok ? 'text-emerald-400' : 'text-red-400'}`}>{claimMsg.msg}</span>
+                              <span className={`text-xs font-semibold ${claimMsg.ok ? 'text-emerald-400' : 'text-[#FC3154]'}`}>{claimMsg.msg}</span>
                             ) : canClaim ? (
                               <button onClick={() => handleClaim(quest)} disabled={loading}
                                 className="px-3 py-1.5 text-xs bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 disabled:opacity-50 text-white rounded-lg font-semibold transition-all">
@@ -268,7 +268,7 @@ export function QuestsTab() {
                         {!done && floor < required && (
                           <div className="mt-2">
                             <div className="h-1 bg-[#0a0a1a] rounded-full overflow-hidden">
-                              <div className="h-full bg-red-700/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                              <div className="h-full bg-[#d4294a]/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
                             </div>
                           </div>
                         )}

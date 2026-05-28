@@ -28,10 +28,10 @@ function Code({ children }: { children: React.ReactNode }) {
 }
 function Box({ children, color = 'purple' }: { children: React.ReactNode; color?: 'purple' | 'amber' | 'emerald' | 'red' | 'blue' }) {
   const colors = {
-    purple: 'bg-violet-950/30 border-red-700/30',
+    purple: 'bg-violet-950/30 border-[#d4294a]/30',
     amber:  'bg-amber-950/30 border-amber-700/30',
     emerald:'bg-emerald-950/30 border-emerald-700/30',
-    red:    'bg-red-950/30 border-red-700/30',
+    red:    'bg-red-950/30 border-[#d4294a]/30',
     blue:   'bg-blue-950/30 border-blue-700/30',
   };
   return (
@@ -243,7 +243,7 @@ export function WikiTab() {
                 </div>
                 <div>
                   <p className="text-slate-300 font-semibold mb-1">Floor 10 boss (DC 28)</p>
-                  <p>CR 17 → odds = (17 − 28 + 50) / 100 = <span className="text-red-400 font-bold">39%</span> success</p>
+                  <p>CR 17 → odds = (17 − 28 + 50) / 100 = <span className="text-[#FC3154] font-bold">39%</span> success</p>
                 </div>
               </div>
 
@@ -331,7 +331,7 @@ export function WikiTab() {
                 {[
                   { tier: 1, name: 'Iron',   color: 'text-slate-400',   gs: 15, primary: '7–10', secondary: '1', forge: 'The Forge',         req: '—' },
                   { tier: 2, name: 'Steel',  color: 'text-blue-400',    gs: 30, primary: '14–18', secondary: '2', forge: 'Reinforced Forge', req: 'Tempered T1 (5 runs)' },
-                  { tier: 3, name: 'Mithril',color: 'text-rose-400',  gs: 50, primary: '20–24', secondary: '3', forge: 'Master Forge',     req: 'Tempered T2 (10 runs)' },
+                  { tier: 3, name: 'Mithril',color: 'text-[#FC3154]',  gs: 50, primary: '20–24', secondary: '3', forge: 'Master Forge',     req: 'Tempered T2 (10 runs)' },
                   { tier: 4, name: 'Void',   color: 'text-amber-400',   gs: 75, primary: '30–35', secondary: '3', forge: 'Void Forge',       req: 'Tempered T3 (15 runs)' },
                 ].map(r => (
                   <div key={r.tier} className="bg-[#111118] rounded-xl overflow-hidden">
@@ -445,7 +445,7 @@ export function WikiTab() {
                   loot: 'Uncommon gear, stone, gold',
                   boss: 'Bandit Captain (floor 10)',
                   injury: '5 min (10 nm)',
-                  color: 'from-red-900 to-blue-700',
+                  color: 'from-[#7a1228] to-blue-700',
                 },
                 {
                   name: 'Collapsed Mine', tier: 2, baseDC: 18, step: 4.5,
@@ -454,7 +454,7 @@ export function WikiTab() {
                   loot: 'Ore, essence, rare gear',
                   boss: 'Mine Colossus (floor 10)',
                   injury: '5 min (10 nm)',
-                  color: 'from-red-900 to-blue-700',
+                  color: 'from-[#7a1228] to-blue-700',
                 },
                 {
                   name: 'Bandit Stronghold', tier: 3, baseDC: 22, step: 5.5,
@@ -463,7 +463,7 @@ export function WikiTab() {
                   loot: 'Gold-heavy, unique items',
                   boss: 'Stronghold Warlord (floor 10)',
                   injury: '8 min (16 nm)',
-                  color: 'from-red-800 to-rose-700',
+                  color: 'from-[#a02038] to-[#d4294a]',
                 },
                 {
                   name: 'Cursed Catacombs', tier: 3, baseDC: 25, step: 6,
@@ -472,7 +472,7 @@ export function WikiTab() {
                   loot: 'Rare gear, essence, legendary chance',
                   boss: 'Lich Lord (floor 10)',
                   injury: '8 min (16 nm)',
-                  color: 'from-red-800 to-rose-700',
+                  color: 'from-[#a02038] to-[#d4294a]',
                 },
               ].map(d => (
                 <div key={d.name} className="mb-4 bg-[#111118] rounded-xl overflow-hidden border border-[rgba(255,255,255,0.07)]">
@@ -545,7 +545,7 @@ export function WikiTab() {
                 },
                 {
                   outcome: 'Failure ✗',
-                  color: 'text-red-400', bg: 'bg-red-950/20 border-red-700/30',
+                  color: 'text-[#FC3154]', bg: 'bg-red-950/20 border-[#d4294a]/30',
                   condition: 'Effective ≥ DC + 16',
                   loot: 'None',
                   gold: 'None',
@@ -556,7 +556,7 @@ export function WikiTab() {
                 },
                 {
                   outcome: 'Disaster! 💀',
-                  color: 'text-red-500', bg: 'bg-red-950/30 border-red-800/40',
+                  color: 'text-[#FC3154]', bg: 'bg-red-950/30 border-red-800/40',
                   condition: 'Effective < DC + 16',
                   loot: 'None',
                   gold: 'None',

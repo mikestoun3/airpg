@@ -56,7 +56,7 @@ const SLOT_LABEL: Record<EquipmentSlot, string> = {
 };
 
 function oddsColor(o: number) {
-  return o >= 70 ? 'text-emerald-400' : o >= 45 ? 'text-amber-400' : 'text-red-400';
+  return o >= 70 ? 'text-emerald-400' : o >= 45 ? 'text-amber-400' : 'text-[#FC3154]';
 }
 
 export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: Props) {
@@ -111,16 +111,16 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
 
       {/* ── LEFT: dungeon list ── */}
       <div className="flex-1 flex flex-col gap-3 md:overflow-y-auto md:pr-1">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-red-500"
-          style={{ textShadow: '0 0 10px rgba(239,68,68,0.6), 0 0 20px rgba(239,68,68,0.3)' }}>
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#FC3154]"
+          style={{ textShadow: '0 0 10px rgba(252,49,84,0.6), 0 0 20px rgba(252,49,84,0.3)' }}>
           Available Dungeons
         </p>
 
         {isInjured && character.injuredUntil ? (
           <div className="bg-[#16161f] border border-red-900/40 rounded-xl p-6 text-center">
             <span className="text-3xl">🩹</span>
-            <p className="text-red-400 font-semibold mt-3">Hero is Injured</p>
-            <p className="text-red-400/50 text-sm mt-1">
+            <p className="text-[#FC3154] font-semibold mt-3">Hero is Injured</p>
+            <p className="text-[#FC3154]/50 text-sm mt-1">
               Recovering — ~{Math.ceil(Math.max(0, character.injuredUntil - Math.floor(Date.now() / 1000)) / 60)} min left
             </p>
           </div>
@@ -137,14 +137,14 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               const timeLabel = estimatedMins >= 60
                 ? `${Math.floor(estimatedMins / 60)}h ${estimatedMins % 60 > 0 ? `${estimatedMins % 60}m` : ''}`.trim()
                 : `${estimatedMins}m`;
-              const rateColor = rewardRate >= -20 ? 'text-emerald-400' : rewardRate >= -50 ? 'text-amber-400' : 'text-red-400';
+              const rateColor = rewardRate >= -20 ? 'text-emerald-400' : rewardRate >= -50 ? 'text-amber-400' : 'text-[#FC3154]';
               const imgSrc = DUNGEON_IMG[dungeon.id];
 
               return (
                 <div key={dungeon.id}
                   className={`rounded-lg border overflow-hidden transition-all ${
                     isSel
-                      ? 'border-red-600/50'
+                      ? 'border-[#FC3154]/50'
                       : 'border-[rgba(255,255,255,0.07)] hover:border-[rgba(255,255,255,0.13)]'
                   } bg-[#13131a]`}>
                   <div className="flex items-stretch h-[88px]">
@@ -195,7 +195,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                         onClick={() => { setSelectedDungeon(dungeon.id); setError(null); }}
                         disabled={!isIdle}
                         className={`px-4 sm:px-5 py-3 rounded-lg font-bold text-sm uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                          isSel ? 'bg-red-500 text-white' : 'bg-red-600 hover:bg-red-500 text-white'
+                          isSel ? 'bg-[#FC3154] text-white' : 'bg-[#FC3154] hover:bg-[#FC3154] text-white'
                         }`}>
                         {isSel ? '✓' : 'Enter'}
                       </button>
@@ -253,7 +253,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   character.status === 'on_run'
                     ? 'text-blue-400 border-blue-800/40 bg-blue-950/40'
                     : character.status === 'injured'
-                    ? 'text-red-400 border-red-800/40 bg-red-950/40'
+                    ? 'text-[#FC3154] border-red-800/40 bg-red-950/40'
                     : 'text-emerald-400 border-emerald-800/40 bg-emerald-950/40'
                 }`}>
                   {character.status === 'on_run' ? '● Away' :
@@ -287,7 +287,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
         {/* Equipment */}
         <div className="rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0e0e14] p-3">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-red-600 font-bold uppercase tracking-widest">Equipment</p>
+            <p className="text-xs text-[#d4294a] font-bold uppercase tracking-widest">Equipment</p>
             <p className="text-[9px] text-[#404048] uppercase tracking-widest">Set Bonus</p>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -303,10 +303,10 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                     item ? 'bg-[#1a1a26]' : 'bg-[#130808]'
                   }`}>
                   {/* Corner brackets */}
-                  <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-red-700/60 rounded-tl" />
-                  <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-red-700/60 rounded-tr" />
-                  <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-red-700/60 rounded-bl" />
-                  <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-red-700/60 rounded-br" />
+                  <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#d4294a]/60 rounded-tl" />
+                  <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#d4294a]/60 rounded-tr" />
+                  <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#d4294a]/60 rounded-bl" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#d4294a]/60 rounded-br" />
                   {/* Slot label */}
                   <span className="absolute top-1.5 left-2 text-[8px] text-[#4e4e58] uppercase tracking-wide font-semibold leading-none">
                     {SLOT_LABEL[slot]}
@@ -323,7 +323,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   <div className="absolute bottom-1.5 flex gap-1">
                     {Array.from({ length: dots }).map((_, i) => (
                       <span key={i} className={`w-1 h-1 rounded-full ${
-                        i < filledDots ? 'bg-red-600' : 'bg-[#1e1e28]'
+                        i < filledDots ? 'bg-[#FC3154]' : 'bg-[#1e1e28]'
                       }`} />
                     ))}
                   </div>
@@ -333,7 +333,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
           </div>
           <button
             onClick={() => onNavigate?.('inventory')}
-            className="w-full mt-3 py-2.5 rounded-lg bg-red-900/30 border border-red-800/40 hover:bg-red-900/50 hover:border-red-700/60 text-red-400 hover:text-red-200 text-xs font-bold uppercase tracking-widest transition-all">
+            className="w-full mt-3 py-2.5 rounded-lg bg-red-900/30 border border-red-800/40 hover:bg-red-900/50 hover:border-[#d4294a]/60 text-[#FC3154] hover:text-red-200 text-xs font-bold uppercase tracking-widest transition-all">
             View Inventory
           </button>
         </div>
@@ -345,7 +345,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               <p className="text-[10px] text-[#606068] uppercase tracking-[0.2em] mb-0.5">Selected</p>
               <p className="text-slate-200 font-semibold text-sm">{selected.name}</p>
               {savedFloor > 0 && (
-                <p className="text-[11px] text-red-500/60 mt-0.5">Checkpoint: Floor {savedFloor}</p>
+                <p className="text-[11px] text-[#FC3154]/60 mt-0.5">Checkpoint: Floor {savedFloor}</p>
               )}
             </div>
 
@@ -356,7 +356,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                   <button key={n} onClick={() => setFloorsToAttempt(n)}
                     className={`aspect-square rounded-lg text-xs font-bold border transition-all ${
                       floorsToAttempt === n
-                        ? 'border-red-600/60 bg-red-900/40 text-red-200'
+                        ? 'border-[#FC3154]/60 bg-red-900/40 text-red-200'
                         : 'border-[rgba(255,255,255,0.07)] bg-transparent text-[#606068] hover:border-[rgba(200,80,80,0.3)] hover:text-slate-300'
                     }`}>
                     {n}
@@ -394,11 +394,11 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
             </div>
 
             {error && (
-              <p className="text-red-400 text-xs bg-red-950/30 border border-red-900/30 rounded-lg px-3 py-2">{error}</p>
+              <p className="text-[#FC3154] text-xs bg-red-950/30 border border-red-900/30 rounded-lg px-3 py-2">{error}</p>
             )}
 
             <button onClick={handleSend} disabled={!isIdle || loading}
-              className="w-full py-3 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 disabled:from-[#1a1a26] disabled:to-[#1a1a26] disabled:text-[#505058] text-white font-bold rounded-xl transition-all text-sm tracking-widest uppercase shadow-lg shadow-red-950/40">
+              className="w-full py-3 bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] hover:to-[#e02a49] disabled:from-[#1a1a26] disabled:to-[#1a1a26] disabled:text-[#505058] text-white font-bold rounded-xl transition-all text-sm tracking-widest uppercase shadow-lg shadow-[#1a0510]/40">
               {loading ? 'Sending...' : 'Send Hero →'}
             </button>
           </div>

@@ -38,7 +38,7 @@ export function ItemCard({ item, onEquip, onSalvage, onUpgrade, canAffordUpgrade
             </button>
           )}
           {onSalvage && (
-            <button onClick={onSalvage} className="px-3 py-1 text-xs bg-red-950/50 hover:bg-red-900/50 text-red-400 rounded-lg transition-colors font-medium">
+            <button onClick={onSalvage} className="px-3 py-1 text-xs bg-red-950/50 hover:bg-red-900/50 text-[#FC3154] rounded-lg transition-colors font-medium">
               Salvage
             </button>
           )}
@@ -146,13 +146,13 @@ export function ItemCard({ item, onEquip, onSalvage, onUpgrade, canAffordUpgrade
           )}
           {onEquip && (
             <button onClick={onEquip}
-              className="px-2.5 py-1 text-[11px] bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 text-white rounded-lg transition-all font-semibold">
+              className="px-2.5 py-1 text-[11px] bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] hover:to-[#e02a49] text-white rounded-lg transition-all font-semibold">
               Equip
             </button>
           )}
           {onSalvage && (
             <button onClick={onSalvage}
-              className="px-2.5 py-1 text-[11px] bg-red-950/60 hover:bg-red-900/60 text-red-400 rounded-lg transition-colors font-medium">
+              className="px-2.5 py-1 text-[11px] bg-red-950/60 hover:bg-red-900/60 text-[#FC3154] rounded-lg transition-colors font-medium">
               Salvage
             </button>
           )}

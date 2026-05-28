@@ -237,7 +237,7 @@ export function CaseOpenModal({ item, caseName, onClose }: Props) {
         {showClose ? (
           <button
             onClick={onClose}
-            className="px-10 py-3 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-red-950/40"
+            className="px-10 py-3 bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-[#1a0510]/40"
           >
             Awesome!
           </button>

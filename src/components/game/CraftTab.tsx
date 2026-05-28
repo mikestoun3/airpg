@@ -141,7 +141,7 @@ export function CraftTab({ state, onRefresh }: Props) {
       {/* LEFT: materials + forge status */}
       <div className="w-full md:w-56 md:flex-shrink-0 flex flex-col gap-4">
         <p className="text-[11px] text-[#505058] uppercase tracking-widest flex items-center gap-2">
-          <span className="text-rose-500">◆</span> Materials
+          <span className="text-[#FC3154]">◆</span> Materials
         </p>
 
         {/* Mobile: horizontal scroll */}
@@ -192,7 +192,7 @@ export function CraftTab({ state, onRefresh }: Props) {
             ))}
           </div>
           {forgeLevel === 0
-            ? <p className="text-[10px] text-red-400">Build The Forge in Camp</p>
+            ? <p className="text-[10px] text-[#FC3154]">Build The Forge in Camp</p>
             : <p className="text-[10px] text-orange-400">{FORGE_NAMES[forgeLevel]} active — T{forgeLevel} crafting unlocked</p>
           }
         </div>
@@ -202,7 +202,7 @@ export function CraftTab({ state, onRefresh }: Props) {
       <div className="flex-1 flex flex-col gap-4 md:overflow-y-auto md:pr-1">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="text-[11px] text-[#505058] uppercase tracking-widest flex items-center gap-2">
-            <span className="text-rose-500">◆</span> Recipes
+            <span className="text-[#FC3154]">◆</span> Recipes
           </p>
           {/* Tier filter */}
           <div className="flex gap-1.5">
@@ -226,7 +226,7 @@ export function CraftTab({ state, onRefresh }: Props) {
           <div className={`rounded-xl p-3 text-sm border ${
             message.type === 'ok'
               ? 'bg-emerald-950/30 border-emerald-700/30 text-emerald-400'
-              : 'bg-red-950/30 border-red-700/30 text-red-400'
+              : 'bg-red-950/30 border-[#d4294a]/30 text-[#FC3154]'
           }`}>
             {message.text}
           </div>
@@ -235,7 +235,7 @@ export function CraftTab({ state, onRefresh }: Props) {
         {/* Alchemy: resource conversions */}
         <div className="bg-[#16161f] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden">
           <div className="px-4 pt-3 pb-2 flex items-center gap-2">
-            <span className="text-rose-500">◆</span>
+            <span className="text-[#FC3154]">◆</span>
             <p className="text-[11px] text-[#505058] uppercase tracking-widest">Alchemy — Resource Conversion (3:1)</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[rgba(255,255,255,0.05)]">
@@ -252,13 +252,13 @@ export function CraftTab({ state, onRefresh }: Props) {
                     <span className="text-red-300 font-semibold truncate">{conv.toName}</span>
                   </div>
                   <div className="shrink-0 flex items-center gap-2">
-                    <span className={`text-xs tabular-nums ${canConvert ? 'text-emerald-400' : 'text-red-400/70'}`}>{have}</span>
+                    <span className={`text-xs tabular-nums ${canConvert ? 'text-emerald-400' : 'text-[#FC3154]/70'}`}>{have}</span>
                     <button
                       onClick={() => handleConvert(conv.id)}
                       disabled={!canConvert || !!isConverting || !!converting}
                       className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
                         canConvert
-                          ? 'border-red-600/40 bg-red-900/20 text-red-300 hover:bg-red-900/40'
+                          ? 'border-[#FC3154]/40 bg-red-900/20 text-red-300 hover:bg-red-900/40'
                           : 'border-transparent bg-transparent text-[#3a3a60] cursor-not-allowed'
                       }`}>
                       {isConverting ? '…' : '⚗'}
@@ -324,7 +324,7 @@ export function CraftTab({ state, onRefresh }: Props) {
                           <img src="/icons/res_gold.png" alt="gold" width={16} height={16} style={{ imageRendering: 'pixelated' }} />
                           <span>Gold</span>
                         </span>
-                        <span className={`font-semibold tabular-nums ${state.character.gold >= recipe.goldCost ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <span className={`font-semibold tabular-nums ${state.character.gold >= recipe.goldCost ? 'text-emerald-400' : 'text-[#FC3154]'}`}>
                           {state.character.gold}/{recipe.goldCost}
                         </span>
                       </div>
@@ -339,7 +339,7 @@ export function CraftTab({ state, onRefresh }: Props) {
                             <ResIcon resourceId={ing.resourceId} fallback={def?.icon ?? '?'} size={16} />
                             <span>{ing.name}</span>
                           </span>
-                          <span className={`font-semibold tabular-nums ${ok ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <span className={`font-semibold tabular-nums ${ok ? 'text-emerald-400' : 'text-[#FC3154]'}`}>
                             {have}/{ing.quantity}
                           </span>
                         </div>
@@ -361,7 +361,7 @@ export function CraftTab({ state, onRefresh }: Props) {
                         <>
                           <button
                             onClick={() => setShowIngredientPicker(isPickerOpen ? null : recipe.id)}
-                            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#111118] border border-[rgba(255,255,255,0.09)] text-xs hover:border-red-600/30 transition-all">
+                            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#111118] border border-[rgba(255,255,255,0.09)] text-xs hover:border-[#FC3154]/30 transition-all">
                             {chosenItem ? (
                               <span style={{ color: RARITY_COLORS[chosenItem.rarity] }}>{chosenItem.name}
                                 <span className="text-[#606068] ml-1">
@@ -411,7 +411,7 @@ export function CraftTab({ state, onRefresh }: Props) {
                       !forgeOk
                         ? 'border-[rgba(255,255,255,0.06)] bg-transparent text-[#3030a0] cursor-not-allowed'
                         : affordable
-                        ? 'border-red-600/40 bg-red-900/20 text-red-300 hover:bg-red-900/40 hover:border-red-600/60'
+                        ? 'border-[#FC3154]/40 bg-red-900/20 text-red-300 hover:bg-red-900/40 hover:border-[#FC3154]/60'
                         : 'border-[rgba(255,255,255,0.06)] bg-transparent text-[#44444e] cursor-not-allowed'
                     }`}>
                     {isCrafting ? 'Crafting…' : !forgeOk ? `🔒 ${FORGE_NAMES[recipe.requiredForgeLevel]}` : affordable ? '⚒ Craft' : reason}

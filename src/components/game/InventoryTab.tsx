@@ -16,7 +16,7 @@ const FILTERS: { id: Filter; label: string; color: string }[] = [
   { id: 'common',    label: 'Common',    color: 'text-slate-400'  },
   { id: 'uncommon',  label: 'Uncommon',  color: 'text-emerald-400'},
   { id: 'rare',      label: 'Rare',      color: 'text-blue-400'   },
-  { id: 'epic',      label: 'Epic',      color: 'text-rose-400' },
+  { id: 'epic',      label: 'Epic',      color: 'text-[#FC3154]' },
   { id: 'legendary', label: 'Legendary', color: 'text-amber-400'  },
 ];
 
@@ -24,7 +24,7 @@ const SALVAGE_RARITIES: { rarity: Rarity; label: string; color: string; borderCo
   { rarity: 'common',    label: 'Common',    color: 'text-slate-400',   borderColor: 'border-slate-600/40'  },
   { rarity: 'uncommon',  label: 'Uncommon',  color: 'text-emerald-400', borderColor: 'border-emerald-700/40'},
   { rarity: 'rare',      label: 'Rare',      color: 'text-blue-400',    borderColor: 'border-blue-700/40'   },
-  { rarity: 'epic',      label: 'Epic',      color: 'text-rose-400',  borderColor: 'border-red-700/40' },
+  { rarity: 'epic',      label: 'Epic',      color: 'text-[#FC3154]',  borderColor: 'border-[#d4294a]/40' },
   { rarity: 'legendary', label: 'Legendary', color: 'text-amber-400',   borderColor: 'border-amber-700/40'  },
 ];
 
@@ -125,7 +125,7 @@ export function InventoryTab({ state, onRefresh }: Props) {
         {/* Desktop: vertical filter panel */}
         <div className="hidden md:block bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-4">
           <p className="text-[11px] text-[#505058] uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="text-rose-500">◆</span> Filter
+            <span className="text-[#FC3154]">◆</span> Filter
           </p>
           <div className="space-y-1">
             {FILTERS.map(({ id, label, color }) => {
@@ -152,7 +152,7 @@ export function InventoryTab({ state, onRefresh }: Props) {
               <span className="text-slate-300">{inventory.length}/20</span>
             </div>
             <div className="h-1.5 bg-[#111118] rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-red-700 to-purple-500 rounded-full"
+              <div className="h-full bg-gradient-to-r from-[#d4294a] to-purple-500 rounded-full"
                 style={{ width: `${(inventory.length / 20) * 100}%` }} />
             </div>
           </div>
@@ -161,7 +161,7 @@ export function InventoryTab({ state, onRefresh }: Props) {
         {/* Salvage by rarity */}
         <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-4">
           <p className="text-[11px] text-[#505058] uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="text-red-500">⚒</span> Salvage All
+            <span className="text-[#FC3154]">⚒</span> Salvage All
           </p>
           {/* Mobile: horizontal row */}
           <div className="flex gap-1.5 flex-wrap md:hidden">
@@ -229,7 +229,7 @@ export function InventoryTab({ state, onRefresh }: Props) {
       {/* Item grid */}
       <div className="flex-1 md:overflow-y-auto">
         {onRun && (
-          <div className="mb-3 px-4 py-2.5 bg-[#16161f] border border-red-700/30 rounded-xl text-red-400 text-sm text-center">
+          <div className="mb-3 px-4 py-2.5 bg-[#16161f] border border-[#d4294a]/30 rounded-xl text-[#FC3154] text-sm text-center">
             ⚔ Hero is on a run — equipment is locked
           </div>
         )}
@@ -244,7 +244,7 @@ export function InventoryTab({ state, onRefresh }: Props) {
             <p className="text-5xl mb-4">🎒</p>
             <p className="text-[#606068]">No items{filter !== 'all' ? ` of this rarity` : ''}</p>
             {filter !== 'all' && (
-              <button onClick={() => setFilter('all')} className="mt-2 text-xs text-rose-400 hover:text-rose-300">Clear filter</button>
+              <button onClick={() => setFilter('all')} className="mt-2 text-xs text-[#FC3154] hover:text-rose-300">Clear filter</button>
             )}
           </div>
         ) : (

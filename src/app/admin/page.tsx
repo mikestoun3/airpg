@@ -150,14 +150,14 @@ function LoginPanel({ onLogin }: { onLogin: () => void }) {
           <p className="text-slate-100 font-black text-xl">AirPG Admin</p>
           <p className="text-[#606068] text-sm">Enter admin secret to continue</p>
         </div>
-        {err && <p className="text-red-400 text-sm text-center bg-red-950/30 border border-red-700/30 rounded-xl px-4 py-2">{err}</p>}
+        {err && <p className="text-[#FC3154] text-sm text-center bg-red-950/30 border border-[#d4294a]/30 rounded-xl px-4 py-2">{err}</p>}
         <input
           type="password" value={secret} onChange={e => setSecret(e.target.value)}
           placeholder="Admin secret…" autoFocus
           className="bg-[#0f0f25] border border-[rgba(200,70,70,0.3)] rounded-xl px-4 py-3 text-slate-200 text-sm outline-none focus:border-purple-600"
         />
         <button type="submit" disabled={loading || !secret}
-          className="py-3 rounded-xl bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 text-white font-bold text-sm">
+          className="py-3 rounded-xl bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:opacity-50 text-white font-bold text-sm">
           {loading ? 'Verifying…' : 'Enter'}
         </button>
       </form>
@@ -261,7 +261,7 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
 
   if (!detail) return <div className="flex-1 flex items-center justify-center text-[#606068] text-sm">Loading…</div>;
 
-  const statusColor = detail.status === 'on_run' ? 'text-red-400' : detail.status === 'injured' ? 'text-red-400' : 'text-emerald-400';
+  const statusColor = detail.status === 'on_run' ? 'text-[#FC3154]' : detail.status === 'injured' ? 'text-[#FC3154]' : 'text-emerald-400';
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -274,7 +274,7 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
               <span className="text-[#606068] text-sm">Lv.{detail.level}</span>
               <span className={`text-xs ${statusColor}`}>{detail.status}</span>
               {detail.banned && (
-                <span className="text-[10px] bg-red-900/40 border border-red-600/40 text-red-400 px-2 py-0.5 rounded-full font-bold">BANNED</span>
+                <span className="text-[10px] bg-red-900/40 border border-[#FC3154]/40 text-[#FC3154] px-2 py-0.5 rounded-full font-bold">BANNED</span>
               )}
             </div>
             {detail.walletAddress && (
@@ -283,7 +283,7 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
           </div>
           <div className="flex items-center gap-4 text-sm">
             <span className="text-amber-400 font-bold">⚡{detail.gold}g</span>
-            {detail.essence > 0 && <span className="text-rose-400 font-bold">🔮{detail.essence}</span>}
+            {detail.essence > 0 && <span className="text-[#FC3154] font-bold">🔮{detail.essence}</span>}
           </div>
         </div>
 
@@ -291,7 +291,7 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {detail.status === 'on_run' && (
             <button onClick={resetCharacter} disabled={resetting}
-              className="px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-600/40 text-red-400 text-xs hover:bg-red-900/50 disabled:opacity-50 transition-colors">
+              className="px-3 py-1.5 rounded-lg bg-red-900/30 border border-[#FC3154]/40 text-[#FC3154] text-xs hover:bg-red-900/50 disabled:opacity-50 transition-colors">
               {resetting ? 'Resetting…' : '⚠ Reset (unstick from dungeon)'}
             </button>
           )}
@@ -304,16 +304,16 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
             <div className="flex items-center gap-2">
               <input value={banReason} onChange={e => setBanReason(e.target.value)}
                 placeholder="Ban reason (optional)"
-                className="w-48 bg-[#0f0f25] border border-red-700/30 rounded-lg px-3 py-1.5 text-slate-200 text-xs outline-none focus:border-red-600"
+                className="w-48 bg-[#0f0f25] border border-[#d4294a]/30 rounded-lg px-3 py-1.5 text-slate-200 text-xs outline-none focus:border-[#FC3154]"
               />
               <button onClick={banFn} disabled={banning}
-                className="px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-600/40 text-red-400 text-xs hover:bg-red-900/50 disabled:opacity-50 transition-colors">
+                className="px-3 py-1.5 rounded-lg bg-red-900/30 border border-[#FC3154]/40 text-[#FC3154] text-xs hover:bg-red-900/50 disabled:opacity-50 transition-colors">
                 {banning ? 'Banning…' : '🚫 Ban Player'}
               </button>
             </div>
           )}
           {detail.banned && detail.banReason && (
-            <span className="text-[11px] text-red-400/70 italic">Причина: {detail.banReason}</span>
+            <span className="text-[11px] text-[#FC3154]/70 italic">Причина: {detail.banReason}</span>
           )}
         </div>
 
@@ -338,7 +338,7 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
               {RARITIES.map(r => <option key={r} value={r} style={{ color: RARITY_COLOR[r] }}>{r}</option>)}
             </select>
             <button onClick={giveItemFn}
-              className="px-3 py-1.5 rounded-lg bg-red-800/30 border border-red-600/40 text-red-300 text-xs hover:bg-red-800/50 transition-colors">
+              className="px-3 py-1.5 rounded-lg bg-red-800/30 border border-[#FC3154]/40 text-red-300 text-xs hover:bg-red-800/50 transition-colors">
               Roll & Give Item
             </button>
           </div>
@@ -386,7 +386,7 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
               ))}
             </div>
             <button onClick={saveStats} disabled={saving}
-              className="mt-4 px-6 py-2 rounded-xl bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 text-white text-sm font-bold transition-all">
+              className="mt-4 px-6 py-2 rounded-xl bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:opacity-50 text-white text-sm font-bold transition-all">
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
@@ -675,7 +675,7 @@ function PromoPanel({ toast }: { toast: (m: string) => void }) {
                   <td className="px-4 py-2.5">
                     {status === 'active' && (
                       <button onClick={() => deactivate(p.code)}
-                        className="text-[10px] text-red-500/60 hover:text-red-400 transition-colors">
+                        className="text-[10px] text-[#FC3154]/60 hover:text-[#FC3154] transition-colors">
                         Deactivate
                       </button>
                     )}
@@ -728,7 +728,7 @@ function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-4">
             <p className="text-[#606068] text-xs mb-1">Pending payouts</p>
-            <p className="text-red-400 font-bold text-xl">{pending.length}</p>
+            <p className="text-[#FC3154] font-bold text-xl">{pending.length}</p>
             <p className="text-[#606068] text-xs mt-1">{fmt(totalOwed.toString())} owed to sellers</p>
           </div>
           <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-4">
@@ -762,7 +762,7 @@ function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
                     <td className="px-4 py-2 font-mono text-[#909098]">{p.sellerWallet.slice(0,8)}…{p.sellerWallet.slice(-4)}</td>
                     <td className="px-4 py-2 text-amber-400">{fmt(p.priceWei)}</td>
                     <td className="px-4 py-2 text-emerald-400">{fmt(p.payoutWei)}</td>
-                    <td className="px-4 py-2 text-rose-400">{fmt(p.feeWei)}</td>
+                    <td className="px-4 py-2 text-[#FC3154]">{fmt(p.feeWei)}</td>
                     <td className="px-4 py-2">
                       {p.txHash ? (
                         <a href={`https://polygonscan.com/tx/${p.txHash}`} target="_blank" rel="noreferrer"
@@ -772,7 +772,7 @@ function PayoutsPanel({ toast }: { toast: (m: string) => void }) {
                       ) : <span className="text-[#44444e]">—</span>}
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] ${p.status === 'pending' ? 'bg-red-900/30 text-red-400' : 'bg-emerald-900/30 text-emerald-400'}`}>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] ${p.status === 'pending' ? 'bg-red-900/30 text-[#FC3154]' : 'bg-emerald-900/30 text-emerald-400'}`}>
                         {p.status}
                       </span>
                     </td>
@@ -844,7 +844,7 @@ function BannedPanel({ toast, onSelectChar }: { toast: (m: string) => void; onSe
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <button onClick={() => onSelectChar(p.id)}
-                  className="text-red-400/80 font-semibold text-sm hover:text-red-300 transition-colors">
+                  className="text-[#FC3154]/80 font-semibold text-sm hover:text-red-300 transition-colors">
                   {p.name}
                 </button>
                 <span className="text-[10px] text-[#606068]">Lv.{p.level}</span>
@@ -916,14 +916,14 @@ function IpAnalyticsPanel({ toast, onSelectChar }: { toast: (m: string) => void;
                         {c.name}
                       </button>
                       <span className="text-[10px] text-[#606068]">Lv.{c.level}</span>
-                      {c.banned && <span className="text-[10px] bg-red-900/40 text-red-400 px-1.5 py-0.5 rounded border border-red-600/30">BANNED</span>}
+                      {c.banned && <span className="text-[10px] bg-red-900/40 text-[#FC3154] px-1.5 py-0.5 rounded border border-[#FC3154]/30">BANNED</span>}
                     </div>
                     {c.walletAddress && <p className="text-[10px] font-mono text-[#44444e] mt-0.5">{shortAddr(c.walletAddress)}</p>}
                     <p className="text-[10px] text-[#3a3a5a] mt-0.5">Last seen: {fmtDate(c.lastSeen)}</p>
                   </div>
                   {!c.banned && (
                     <button onClick={() => banChar(c.id, c.name)} disabled={banning === c.id}
-                      className="px-3 py-1.5 rounded-lg bg-red-900/20 border border-red-700/30 text-red-400 text-xs hover:bg-red-900/40 disabled:opacity-50 transition-colors shrink-0">
+                      className="px-3 py-1.5 rounded-lg bg-red-900/20 border border-[#d4294a]/30 text-[#FC3154] text-xs hover:bg-red-900/40 disabled:opacity-50 transition-colors shrink-0">
                       {banning === c.id ? '…' : '🚫 Ban'}
                     </button>
                   )}
@@ -1006,7 +1006,7 @@ export default function AdminPage() {
       {/* Header */}
       <header className="h-12 flex-shrink-0 bg-[#0e0e14] border-b border-[rgba(255,255,255,0.08)] flex items-center px-6 gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-red-700 to-rose-800 flex items-center justify-center text-xs font-black">A</div>
+          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#d4294a] to-rose-800 flex items-center justify-center text-xs font-black">A</div>
           <span className="font-black text-sm tracking-wide text-slate-100">AirPG</span>
           <span className="text-[#606068] text-xs tracking-widest">ADMIN</span>
         </div>
@@ -1033,7 +1033,7 @@ export default function AdminPage() {
             disabled={maintenanceLoading}
             className={`flex items-center gap-2 px-3 py-1 rounded-lg text-xs border transition-colors ${
               maintenance
-                ? 'bg-red-900/40 border-red-700/50 text-red-300 hover:bg-red-900/60'
+                ? 'bg-red-900/40 border-[#d4294a]/50 text-red-300 hover:bg-red-900/60'
                 : 'bg-[#1c1c28] border-[rgba(255,255,255,0.09)] text-[#7070c0] hover:text-slate-200'
             } disabled:opacity-50`}
           >
@@ -1071,14 +1071,14 @@ export default function AdminPage() {
               )}
               {accounts.map(acc => {
                 const isSelected = acc.id === selectedId;
-                const statusClr = acc.banned ? 'text-red-500' : acc.status === 'on_run' ? 'text-red-400' : acc.status === 'injured' ? 'text-red-400' : 'text-emerald-400';
+                const statusClr = acc.banned ? 'text-[#FC3154]' : acc.status === 'on_run' ? 'text-[#FC3154]' : acc.status === 'injured' ? 'text-[#FC3154]' : 'text-emerald-400';
                 return (
                   <button key={acc.id} onClick={() => setSelectedId(acc.id)}
                     className={`w-full text-left px-4 py-2.5 border-b border-[rgba(255,255,255,0.04)] transition-colors ${
                       isSelected ? 'bg-[#1c1c28]' : 'hover:bg-[#111128]'
                     }`}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`text-xs font-semibold truncate ${isSelected ? 'text-slate-100' : acc.banned ? 'text-red-400/70' : 'text-slate-300'}`}>{acc.name}</span>
+                      <span className={`text-xs font-semibold truncate ${isSelected ? 'text-slate-100' : acc.banned ? 'text-[#FC3154]/70' : 'text-slate-300'}`}>{acc.name}</span>
                       <span className={`text-[10px] shrink-0 ${statusClr}`}>{acc.banned ? '🚫' : '●'}</span>
                     </div>
                     <div className="flex items-center justify-between mt-0.5">

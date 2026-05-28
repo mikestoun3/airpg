@@ -14,7 +14,7 @@ const UPGRADE_ICONS: Record<string, string> = {
 const UPGRADE_COLORS: Record<string, string> = {
   storage_room: 'from-slate-700 to-slate-600',
   the_forge:    'from-orange-800 to-red-700',
-  the_shrine:   'from-red-800 to-rose-700',
+  the_shrine:   'from-[#a02038] to-[#d4294a]',
   the_library:  'from-blue-800 to-indigo-700',
   armory:       'from-slate-700 to-gray-600',
 };
@@ -78,12 +78,12 @@ export function CampTab({ state, onRefresh }: Props) {
         {/* Resources — horizontal on mobile */}
         <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-4">
           <p className="text-[11px] text-[#505058] uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="text-rose-500">◆</span> Resources
+            <span className="text-[#FC3154]">◆</span> Resources
           </p>
           <div className="grid grid-cols-3 md:grid-cols-1 gap-3 md:gap-0 md:space-y-3">
             {[
               { icon: '💰', label: 'Gold', value: character.gold, color: 'text-amber-400' },
-              { icon: '🔮', label: 'Essence', value: character.essence, color: 'text-rose-400' },
+              { icon: '🔮', label: 'Essence', value: character.essence, color: 'text-[#FC3154]' },
               { icon: '⭐', label: 'Relics', value: character.relics, color: 'text-blue-400' },
             ].map(({ icon, label, value, color }) => (
               <div key={label} className="flex flex-col md:flex-row md:items-center md:justify-between bg-[#111118] md:bg-transparent rounded-lg md:rounded-none p-2 md:p-0 text-center md:text-left">
@@ -103,7 +103,7 @@ export function CampTab({ state, onRefresh }: Props) {
           <div className="flex items-center gap-2">
             <div className="flex-1 flex gap-1">
               {campUpgrades.map((u) => (
-                <div key={u.id} className={`flex-1 h-1.5 rounded-full ${u.built ? 'bg-red-600' : 'bg-[#252545]'}`} />
+                <div key={u.id} className={`flex-1 h-1.5 rounded-full ${u.built ? 'bg-[#FC3154]' : 'bg-[#252545]'}`} />
               ))}
             </div>
             <span className="text-[#505058] text-xs">{builtIds.length}/{campUpgrades.length}</span>
@@ -113,7 +113,7 @@ export function CampTab({ state, onRefresh }: Props) {
         {/* Promo code */}
         <div className="bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl p-4">
           <p className="text-[11px] text-[#505058] uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="text-rose-500">◆</span> Promo Code
+            <span className="text-[#FC3154]">◆</span> Promo Code
           </p>
           <form onSubmit={handlePromoRedeem} className="flex gap-2">
             <input
@@ -123,7 +123,7 @@ export function CampTab({ state, onRefresh }: Props) {
               className="flex-1 bg-[#0c0c20] border border-[rgba(255,255,255,0.09)] rounded-lg px-3 py-2 text-slate-200 text-xs font-mono uppercase tracking-wider outline-none focus:border-purple-600 placeholder:text-[#3535a0] placeholder:normal-case placeholder:tracking-normal"
             />
             <button type="submit" disabled={promoState === 'loading' || !promoCode.trim()}
-              className="px-3 py-2 rounded-lg bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-40 text-white text-xs font-bold transition-all">
+              className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:opacity-40 text-white text-xs font-bold transition-all">
               {promoState === 'loading' ? '…' : '→'}
             </button>
           </form>
@@ -131,7 +131,7 @@ export function CampTab({ state, onRefresh }: Props) {
             <div className={`mt-2 rounded-lg px-3 py-2 text-xs text-center ${
               promoState === 'success'
                 ? 'bg-emerald-900/20 border border-emerald-700/30 text-emerald-400'
-                : 'bg-red-950/20 border border-red-700/25 text-red-400'
+                : 'bg-red-950/20 border border-[#d4294a]/25 text-[#FC3154]'
             }`}>
               {promoResult.msg}
               {promoResult.item && (
@@ -145,7 +145,7 @@ export function CampTab({ state, onRefresh }: Props) {
 
         {message && (
           <div className={`rounded-xl p-3 text-sm text-center border ${
-            message.ok ? 'bg-emerald-900/20 border-emerald-700/30 text-emerald-400' : 'bg-red-950/30 border-red-700/30 text-red-400'
+            message.ok ? 'bg-emerald-900/20 border-emerald-700/30 text-emerald-400' : 'bg-red-950/30 border-[#d4294a]/30 text-[#FC3154]'
           }`}>
             {message.text}
           </div>
@@ -155,7 +155,7 @@ export function CampTab({ state, onRefresh }: Props) {
       {/* RIGHT: upgrade cards */}
       <div className="flex-1 md:overflow-y-auto">
         <p className="text-[11px] text-[#505058] uppercase tracking-widest mb-4 flex items-center gap-2">
-          <span className="text-rose-500">◆</span> Base Upgrades
+          <span className="text-[#FC3154]">◆</span> Base Upgrades
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {campUpgrades.map((upgrade) => {
@@ -187,16 +187,16 @@ export function CampTab({ state, onRefresh }: Props) {
                   {!upgrade.built && (
                     <div className="flex items-center justify-between">
                       <div className="flex gap-2 text-xs">
-                        <span className={character.gold >= upgrade.goldCost ? 'text-amber-400' : 'text-red-400'}>{upgrade.goldCost}g</span>
+                        <span className={character.gold >= upgrade.goldCost ? 'text-amber-400' : 'text-[#FC3154]'}>{upgrade.goldCost}g</span>
                         {upgrade.essenceCost > 0 && (
-                          <span className={character.essence >= upgrade.essenceCost ? 'text-rose-400' : 'text-red-400'}>{upgrade.essenceCost} ess</span>
+                          <span className={character.essence >= upgrade.essenceCost ? 'text-[#FC3154]' : 'text-[#FC3154]'}>{upgrade.essenceCost} ess</span>
                         )}
                       </div>
                       {!prereqMet ? (
                         <span className="text-xs text-[#44444e]">Needs: {campUpgrades.find(u => u.id === upgrade.requires)?.name}</span>
                       ) : (
                         <button onClick={() => handleBuild(upgrade.id)} disabled={!canAfford || isBuilding}
-                          className="px-4 py-1.5 text-xs font-semibold rounded-lg transition-all bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white">
+                          className="px-4 py-1.5 text-xs font-semibold rounded-lg transition-all bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white">
                           {isBuilding ? 'Building...' : canAfford ? 'Build' : 'Need more'}
                         </button>
                       )}

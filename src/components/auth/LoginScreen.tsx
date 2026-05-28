@@ -108,7 +108,7 @@ export function LoginScreen({ onLogin }: Props) {
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-700 to-rose-900 flex items-center justify-center text-3xl font-black text-white shadow-2xl shadow-red-950/60">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-3xl font-black text-white shadow-2xl shadow-[#1a0510]/60">
             A
           </div>
           <div className="text-center">
@@ -125,14 +125,14 @@ export function LoginScreen({ onLogin }: Props) {
           </div>
 
           {statusLabel && (
-            <div className="flex items-center justify-center gap-2 text-rose-400 text-sm">
-              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center justify-center gap-2 text-[#FC3154] text-sm">
+              <div className="w-4 h-4 border-2 border-[#FC3154] border-t-transparent rounded-full animate-spin" />
               {statusLabel}
             </div>
           )}
 
           {error && (
-            <div className="bg-red-950/40 border border-red-700/30 rounded-xl px-4 py-3 text-red-400 text-sm text-center">
+            <div className="bg-red-950/40 border border-[#d4294a]/30 rounded-xl px-4 py-3 text-[#FC3154] text-sm text-center">
               {error}
             </div>
           )}
@@ -142,7 +142,7 @@ export function LoginScreen({ onLogin }: Props) {
             <button
               onClick={handleConnect}
               disabled={status === 'connecting' || status === 'signing' || status === 'verifying'}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
               <MetaMaskIcon />
               Connect MetaMask
             </button>

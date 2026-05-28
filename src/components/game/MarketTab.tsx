@@ -305,7 +305,7 @@ export function MarketTab({ state, onRefresh }: Props) {
       {/* LEFT: sell panel */}
       <div className={`${mobileTab === 'sell' ? 'flex' : 'hidden'} md:flex w-full md:w-64 md:flex-shrink-0 flex-col gap-4 overflow-y-auto`}>
         <p className="text-[11px] text-[#505058] uppercase tracking-widest flex items-center gap-2">
-          <span className="text-rose-500">◆</span> Sell Items
+          <span className="text-[#FC3154]">◆</span> Sell Items
         </p>
 
         {state.walletAddress ? (
@@ -361,7 +361,7 @@ export function MarketTab({ state, onRefresh }: Props) {
                         </div>
                         <button
                           onClick={() => { setEditingId(isEditing ? null : l.id); setEditPrice(''); }}
-                          className="text-[10px] text-[#606068] hover:text-red-400 transition-colors shrink-0 px-1"
+                          className="text-[10px] text-[#606068] hover:text-[#FC3154] transition-colors shrink-0 px-1"
                           title="Edit price">
                           ✎
                         </button>
@@ -369,7 +369,7 @@ export function MarketTab({ state, onRefresh }: Props) {
                           onClick={() => handleCancel(l.id)}
                           disabled={cancellingId === l.id || !!locked}
                           title={locked ? `Locked for ${lockedMins} more minutes` : 'Cancel listing'}
-                          className="text-[10px] text-[#606068] hover:text-red-400 transition-colors shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
+                          className="text-[10px] text-[#606068] hover:text-[#FC3154] transition-colors shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
                           {cancellingId === l.id ? '…' : '✕'}
                         </button>
                       </div>
@@ -379,12 +379,12 @@ export function MarketTab({ state, onRefresh }: Props) {
                             type="number" min="0" step="0.001" placeholder="New price (POL)"
                             value={editPrice}
                             onChange={e => setEditPrice(e.target.value)}
-                            className="flex-1 min-w-0 bg-[#16161f] border border-[rgba(200,70,70,0.25)] rounded-lg px-2 py-1 text-slate-200 text-xs outline-none focus:border-red-600"
+                            className="flex-1 min-w-0 bg-[#16161f] border border-[rgba(200,70,70,0.25)] rounded-lg px-2 py-1 text-slate-200 text-xs outline-none focus:border-[#FC3154]"
                           />
                           <button
                             onClick={() => handleSavePrice(l.id)}
                             disabled={savingPrice || !editPrice || parseFloat(editPrice) <= 0}
-                            className="px-2 py-1 text-[10px] font-bold rounded-lg bg-red-900/40 border border-red-600/30 text-red-300 hover:bg-red-900/60 disabled:opacity-40 transition-all">
+                            className="px-2 py-1 text-[10px] font-bold rounded-lg bg-red-900/40 border border-[#FC3154]/30 text-red-300 hover:bg-red-900/60 disabled:opacity-40 transition-all">
                             {savingPrice ? '…' : 'Save'}
                           </button>
                           <button
@@ -413,7 +413,7 @@ export function MarketTab({ state, onRefresh }: Props) {
         {/* Header row */}
         <div className="flex items-center justify-between">
           <p className="text-[11px] text-[#505058] uppercase tracking-widest flex items-center gap-2">
-            <span className="text-rose-500">◆</span> Market
+            <span className="text-[#FC3154]">◆</span> Market
             <span className="text-[#44444e]">
               {otherListings.length}{hasFilters ? ` filtered` : total > listings.length ? ` / ${total}` : ''} listing{otherListings.length !== 1 ? 's' : ''}
             </span>
@@ -421,7 +421,7 @@ export function MarketTab({ state, onRefresh }: Props) {
           <div className="flex items-center gap-3">
             {hasFilters && (
               <button onClick={() => { setFilterRarities(new Set()); setFilterSlot(''); setMinPol(''); setMaxPol(''); }}
-                className="text-[11px] text-red-500/70 hover:text-red-400 transition-colors">
+                className="text-[11px] text-[#FC3154]/70 hover:text-[#FC3154] transition-colors">
                 ✕ clear
               </button>
             )}
@@ -516,7 +516,7 @@ export function MarketTab({ state, onRefresh }: Props) {
           <div className={`flex-shrink-0 px-4 py-2.5 rounded-xl border text-sm text-center ${
             toast.ok
               ? 'bg-emerald-950/30 border-emerald-700/30 text-emerald-400'
-              : 'bg-red-950/30 border-red-700/30 text-red-400'
+              : 'bg-red-950/30 border-[#d4294a]/30 text-[#FC3154]'
           }`}>
             {toast.text}
           </div>
@@ -530,7 +530,7 @@ export function MarketTab({ state, onRefresh }: Props) {
             <p className="text-[#606068]">{hasFilters ? 'No listings match your filters' : 'No listings right now'}</p>
             {hasFilters
               ? <button onClick={() => { setFilterRarities(new Set()); setFilterSlot(''); setMinPol(''); setMaxPol(''); }}
-                  className="mt-2 text-xs text-rose-500 hover:text-rose-400">Clear filters</button>
+                  className="mt-2 text-xs text-[#FC3154] hover:text-[#FC3154]">Clear filters</button>
               : <p className="text-[#3a3a5a] text-xs mt-1">Be the first to list an item!</p>
             }
           </div>
@@ -620,13 +620,13 @@ export function MarketTab({ state, onRefresh }: Props) {
                   placeholder="1.0"
                   value={pricePol}
                   onChange={(e) => setPricePol(e.target.value)}
-                  className="w-full bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-red-600/50"
+                  className="w-full bg-[#16161f] border border-[rgba(255,255,255,0.09)] rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-[#FC3154]/50"
                 />
                 {pricePol && !isNaN(parseFloat(pricePol)) && parseFloat(pricePol) > 0 ? (
                   <div className="mt-2 bg-[#111118] rounded-lg px-3 py-2 text-xs space-y-1">
                     <div className="flex justify-between text-[#606068]">
                       <span>Marketplace fee ({MARKET_FEE_PCT}%)</span>
-                      <span className="text-red-400/70">−{(parseFloat(pricePol) * MARKET_FEE_PCT / 100).toFixed(4)} POL</span>
+                      <span className="text-[#FC3154]/70">−{(parseFloat(pricePol) * MARKET_FEE_PCT / 100).toFixed(4)} POL</span>
                     </div>
                     <div className="flex justify-between font-semibold border-t border-[rgba(255,255,255,0.06)] pt-1">
                       <span className="text-[#78788a]">You receive</span>
@@ -647,7 +647,7 @@ export function MarketTab({ state, onRefresh }: Props) {
               <button
                 onClick={handleList}
                 disabled={!pricePol || parseFloat(pricePol) <= 0 || listing}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-700 hover:to-rose-600 disabled:opacity-50 text-white font-bold text-sm transition-all">
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:opacity-50 text-white font-bold text-sm transition-all">
                 {listing ? 'Listing…' : 'List Item'}
               </button>
             </div>
