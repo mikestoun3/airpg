@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { GameState, EquipmentSlot } from '@/types/game';
 import { DUNGEONS } from '@/lib/data/dungeons';
 import { RARITY_COLORS } from '@/types/game';
+import { DUNGEON_RESOURCE_DROPS, getResource } from '@/lib/data/resources';
 import { RunTimer } from './RunTimer';
 
 interface Props {
@@ -95,7 +96,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
   const endFloor = startFloor + floorsToAttempt - 1;
   const firstFloorDC = selected ? Math.round(selected.baseDC + (startFloor - 1) * selected.floorDCStep) : 0;
   const lastFloorDC = selected ? Math.round(selected.baseDC + (endFloor - 1) * selected.floorDCStep) : 0;
-  const firstFloorOdds = selected ? Math.min(95, Math.max(5, Math.round(((cr - firstFloorDC + 50) / 100) * 100))) : 0;
+  const firstFloorOdds = selected ? Math.min(95, Math.max(5, cr - firstFloorDC + 70)) : 0;
   const spdReduction = Math.min(character.spd * 0.02, 0.4);
   const estimatedDuration = Math.max(1, Math.round(floorsToAttempt * 2 * (1 - spdReduction)));
 
@@ -157,13 +158,10 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               const dungeonSavedFloor = savedFloors?.[dungeon.id] ?? 0;
               const dungeonStartFloor = dungeonSavedFloor + 1;
               const floorDC = Math.round(dungeon.baseDC + (dungeonStartFloor - 1) * dungeon.floorDCStep);
-              const odds = Math.min(95, Math.max(5, Math.round(((cr - floorDC + 50) / 100) * 100)));
-              const rewardRate = odds - 100;
-              const estimatedMins = Math.max(1, Math.round(3 * dungeon.durationMinutes * (1 - spdReduction)));
-              const timeLabel = estimatedMins >= 60
-                ? `${Math.floor(estimatedMins / 60)}h ${estimatedMins % 60 > 0 ? `${estimatedMins % 60}m` : ''}`.trim()
-                : `${estimatedMins}m`;
-              const rateColor = rewardRate >= -20 ? 'text-emerald-400' : rewardRate >= -50 ? 'text-amber-400' : 'text-[#FC3154]';
+              // P(not fail) = min(95, max(5, CR - DC + 70))
+              const passRate = Math.min(95, Math.max(5, cr - floorDC + 70));
+              const passColor = passRate >= 70 ? 'text-emerald-400' : passRate >= 45 ? 'text-amber-400' : 'text-[#FC3154]';
+              const drops = DUNGEON_RESOURCE_DROPS[dungeon.id] ?? [];
               const imgSrc = DUNGEON_IMG[dungeon.id];
 
               return (
@@ -186,32 +184,41 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#13131a]/60" />
                     </div>
 
-                    {/* Name + subtitle */}
-                    <div className="flex-1 flex flex-col justify-center px-4 min-w-0">
-                      <p className="text-slate-100 font-bold text-[15px] uppercase tracking-wide leading-tight truncate">
-                        {dungeon.name}
-                      </p>
-                      <p className="text-[10px] text-[#4a4a58] uppercase tracking-widest mt-1">
+                    {/* Name + subtitle + drops */}
+                    <div className="flex-1 flex flex-col justify-center px-4 min-w-0 gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <p className="text-slate-100 font-bold text-[15px] uppercase tracking-wide leading-tight truncate">
+                          {dungeon.name}
+                        </p>
+                        {dungeonSavedFloor > 0 && (
+                          <span className="text-[9px] text-[#555565] border border-[rgba(255,255,255,0.08)] px-1.5 py-0.5 rounded shrink-0">
+                            Fl.{dungeonSavedFloor + 1}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-[#4a4a58] uppercase tracking-widest">
                         {DUNGEON_SUBTITLE[dungeon.id]}
                       </p>
-                      {dungeonSavedFloor > 0 && (
-                        <span className="mt-1.5 text-[9px] text-[#555565] border border-[rgba(255,255,255,0.08)] px-1.5 py-0.5 rounded self-start">
-                          Fl.{dungeonSavedFloor + 1}
-                        </span>
+                      {drops.length > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {drops.map(drop => {
+                            const res = getResource(drop.resourceId);
+                            return res ? (
+                              <span key={drop.resourceId} className="text-[11px]" title={`${res.name} ${Math.round(drop.chance * 100)}%`}>
+                                {res.icon}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
                       )}
                     </div>
 
-                    {/* Stats: Reward Rate + Time — hidden on mobile */}
-                    <div className="hidden sm:flex items-center gap-5 sm:gap-8 px-4 sm:px-7 shrink-0">
+                    {/* Pass Rate — hidden on mobile */}
+                    <div className="hidden sm:flex items-center gap-6 px-5 sm:px-7 shrink-0">
                       <div className="text-center">
-                        <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest whitespace-nowrap">Reward Rate</p>
-                        <p className={`text-base font-bold mt-1 ${rateColor}`}>
-                          {rewardRate >= 0 ? '+' : ''}{rewardRate}%
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest">Time</p>
-                        <p className="text-base font-bold mt-1 text-slate-200">{timeLabel}</p>
+                        <p className="text-[9px] text-[#3a3a48] uppercase tracking-widest whitespace-nowrap">Pass Rate</p>
+                        <p className={`text-base font-bold mt-1 ${passColor}`}>{passRate}%</p>
+                        <p className="text-[8px] text-[#30303a] mt-0.5">Fl.{dungeonStartFloor}</p>
                       </div>
                     </div>
 
@@ -401,7 +408,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                 <span className="text-slate-300 font-semibold">~{estimatedDuration} min</span>
               </div>
               <div className="flex justify-between text-[11px]">
-                <span className="text-[#505058]">Entry odds</span>
+                <span className="text-[#505058]">Pass rate</span>
                 <span className={`font-bold ${oddsColor(firstFloorOdds)}`}>~{firstFloorOdds}%</span>
               </div>
               {startFloor !== endFloor && (
@@ -418,6 +425,37 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                 </div>
               )}
             </div>
+
+            {/* Resource drops */}
+            {(() => {
+              const selDrops = DUNGEON_RESOURCE_DROPS[selected.id] ?? [];
+              if (selDrops.length === 0) return null;
+              return (
+                <div className="bg-[#0e0e14] rounded-lg px-3 py-2.5">
+                  <p className="text-[9px] text-[#404048] uppercase tracking-widest mb-2">Possible Drops</p>
+                  <div className="space-y-1.5">
+                    {selDrops.map(drop => {
+                      const res = getResource(drop.resourceId);
+                      if (!res) return null;
+                      const chance = Math.round(drop.chance * 100);
+                      const chanceColor = chance >= 40 ? 'text-emerald-400' : chance >= 15 ? 'text-amber-400' : 'text-[#505060]';
+                      return (
+                        <div key={drop.resourceId} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">{res.icon}</span>
+                            <span className="text-[11px] text-slate-300">{res.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px]">
+                            <span className="text-[#404048]">{drop.minQty}–{drop.maxQty}</span>
+                            <span className={`font-bold ${chanceColor}`}>{chance}%</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {error && (
               <p className="text-[#FC3154] text-xs bg-red-950/30 border border-red-900/30 rounded-lg px-3 py-2">{error}</p>
