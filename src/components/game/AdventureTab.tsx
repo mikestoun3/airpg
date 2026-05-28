@@ -107,6 +107,24 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
     }
   }
 
+  // Expected drops: for each floor, P(reach it) = product of all prior pass rates
+  // P(not fail floor i) = min(1, max(0, (CR - DC_i + 70) / 100))
+  const expectedDrops: Record<string, number> = {};
+  if (selected) {
+    let cumProb = 1;
+    for (let i = 0; i < floorsToAttempt; i++) {
+      const floor = startFloor + i;
+      const dc = Math.round(selected.baseDC + (floor - 1) * selected.floorDCStep);
+      const passProb = Math.min(1, Math.max(0, (cr - dc + 70) / 100));
+      cumProb *= passProb;
+      const drops = DUNGEON_RESOURCE_DROPS[selected.id] ?? [];
+      for (const drop of drops) {
+        const avgQty = (drop.minQty + drop.maxQty) / 2;
+        expectedDrops[drop.resourceId] = (expectedDrops[drop.resourceId] ?? 0) + cumProb * drop.chance * avgQty;
+      }
+    }
+  }
+
   return (
     <div className="flex flex-col md:flex-row gap-4 md:h-full">
 
@@ -432,23 +450,26 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               if (selDrops.length === 0) return null;
               return (
                 <div className="bg-[#0e0e14] rounded-lg px-3 py-2.5">
-                  <p className="text-[9px] text-[#404048] uppercase tracking-widest mb-2">Possible Drops</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[9px] text-[#404048] uppercase tracking-widest">Possible Drops</p>
+                    <p className="text-[9px] text-[#404048] uppercase tracking-widest">~Expected</p>
+                  </div>
                   <div className="space-y-1.5">
                     {selDrops.map(drop => {
                       const res = getResource(drop.resourceId);
                       if (!res) return null;
                       const chance = Math.round(drop.chance * 100);
                       const chanceColor = chance >= 40 ? 'text-emerald-400' : chance >= 15 ? 'text-amber-400' : 'text-[#505060]';
+                      const exp = expectedDrops[drop.resourceId] ?? 0;
+                      const expStr = exp < 0.1 ? '<0.1' : exp.toFixed(1);
                       return (
                         <div key={drop.resourceId} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{res.icon}</span>
-                            <span className="text-[11px] text-slate-300">{res.name}</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm shrink-0">{res.icon}</span>
+                            <span className="text-[11px] text-slate-300 truncate">{res.name}</span>
+                            <span className="text-[10px] text-[#404048] shrink-0">{drop.minQty}–{drop.maxQty} · <span className={chanceColor}>{chance}%</span></span>
                           </div>
-                          <div className="flex items-center gap-2 text-[11px]">
-                            <span className="text-[#404048]">{drop.minQty}–{drop.maxQty}</span>
-                            <span className={`font-bold ${chanceColor}`}>{chance}%</span>
-                          </div>
+                          <span className="text-[11px] font-bold text-slate-200 shrink-0 ml-2">~{expStr}</span>
                         </div>
                       );
                     })}
