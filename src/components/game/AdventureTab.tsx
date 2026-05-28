@@ -111,8 +111,8 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
 
       {/* ── LEFT: dungeon list ── */}
       <div className="flex-1 flex flex-col gap-3 md:overflow-y-auto md:pr-1">
-        <p className="text-[10px] text-[#78788a] uppercase tracking-[0.2em] flex items-center gap-2">
-          <span className="w-1 h-1 rounded-full bg-red-700 inline-block" />
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-red-500"
+          style={{ textShadow: '0 0 10px rgba(239,68,68,0.6), 0 0 20px rgba(239,68,68,0.3)' }}>
           Available Dungeons
         </p>
 
@@ -132,66 +132,80 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               const dungeonStartFloor = dungeonSavedFloor + 1;
               const floorDC = Math.round(dungeon.baseDC + (dungeonStartFloor - 1) * dungeon.floorDCStep);
               const odds = Math.min(95, Math.max(5, Math.round(((cr - floorDC + 50) / 100) * 100)));
+              const rewardRate = odds - 100; // negative = penalty, e.g. -25%
+              const estimatedMins = Math.max(1, Math.round(3 * dungeon.durationMinutes * (1 - spdReduction)));
+              const timeLabel = estimatedMins >= 60
+                ? `${Math.floor(estimatedMins / 60)}h${estimatedMins % 60 > 0 ? ` ${estimatedMins % 60}m` : ''}`
+                : `${estimatedMins}m`;
+              const diff = dungeon.tier === 1 ? { label: 'Easy', cls: 'text-emerald-400 bg-emerald-900/30 border-emerald-700/40' }
+                : dungeon.tier === 2 ? { label: 'Normal', cls: 'text-amber-400 bg-amber-900/30 border-amber-700/40' }
+                : { label: 'Hard', cls: 'text-red-400 bg-red-900/30 border-red-700/40' };
               const imgSrc = DUNGEON_IMG[dungeon.id];
 
               return (
                 <div key={dungeon.id}
                   className={`rounded-xl border overflow-hidden transition-all ${
                     isSel
-                      ? 'border-red-700/50 bg-[#1c0c0c]'
-                      : 'border-[rgba(255,255,255,0.07)] bg-[#16161f] hover:border-[rgba(200,80,80,0.25)] hover:bg-[#190e0e]'
+                      ? 'border-red-600/60 bg-[#161620]'
+                      : 'border-[rgba(255,255,255,0.07)] bg-[#13131a] hover:border-[rgba(255,255,255,0.12)]'
                   }`}>
                   <div className="flex items-stretch">
                     {/* Thumbnail */}
-                    <div className={`w-28 min-h-[96px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a0a0a] to-[#0a0a12]'}`}>
+                    <div className={`w-32 shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'}`}>
                       {imgSrc && (
                         <img src={imgSrc} alt={dungeon.name}
-                          className="absolute inset-0 w-full h-full object-cover opacity-80"
+                          className="absolute inset-0 w-full h-full object-cover opacity-85"
                           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#16161f]/60" />
-                      <div className="absolute bottom-1.5 left-1.5">
-                        <span className={`text-[9px] font-bold uppercase tracking-wide drop-shadow ${TIER_BADGE[dungeon.tier]}`}>
-                          {TIER_LABELS[dungeon.tier]}
-                        </span>
-                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#13131a]/70" />
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 flex items-center gap-2 px-3 py-3 min-w-0">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-slate-100 font-semibold text-sm">{dungeon.name}</span>
-                          {dungeonSavedFloor > 0 && (
-                            <span className="text-[9px] text-red-400/70 border border-red-900/50 px-1 py-0.5 rounded">
-                              Fl.{dungeonSavedFloor + 1}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[#606068] mt-0.5 truncate">
-                          {DUNGEON_SUBTITLE[dungeon.id] ?? dungeon.lootFocus}
+                    <div className="flex-1 flex flex-col justify-center gap-1.5 px-4 py-3 min-w-0">
+                      <div>
+                        <p className="text-slate-100 font-bold text-base leading-tight uppercase tracking-wide">
+                          {dungeon.name}
+                        </p>
+                        <p className="text-[11px] text-[#505060] mt-0.5 uppercase tracking-wide">
+                          {DUNGEON_SUBTITLE[dungeon.id]}
                         </p>
                       </div>
-
-                      {/* Odds + duration */}
-                      <div className="text-right shrink-0">
-                        <p className={`text-sm font-bold ${oddsColor(odds)}`}>~{odds}%</p>
-                        <p className="text-[10px] text-[#505058] mt-0.5">{dungeon.durationMinutes}m/fl</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${diff.cls}`}>
+                          {diff.label}
+                        </span>
+                        {dungeonSavedFloor > 0 && (
+                          <span className="text-[9px] text-[#606070] border border-[rgba(255,255,255,0.08)] px-1.5 py-0.5 rounded">
+                            Fl.{dungeonSavedFloor + 1}
+                          </span>
+                        )}
                       </div>
-
-                      {/* ENTER button */}
-                      <button
-                        onClick={() => { setSelectedDungeon(dungeon.id); setError(null); }}
-                        disabled={!isIdle}
-                        className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                          isSel
-                            ? 'bg-red-700 text-white shadow-md shadow-red-950/50'
-                            : 'bg-red-950/60 text-red-400 border border-red-800/40 hover:bg-red-900/70 hover:text-red-200'
-                        }`}>
-                        {isSel ? '✓' : 'Enter'}
-                      </button>
+                      <div className="flex items-center gap-4 mt-0.5">
+                        <div>
+                          <p className="text-[9px] text-[#404050] uppercase tracking-widest">Reward Rate</p>
+                          <p className={`text-sm font-bold ${rewardRate >= -20 ? 'text-emerald-400' : rewardRate >= -50 ? 'text-amber-400' : 'text-red-400'}`}>
+                            {rewardRate >= 0 ? '+' : ''}{rewardRate}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] text-[#404050] uppercase tracking-widest">Time</p>
+                          <p className="text-sm font-bold text-slate-300">{timeLabel}</p>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* ENTER button */}
+                    <button
+                      onClick={() => { setSelectedDungeon(dungeon.id); setError(null); }}
+                      disabled={!isIdle}
+                      className={`shrink-0 px-4 flex items-center justify-center font-black text-[11px] uppercase tracking-[0.15em] transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                        isSel
+                          ? 'bg-red-600 text-white'
+                          : 'bg-red-700 hover:bg-red-600 text-white'
+                      }`}>
+                      {isSel ? '✓' : 'Enter'}
+                    </button>
                   </div>
                 </div>
               );
@@ -204,17 +218,13 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                 : c.minLevel ? `Lv. ${character.level}/${c.minLevel}` : '';
               return (
                 <div key={dungeon.id}
-                  className="rounded-xl border border-[rgba(255,255,255,0.04)] bg-[#110909] opacity-50 overflow-hidden">
+                  className="rounded-xl border border-[rgba(255,255,255,0.04)] bg-[#111118] opacity-40 overflow-hidden">
                   <div className="flex items-stretch">
-                    <div className={`w-28 min-h-[96px] shrink-0 bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#140808] to-[#090910]'} opacity-40`} />
-                    <div className="flex-1 flex items-center justify-between px-3 py-3">
-                      <div>
-                        <p className="text-[#505058] font-medium text-sm">🔒 {dungeon.name}</p>
-                        <p className="text-[11px] text-[#383840] mt-0.5">{hint}</p>
-                      </div>
-                      <span className={`text-[10px] uppercase tracking-wide ${TIER_BADGE[dungeon.tier]} opacity-50`}>
-                        {TIER_LABELS[dungeon.tier]}
-                      </span>
+                    <div className={`w-32 shrink-0 bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'} opacity-30 min-h-[90px]`} />
+                    <div className="flex-1 flex flex-col justify-center gap-1 px-4 py-3">
+                      <p className="text-[#505060] font-bold text-base uppercase tracking-wide">🔒 {dungeon.name}</p>
+                      <p className="text-[11px] text-[#383840] uppercase tracking-wide">{DUNGEON_SUBTITLE[dungeon.id]}</p>
+                      <p className="text-[10px] text-[#404048] mt-0.5">{hint}</p>
                     </div>
                   </div>
                 </div>
