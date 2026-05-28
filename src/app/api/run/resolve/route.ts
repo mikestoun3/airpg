@@ -78,16 +78,17 @@ export async function POST(req: NextRequest) {
 
     // Award season points: floor_number * dungeon_tier * 2 per completed floor (partial = half)
     const dungeon = getDungeon(result.dungeonId);
+    let seasonPointsEarned = 0;
     if (dungeon && result.floorResults) {
-      let sp = 0;
       for (const floor of result.floorResults) {
         if (floor.outcome !== 'failure') {
           const base = floor.floor * dungeon.tier * 2;
-          sp += floor.outcome === 'partial' ? Math.floor(base * 0.5) : base;
+          seasonPointsEarned += floor.outcome === 'partial' ? Math.floor(base * 0.5) : base;
         }
       }
-      addSeasonPoints(char.id, sp);
+      addSeasonPoints(char.id, seasonPointsEarned);
     }
+    result.seasonPoints = seasonPointsEarned;
 
     // Add XP
     const levelResult = addXpAndLevel(char.id, result.xpGained);

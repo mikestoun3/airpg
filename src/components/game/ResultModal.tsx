@@ -77,6 +77,12 @@ export function ResultModal({ result, leveled, newLevel, onClose }: Props) {
             <p className="text-blue-400 font-bold text-xl">+{result.xpGained}</p>
             <p className="text-[#505058] text-[11px] mt-0.5">XP</p>
           </div>
+          {(result.seasonPoints ?? 0) > 0 && (
+            <div className="flex-1 bg-[#16161f] rounded-xl p-3 text-center">
+              <p className="text-[#FC3154] font-bold text-xl">+{result.seasonPoints}</p>
+              <p className="text-[#505058] text-[11px] mt-0.5">Season Pts</p>
+            </div>
+          )}
         </div>
 
         {/* Scrollable content */}

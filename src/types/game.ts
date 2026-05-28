@@ -182,6 +182,7 @@ export interface RunResult {
   startFloor?: number;
   floorsCompleted?: number;
   floorResults?: FloorResult[];
+  seasonPoints?: number;
 }
 
 export interface Equipment {
