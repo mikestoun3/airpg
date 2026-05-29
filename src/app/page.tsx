@@ -253,7 +253,7 @@ export default function GamePage() {
 
       {/* ── Sidebar (desktop only) ── */}
       <aside className="hidden md:flex w-56 flex-shrink-0 bg-[#0e0e14] border-r border-[rgba(255,255,255,0.07)] flex-col">
-        <div className="px-5 py-5 border-b border-[rgba(255,255,255,0.06)]">
+        <div className="px-5 py-5 border-b border-[rgba(255,255,255,0.06)] flex justify-center">
           <img src="/icons/logo.png" alt="Nexfall" className="h-7 w-auto max-w-full object-contain" />
         </div>
 
