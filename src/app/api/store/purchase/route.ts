@@ -9,7 +9,7 @@ import { rollFreeItem } from '@/lib/engine/loot-roller';
 
 const POLYGON_RPC      = process.env.POLYGON_RPC_URL ?? 'https://polygon-bor-rpc.publicnode.com';
 const POLYGON_CHAIN_ID = 137;
-const STORE_ADDRESS    = (process.env.STORE_ADDRESS ?? '').toLowerCase();
+const STORE_ADDRESS    = (process.env.NEXT_PUBLIC_STORE_ADDRESS ?? process.env.STORE_ADDRESS ?? '').toLowerCase();
 
 const SLOTS: EquipmentSlot[] = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'trinket'];
 
