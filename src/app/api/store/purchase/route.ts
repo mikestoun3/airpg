@@ -43,15 +43,24 @@ export async function POST(req: NextRequest) {
     const storeItem = STORE_ITEMS.find(i => i.id === storeItemId);
     if (!storeItem) return NextResponse.json({ ok: false, error: 'Unknown store item' }, { status: 400 });
 
-    // Verify the transaction on-chain
+    // Verify the transaction on-chain (retry up to 5x, 3s apart)
     const provider = new ethers.JsonRpcProvider(POLYGON_RPC, POLYGON_CHAIN_ID);
 
-    const [receipt, tx] = await Promise.all([
-      provider.getTransactionReceipt(txHash),
-      provider.getTransaction(txHash),
-    ]);
+    let receipt: Awaited<ReturnType<typeof provider.getTransactionReceipt>> = null;
+    let tx: Awaited<ReturnType<typeof provider.getTransaction>> = null;
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 3000));
+      [receipt, tx] = await Promise.all([
+        provider.getTransactionReceipt(txHash),
+        provider.getTransaction(txHash),
+      ]);
+      console.log(`[store] attempt ${attempt + 1}: txHash=${txHash} receipt=${receipt?.status ?? 'null'} tx=${tx ? 'found' : 'null'}`);
+      if (receipt && receipt.status === 1 && tx) break;
+    }
 
     if (!receipt || receipt.status !== 1) {
+      console.error('[store] tx not confirmed after retries:', { txHash, status: receipt?.status });
       return NextResponse.json({ ok: false, error: 'Transaction not confirmed or failed on Polygon' }, { status: 400 });
     }
     if (!tx) {
