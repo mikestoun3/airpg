@@ -6,7 +6,7 @@ import { AIRPG_MARKET_ABI } from '@/lib/market-contract';
 
 const POLYGON_RPC      = process.env.POLYGON_RPC_URL ?? 'https://polygon-bor-rpc.publicnode.com';
 const POLYGON_CHAIN_ID = 137;
-const CONTRACT_ADDRESS = (process.env.CONTRACT_ADDRESS ?? '').toLowerCase();
+const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? process.env.CONTRACT_ADDRESS ?? '').toLowerCase();
 
 export async function POST(req: NextRequest) {
   try {
