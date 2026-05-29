@@ -544,28 +544,47 @@ export function MarketTab({ state, onRefresh }: Props) {
                   className={`bg-[#16161f] rounded-xl border ${RARITY_BORDER[l.item.rarity]} overflow-hidden flex flex-col`}>
                   <div className="h-0.5" style={{ background: `linear-gradient(90deg, ${RARITY_COLORS[l.item.rarity]}60, transparent)` }} />
                   <div className="p-4 flex flex-col gap-2.5 flex-1">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold tracking-wide" style={{ color: RARITY_COLORS[l.item.rarity] }}>
-                        {l.item.rarity}
-                      </span>
-                      <p className="text-slate-100 font-semibold text-sm mt-0.5">{l.item.name}</p>
-                      <p className="text-[#606068] text-[10px]">{l.item.slot} · GS {l.item.gearScore}</p>
+                    {/* Header: image + name */}
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={`/icons/items/item_${l.item.slot}_${l.item.rarity}.png`}
+                        alt={l.item.name}
+                        className="w-12 h-12 object-contain shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] uppercase font-bold tracking-wide" style={{ color: RARITY_COLORS[l.item.rarity] }}>
+                          {l.item.rarity}
+                        </span>
+                        <p className="text-slate-100 font-semibold text-sm leading-tight truncate">{l.item.name}</p>
+                        <p className="text-[#606068] text-[10px]">{l.item.slot} · GS {l.item.gearScore}</p>
+                      </div>
                     </div>
 
-                    <div className="bg-[#111118] rounded-lg p-2 text-xs">
+                    {/* Stats */}
+                    <div className="bg-[#111118] rounded-lg p-2 text-xs space-y-1">
                       <div className="flex justify-between text-[#505058]">
                         <span>{l.item.primaryStat.toUpperCase()}</span>
                         <span className="text-slate-200">+{l.item.primaryValue}</span>
                       </div>
-                      {l.item.secondaryStats?.map((s) => (
-                        <div key={s.stat} className="flex justify-between text-[#606068]">
+                      {l.item.secondaryStats?.map((s, i) => (
+                        <div key={i} className="flex justify-between text-[#606068]">
                           <span>{s.stat.toUpperCase()}</span>
                           <span>+{s.value}</span>
                         </div>
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    {/* Special effects */}
+                    {(l.item.specialEffects?.length ?? 0) > 0 && (
+                      <div className="space-y-1">
+                        {l.item.specialEffects.map((e) => (
+                          <p key={e.id} className="text-[10px] text-amber-400/80 italic leading-tight">✦ {e.description}</p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Price + Buy */}
+                    <div className="flex items-center justify-between mt-auto">
                       <div>
                         <p className="text-amber-400 font-bold text-sm">{formatPol(l.priceWei)}</p>
                         <p className="text-[10px] text-[#44444e]">{shortAddr(l.sellerWallet)} · {MARKET_FEE_PCT}% fee</p>
