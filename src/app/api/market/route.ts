@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const limit = 30;
     const offset = parseInt(req.nextUrl.searchParams.get('offset') ?? '0') || 0;
     const { listings: raw, total } = getActiveListings(limit, offset);
-    const listings = raw.map(({ sellerWallet: _sw, buyerWallet: _bw, ...rest }) => rest);
+    const listings = raw.map(({ buyerWallet: _bw, ...rest }) => rest);
     return NextResponse.json({ ok: true, listings, total, myCharId });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
