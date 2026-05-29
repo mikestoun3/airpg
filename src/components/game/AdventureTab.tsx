@@ -222,9 +222,8 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                           {drops.map(drop => {
                             const res = getResource(drop.resourceId);
                             return res ? (
-                              <div key={drop.resourceId} className="w-4 h-4 rounded bg-[#1a1a26] flex items-center justify-center overflow-hidden" title={`${res.name} ${Math.round(drop.chance * 100)}%`}>
-                                <img src={res.sprite} alt={res.name} className="w-4 h-4 object-contain" />
-                              </div>
+                              <img key={drop.resourceId} src={res.sprite} alt={res.name}
+                                className="w-5 h-5 object-contain" title={`${res.name} ${Math.round(drop.chance * 100)}%`} />
                             ) : null;
                           })}
                         </div>
@@ -479,9 +478,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                       return (
                         <div key={drop.resourceId} className="flex items-center justify-between">
                           <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-6 h-6 rounded shrink-0 bg-[#1a1a26] flex items-center justify-center overflow-hidden">
-                              <img src={res.sprite} alt={res.name} className="w-5 h-5 object-contain" />
-                            </div>
+                            <img src={res.sprite} alt={res.name} className="w-6 h-6 object-contain shrink-0" />
                             <span className="text-[11px] text-slate-300 truncate">{res.name}</span>
                             <span className="text-[10px] text-[#404048] shrink-0">{drop.minQty}–{drop.maxQty} · <span className={chanceColor}>{chance}%</span></span>
                           </div>
