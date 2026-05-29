@@ -448,12 +448,23 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
             {(() => {
               const selDrops = DUNGEON_RESOURCE_DROPS[selected.id] ?? [];
               if (selDrops.length === 0) return null;
+              const firstDC = Math.round(selected.baseDC + (startFloor - 1) * selected.floorDCStep);
+              const firstPassProb = Math.max(0, (cr - firstDC + 70) / 100);
+              const tooHard = firstPassProb === 0;
+              const minCR = firstDC - 70 + 1;
               return (
                 <div className="bg-[#0e0e14] rounded-lg px-3 py-2.5">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[9px] text-[#404048] uppercase tracking-widest">Possible Drops</p>
-                    <p className="text-[9px] text-[#404048] uppercase tracking-widest">~Expected</p>
+                    <p className="text-[9px] text-[#404048] uppercase tracking-widest">
+                      {tooHard ? 'Per floor' : '~Expected'}
+                    </p>
                   </div>
+                  {tooHard && (
+                    <p className="text-[10px] text-amber-400/70 mb-2">
+                      ⚠ Floor {startFloor} needs CR {minCR} — showing base rates
+                    </p>
+                  )}
                   <div className="space-y-1.5">
                     {selDrops.map(drop => {
                       const res = getResource(drop.resourceId);
@@ -461,7 +472,10 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                       const chance = Math.round(drop.chance * 100);
                       const chanceColor = chance >= 40 ? 'text-emerald-400' : chance >= 15 ? 'text-amber-400' : 'text-[#505060]';
                       const exp = expectedDrops[drop.resourceId] ?? 0;
-                      const expStr = exp < 0.1 ? '<0.1' : exp.toFixed(1);
+                      const baseExp = drop.chance * (drop.minQty + drop.maxQty) / 2;
+                      const displayVal = tooHard
+                        ? `~${baseExp.toFixed(1)}`
+                        : exp < 0.1 ? '<0.1' : `~${exp.toFixed(1)}`;
                       return (
                         <div key={drop.resourceId} className="flex items-center justify-between">
                           <div className="flex items-center gap-2 min-w-0">
@@ -471,7 +485,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                             <span className="text-[11px] text-slate-300 truncate">{res.name}</span>
                             <span className="text-[10px] text-[#404048] shrink-0">{drop.minQty}–{drop.maxQty} · <span className={chanceColor}>{chance}%</span></span>
                           </div>
-                          <span className="text-[11px] font-bold text-slate-200 shrink-0 ml-2">~{expStr}</span>
+                          <span className={`text-[11px] font-bold shrink-0 ml-2 ${tooHard ? 'text-[#505060]' : 'text-slate-200'}`}>{displayVal}</span>
                         </div>
                       );
                     })}
