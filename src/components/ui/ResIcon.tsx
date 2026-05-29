@@ -17,7 +17,7 @@ export function ResIcon({ resourceId, fallback = '?', size = 20, className = '' 
         width={size}
         height={size}
         className={`inline-block object-contain ${className}`}
-        style={{ imageRendering: 'pixelated' }}
+        
       />
     );
   }
