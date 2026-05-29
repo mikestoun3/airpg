@@ -361,10 +361,10 @@ export function WikiTab() {
               <H3>Crafting Loop</H3>
               <Box color="purple">
                 <ol className="space-y-2 text-sm text-[#9090b8]">
-                  <li>1. Farm <span className="text-red-300">Tier 1 dungeons</span> for Iron Ore, Leather, Arcane Dust.</li>
+                  <li>1. Farm <span className="text-red-300">Tier 1 dungeons</span> for Ferrite Slab, Leather, Phase Dust.</li>
                   <li>2. Build <span className="text-red-300">The Forge</span> in Camp → craft your first <strong className="text-slate-200">Iron</strong> gear (T1) for <span className="text-amber-300">100g</span>.</li>
                   <li>3. Equip it and run 5 dungeons → item becomes <span className="text-amber-300">Tempered</span>.</li>
-                  <li>4. Farm <span className="text-red-300">Tier 2 dungeons</span> for Quality Ore, Spirit Thread.</li>
+                  <li>4. Farm <span className="text-red-300">Tier 2 dungeons</span> for Aurite Ore, Null Weave.</li>
                   <li>5. Build <span className="text-red-300">Reinforced Forge</span> → absorb the tempered T1 into <strong className="text-blue-300">Steel</strong> (T2) for <span className="text-amber-300">300g</span>.</li>
                   <li>6. Repeat for Mithril (700g) and Void (1500g). Each tier takes ~1 week of active play.</li>
                 </ol>
@@ -396,9 +396,9 @@ export function WikiTab() {
 
               <H3>Resources by Dungeon Tier</H3>
               <div className="bg-[#111118] rounded-xl p-4">
-                <Row label="Tier 1 dungeons" value="Iron Ore, Rough Leather, Arcane Dust" />
-                <Row label="Tier 2 dungeons" value="Quality Ore, Spirit Thread" />
-                <Row label="Tier 3 dungeons" value="Mithril Shard, Void Shard (rare)" />
+                <Row label="Tier 1 dungeons" value="Ferrite Slab, Salvaged Hide, Phase Dust" />
+                <Row label="Tier 2 dungeons" value="Aurite Ore, Null Weave" />
+                <Row label="Tier 3 dungeons" value="Echo Shard, Nexus Core (rare)" />
                 <Row label="Boss floors"     value="2× resource drops" />
               </div>
 
