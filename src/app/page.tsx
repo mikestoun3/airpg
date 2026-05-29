@@ -254,7 +254,7 @@ export default function GamePage() {
       {/* ── Sidebar (desktop only) ── */}
       <aside className="hidden md:flex w-56 flex-shrink-0 bg-[#0e0e14] border-r border-[rgba(255,255,255,0.07)] flex-col">
         <div className="px-5 py-5 border-b border-[rgba(255,255,255,0.06)]">
-          <img src="/icons/logo.png" alt="Nexfall" className="h-12 w-auto max-w-full object-contain" />
+          <img src="/icons/logo.png" alt="Nexfall" className="h-7 w-auto max-w-full object-contain" />
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-2">
@@ -327,7 +327,7 @@ export default function GamePage() {
         <header className="h-12 md:h-14 flex-shrink-0 bg-[#0e0e14] border-b border-[rgba(255,255,255,0.07)] flex items-center justify-between px-3 md:px-6 relative">
           <div className="flex items-center gap-2">
             {/* Mobile: mini logo */}
-            <img src="/icons/logo.png" alt="Nexfall" className="md:hidden h-8 w-auto object-contain shrink-0" />
+            <img src="/icons/logo.png" alt="Nexfall" className="md:hidden h-5 w-auto object-contain shrink-0" />
             <h1 className="text-slate-300 font-semibold text-sm capitalize">
               {NAV.find(n => n.id === activeTab)?.label === 'Camp' ? 'Base Camp' : NAV.find(n => n.id === activeTab)?.label}
             </h1>

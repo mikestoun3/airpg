@@ -108,7 +108,7 @@ export function LoginScreen({ onLogin }: Props) {
 
         {/* Logo */}
         <div className="flex flex-col items-center">
-          <img src="/icons/logo.png" alt="Nexfall" className="h-28 w-auto object-contain" />
+          <img src="/icons/logo.png" alt="Nexfall" className="h-16 w-auto object-contain" />
         </div>
 
         {/* Card */}
