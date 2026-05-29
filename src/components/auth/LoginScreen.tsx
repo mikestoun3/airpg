@@ -107,14 +107,8 @@ export function LoginScreen({ onLogin }: Props) {
       <div className="flex flex-col items-center gap-8 max-w-sm w-full px-6">
 
         {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-3xl font-black text-white shadow-2xl shadow-[#1a0510]/60">
-            A
-          </div>
-          <div className="text-center">
-            <p className="text-slate-100 font-black text-2xl tracking-wide">AirPG</p>
-            <p className="text-[#606068] text-sm tracking-widest uppercase">Idle Dungeon</p>
-          </div>
+        <div className="flex flex-col items-center">
+          <img src="/icons/logo.png" alt="Nexfall" className="h-24 w-auto object-contain" />
         </div>
 
         {/* Card */}

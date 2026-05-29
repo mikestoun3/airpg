@@ -254,13 +254,7 @@ export default function GamePage() {
       {/* ── Sidebar (desktop only) ── */}
       <aside className="hidden md:flex w-56 flex-shrink-0 bg-[#0e0e14] border-r border-[rgba(255,255,255,0.07)] flex-col">
         <div className="px-5 py-5 border-b border-[rgba(255,255,255,0.06)]">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-sm font-bold">A</div>
-            <div>
-              <p className="text-slate-100 font-black text-base leading-none tracking-wide">AirPG</p>
-              <p className="text-[#606068] text-[10px] tracking-widest uppercase">Idle Dungeon</p>
-            </div>
-          </div>
+          <img src="/icons/logo.png" alt="Nexfall" className="h-9 w-auto object-contain" />
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-2">
@@ -333,7 +327,7 @@ export default function GamePage() {
         <header className="h-12 md:h-14 flex-shrink-0 bg-[#0e0e14] border-b border-[rgba(255,255,255,0.07)] flex items-center justify-between px-3 md:px-6 relative">
           <div className="flex items-center gap-2">
             {/* Mobile: mini logo */}
-            <div className="md:hidden w-6 h-6 rounded-md bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-xs font-bold shrink-0">A</div>
+            <img src="/icons/logo.png" alt="Nexfall" className="md:hidden h-6 w-auto object-contain shrink-0" />
             <h1 className="text-slate-300 font-semibold text-sm capitalize">
               {NAV.find(n => n.id === activeTab)?.label === 'Camp' ? 'Base Camp' : NAV.find(n => n.id === activeTab)?.label}
             </h1>

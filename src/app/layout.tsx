@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AirPG — Idle Dungeon",
+  title: "Nexfall — Idle Dungeon",
   description: "Send your hero into the dungeon. Wait. Collect loot.",
 };
 
