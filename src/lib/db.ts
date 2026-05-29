@@ -1330,6 +1330,41 @@ export function getReferralCount(characterId: string): number {
   return row.cnt;
 }
 
+export function getReferralInfo(characterId: string): {
+  referredBy: { id: string; name: string; walletAddress: string | null } | null;
+  referrals: Array<{ id: string; name: string; walletAddress: string | null; createdAt: number }>;
+  code: string | null;
+} {
+  const db = getDb();
+  // Who referred this character
+  const referrerRow = db.prepare(`
+    SELECT c.id, c.name, w.address as wallet
+    FROM referrals r
+    JOIN characters c ON c.id = r.referrer_id
+    LEFT JOIN wallets w ON w.character_id = c.id
+    WHERE r.referee_id = ?
+  `).get(characterId) as { id: string; name: string; wallet: string | null } | undefined;
+
+  // Who this character has referred
+  const referredRows = db.prepare(`
+    SELECT c.id, c.name, w.address as wallet, r.created_at
+    FROM referrals r
+    JOIN characters c ON c.id = r.referee_id
+    LEFT JOIN wallets w ON w.character_id = c.id
+    WHERE r.referrer_id = ?
+    ORDER BY r.created_at DESC
+  `).all(characterId) as Array<{ id: string; name: string; wallet: string | null; created_at: number }>;
+
+  // This character's referral code
+  const codeRow = db.prepare('SELECT code FROM referral_codes WHERE character_id = ?').get(characterId) as { code: string } | undefined;
+
+  return {
+    referredBy: referrerRow ? { id: referrerRow.id, name: referrerRow.name, walletAddress: referrerRow.wallet } : null,
+    referrals: referredRows.map(r => ({ id: r.id, name: r.name, walletAddress: r.wallet, createdAt: r.created_at })),
+    code: codeRow?.code ?? null,
+  };
+}
+
 // ── Quests ────────────────────────────────────────────────────────────────────
 
 export function getCompletedQuests(characterId: string): string[] {

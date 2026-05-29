@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminAuthed } from '@/lib/admin-auth';
-import { adminGetCharacter, adminUpdateCharacter, adminResetCharacter, getEquipment, getInventory, banCharacter, unbanCharacter } from '@/lib/db';
+import { adminGetCharacter, adminUpdateCharacter, adminResetCharacter, getEquipment, getInventory, banCharacter, unbanCharacter, getReferralInfo } from '@/lib/db';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAdminAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
@@ -9,7 +9,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!character) return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
   const equipment = getEquipment(id);
   const inventory = getInventory(id);
-  return NextResponse.json({ ok: true, character, equipment, inventory });
+  const referralInfo = getReferralInfo(id);
+  return NextResponse.json({ ok: true, character, equipment, inventory, referralInfo });
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

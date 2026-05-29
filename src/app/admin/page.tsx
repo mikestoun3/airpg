@@ -20,6 +20,12 @@ interface IpGroup {
   characters: Array<{ id: string; name: string; level: number; walletAddress: string | null; banned: boolean; lastSeen: number }>;
 }
 
+interface ReferralInfo {
+  referredBy: { id: string; name: string; walletAddress: string | null } | null;
+  referrals: Array<{ id: string; name: string; walletAddress: string | null; createdAt: number }>;
+  code: string | null;
+}
+
 interface CharacterDetail {
   id: string;
   name: string;
@@ -41,6 +47,7 @@ interface CharacterDetail {
   walletAddress: string | null;
   equipment: Equipment;
   inventory: ItemInstance[];
+  referralInfo?: ReferralInfo;
 }
 
 interface PromoCode {
@@ -181,10 +188,10 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/admin/character/${charId}`);
-    const d = await r.json() as { ok: boolean; character: CharacterDetail; equipment: Equipment; inventory: ItemInstance[] };
+    const d = await r.json() as { ok: boolean; character: CharacterDetail; equipment: Equipment; inventory: ItemInstance[]; referralInfo?: ReferralInfo };
     if (d.ok) {
       const c = d.character;
-      setDetail({ ...c, equipment: d.equipment, inventory: d.inventory });
+      setDetail({ ...c, equipment: d.equipment, inventory: d.inventory, referralInfo: d.referralInfo });
       setEditForm({
         name: c.name, level: c.level, xp: c.xp, gold: c.gold, essence: c.essence,
         pwr: c.pwr, end_stat: c.end, lck: c.lck, spd: c.spd, ins: c.ins, stat_points: c.statPoints,
@@ -389,6 +396,63 @@ function CharacterPanel({ charId, toast }: { charId: string; toast: (m: string) 
               className="mt-4 px-6 py-2 rounded-xl bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#d4294a] hover:to-[#e02a49] disabled:opacity-50 text-white text-sm font-bold transition-all">
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
+
+            {/* Referral info */}
+            {detail.referralInfo && (
+              <div className="mt-6 border-t border-[rgba(255,255,255,0.07)] pt-5 space-y-4">
+                <p className="text-[10px] text-[#606068] uppercase tracking-widest">Referrals</p>
+
+                {/* Referral code */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-[#505058]">Ref code:</span>
+                  <span className="font-mono text-xs text-amber-400 bg-amber-900/20 px-2 py-0.5 rounded">
+                    {detail.referralInfo.code ?? '—'}
+                  </span>
+                </div>
+
+                {/* Referred by */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-[#505058] shrink-0">Referred by:</span>
+                  {detail.referralInfo.referredBy ? (
+                    <span className="text-xs text-slate-300">
+                      <span className="text-[#FC3154] font-semibold">{detail.referralInfo.referredBy.name}</span>
+                      {detail.referralInfo.referredBy.walletAddress && (
+                        <span className="text-[#44444e] ml-1.5 font-mono">{detail.referralInfo.referredBy.walletAddress.slice(0,8)}…</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-[#3a3a4a] italic">No referrer</span>
+                  )}
+                </div>
+
+                {/* Referred list */}
+                <div>
+                  <p className="text-[11px] text-[#505058] mb-2">
+                    Invited players: <span className="text-slate-300 font-semibold">{detail.referralInfo.referrals.length}</span>
+                  </p>
+                  {detail.referralInfo.referrals.length > 0 ? (
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {detail.referralInfo.referrals.map((r, i) => (
+                        <div key={r.id} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#0f0f20] border border-[rgba(255,255,255,0.05)]">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-[#44444e]">#{i + 1}</span>
+                            <span className="text-xs text-slate-300 font-medium">{r.name}</span>
+                            {r.walletAddress && (
+                              <span className="text-[10px] text-[#44444e] font-mono">{r.walletAddress.slice(0,8)}…</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-[#44444e]">
+                            {new Date(r.createdAt * 1000).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-[#3a3a4a] italic">No referrals yet</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
