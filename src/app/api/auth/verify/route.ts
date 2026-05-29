@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
     }
 
     const message = `Sign in to AirPG\nNonce: ${nonce}`;
-    const recovered = ethers.verifyMessage(message, signature).toLowerCase();
+    const normalizedSig = ethers.Signature.from(signature);
+    const recovered = ethers.verifyMessage(message, normalizedSig).toLowerCase();
     if (recovered !== addr) {
       return NextResponse.json({ ok: false, error: 'Signature mismatch' }, { status: 401 });
     }
