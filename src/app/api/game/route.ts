@@ -24,7 +24,10 @@ import type { GameState } from '@/types/game';
 export async function GET(req: NextRequest) {
   try {
     const wallet = getSessionWallet(req);
-    const char = getOrCreateCharacter(wallet ?? undefined);
+    if (!wallet) {
+      return NextResponse.json({ ok: true, state: { walletAddress: null }, hasCompletedRun: false });
+    }
+    const char = getOrCreateCharacter(wallet);
 
     // Log IP for analytics
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()

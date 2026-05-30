@@ -180,9 +180,9 @@ export default function GamePage() {
     if (data.ok) {
       setState(data.state);
       setHasCompletedRun(data.hasCompletedRun);
-      if (data.state?.character && !data.state.character.nicknameSet) {
-        setShowNicknameModal(true);
-      }
+      setShowNicknameModal(
+        !!(data.state?.walletAddress && data.state?.character && !data.state.character.nicknameSet)
+      );
     }
     setLoading(false);
   }, []);
