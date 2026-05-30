@@ -24,7 +24,7 @@ const TIER_BADGE: Record<number, string> = {
 
 const DUNGEON_IMG: Record<string, string> = {
   goblin_warrens:    '/dungeons/goblin_warrens.png',
-  forgotten_cellar:  '/dungeons/forgotten_cellar.png',
+  forgotten_cellar:  '/dungeons/forgotten_cellar.mp4',
   ruined_watchtower: '/dungeons/ruined_watchtower.png',
   collapsed_mine:    '/dungeons/collapsed_mine.png',
   cursed_catacombs:  '/dungeons/cursed_catacombs.png',
@@ -42,7 +42,7 @@ const DUNGEON_FALLBACK: Record<string, string> = {
 
 const DUNGEON_SUBTITLE: Record<string, string> = {
   goblin_warrens:    'Collapsed Transit Zone',
-  forgotten_cellar:  'Abandoned Signal Relay',
+  forgotten_cellar:  'Spatial Anomaly Zone',
   ruined_watchtower: 'Rogue Military Outpost',
   collapsed_mine:    'Energy Anomaly Site',
   cursed_catacombs:  'Corrupted Network Node',
@@ -194,10 +194,13 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
                     {/* Thumbnail */}
                     <div className={`w-20 sm:w-[260px] shrink-0 relative overflow-hidden bg-gradient-to-br ${DUNGEON_FALLBACK[dungeon.id] ?? 'from-[#1a1a26] to-[#0a0a12]'}`}>
                       {imgSrc && (
-                        <img src={imgSrc} alt={dungeon.name}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
+                        imgSrc.endsWith('.mp4')
+                          ? <video src={imgSrc} autoPlay loop muted playsInline
+                              className="absolute inset-0 w-full h-full object-cover" />
+                          : <img src={imgSrc} alt={dungeon.name}
+                              className="absolute inset-0 w-full h-full object-cover"
+                              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#13131a]/60" />
                     </div>

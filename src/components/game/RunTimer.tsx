@@ -86,7 +86,7 @@ const DUNGEON_EVENTS: Record<string, string[][]> = {
 
 const DUNGEON_IMG: Record<string, string> = {
   goblin_warrens:    '/dungeons/goblin_warrens.png',
-  forgotten_cellar:  '/dungeons/forgotten_cellar.png',
+  forgotten_cellar:  '/dungeons/forgotten_cellar.mp4',
   ruined_watchtower: '/dungeons/ruined_watchtower.png',
   collapsed_mine:    '/dungeons/collapsed_mine.png',
   cursed_catacombs:  '/dungeons/cursed_catacombs.png',
@@ -189,8 +189,11 @@ export function RunTimer({ run, onComplete }: Props) {
       <div className="relative bg-[#13131a] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden flex-shrink-0">
         {/* Dungeon artwork background */}
         {DUNGEON_IMG[run.dungeonId] && (
-          <img src={DUNGEON_IMG[run.dungeonId]} alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none select-none" />
+          DUNGEON_IMG[run.dungeonId].endsWith('.mp4')
+            ? <video src={DUNGEON_IMG[run.dungeonId]} autoPlay loop muted playsInline
+                className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none select-none" />
+            : <img src={DUNGEON_IMG[run.dungeonId]} alt=""
+                className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none select-none" />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0e0e18]/95 via-[#0e0e18]/70 to-[#0e0e18]/50 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#13131a] pointer-events-none" />

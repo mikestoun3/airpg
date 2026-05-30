@@ -18,8 +18,8 @@ export const DUNGEONS: DungeonConfig[] = [
   },
   {
     id: 'forgotten_cellar',
-    name: 'Echo Depths',
-    description: 'Subterranean signal relay station, abandoned after the grid collapse. Strange echoes persist.',
+    name: 'Rift Basin',
+    description: 'A fractured underground cavity split open by a spatial anomaly. Reality bends at the seams.',
     tier: 1,
     durationMinutes: 10,
     baseDC: 8,
