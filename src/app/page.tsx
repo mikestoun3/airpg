@@ -46,6 +46,7 @@ function shortAddr(addr: string) {
 
 function NicknameModal({ onDone }: { onDone: () => void }) {
   const [value, setValue] = useState('');
+  const [gender, setGender] = useState<'male' | 'female'>('male');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,7 +72,7 @@ function NicknameModal({ onDone }: { onDone: () => void }) {
     setLoading(true);
     const res = await fetch('/api/nickname', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname: value }),
+      body: JSON.stringify({ nickname: value, gender }),
     });
     const data = await res.json() as { ok: boolean; error?: string };
     setLoading(false);
@@ -82,39 +83,71 @@ function NicknameModal({ onDone }: { onDone: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-[#0b0b0f]/95 backdrop-blur-sm flex items-center justify-center px-4">
       <div className="w-full max-w-sm bg-[#16161f] border border-[rgba(200,70,70,0.25)] rounded-2xl overflow-hidden shadow-2xl">
-        <div className="px-6 pt-8 pb-6">
-          <div className="text-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#d4294a] to-[#7a1228] flex items-center justify-center text-2xl mx-auto mb-4">⚔️</div>
-            <h2 className="text-slate-100 font-black text-xl tracking-wide">Выберите никнейм</h2>
-            <p className="text-[#606068] text-sm mt-1">Это имя увидят другие игроки</p>
+        <div className="px-6 pt-6 pb-6 flex flex-col gap-5">
+
+          {/* Header */}
+          <div className="text-center">
+            <img src="/icons/logo.png" alt="Nexfall" className="h-8 w-auto object-contain mx-auto mb-3" />
+            <p className="text-[#606068] text-sm">Выберите персонажа и никнейм</p>
           </div>
 
-          <div className="relative mb-1.5">
-            <input
-              ref={inputRef}
-              value={value}
-              onChange={e => handleChange(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') submit(); }}
-              placeholder="Hero_123"
-              maxLength={13}
-              className={`w-full bg-[#1a1a26] border rounded-xl px-4 py-3 text-slate-100 text-sm font-mono tracking-wide outline-none transition-colors ${
-                error ? 'border-[#FC3154]/60 focus:border-[#FC3154]' : 'border-[rgba(200,70,70,0.25)] focus:border-[#FC3154]'
-              }`}
-            />
-            <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono ${value.length >= 13 ? 'text-amber-400' : 'text-[#44444e]'}`}>
-              {value.length}/13
-            </span>
+          {/* Gender picker */}
+          <div className="grid grid-cols-2 gap-3">
+            {(['male', 'female'] as const).map((g) => (
+              <button key={g} onClick={() => setGender(g)}
+                className={`relative rounded-xl overflow-hidden border-2 transition-all ${
+                  gender === g
+                    ? 'border-[#FC3154] shadow-[0_0_12px_rgba(252,49,84,0.35)]'
+                    : 'border-[rgba(255,255,255,0.07)] opacity-60 hover:opacity-80'
+                }`}>
+                <img
+                  src={g === 'male' ? '/icons/character_portrait.png' : '/icons/character_portrait_female.png'}
+                  alt={g}
+                  className="w-full h-32 object-cover object-top"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0f]/80 to-transparent" />
+                <div className={`absolute bottom-2 left-0 right-0 text-center text-xs font-bold uppercase tracking-widest ${
+                  gender === g ? 'text-[#FC3154]' : 'text-[#78788a]'
+                }`}>
+                  {g === 'male' ? 'Муж.' : 'Жен.'}
+                </div>
+                {gender === g && (
+                  <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#FC3154] flex items-center justify-center">
+                    <span className="text-white text-[9px] font-black">✓</span>
+                  </div>
+                )}
+              </button>
+            ))}
           </div>
 
-          {error ? (
-            <p className="text-[#FC3154] text-xs mb-4 px-1">{error}</p>
-          ) : (
-            <p className="text-[#44444e] text-xs mb-4 px-1">Латиница, цифры и _ · 3–13 символов · навсегда</p>
-          )}
+          {/* Nickname input */}
+          <div>
+            <div className="relative mb-1.5">
+              <input
+                ref={inputRef}
+                value={value}
+                onChange={e => handleChange(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+                placeholder="Hero_123"
+                maxLength={13}
+                className={`w-full bg-[#1a1a26] border rounded-xl px-4 py-3 text-slate-100 text-sm font-mono tracking-wide outline-none transition-colors ${
+                  error ? 'border-[#FC3154]/60 focus:border-[#FC3154]' : 'border-[rgba(200,70,70,0.25)] focus:border-[#FC3154]'
+                }`}
+              />
+              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono ${value.length >= 13 ? 'text-amber-400' : 'text-[#44444e]'}`}>
+                {value.length}/13
+              </span>
+            </div>
+            {error ? (
+              <p className="text-[#FC3154] text-xs px-1">{error}</p>
+            ) : (
+              <p className="text-[#44444e] text-xs px-1">Латиница, цифры и _ · 3–13 символов · навсегда</p>
+            )}
+          </div>
 
           <button onClick={submit} disabled={loading || value.length < 3 || !!error}
             className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] hover:to-[#e02a49] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm transition-all">
-            {loading ? 'Проверяем…' : 'Начать игру'}
+            {loading ? 'Проверяем…' : 'Начать игру →'}
           </button>
         </div>
       </div>

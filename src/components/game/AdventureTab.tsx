@@ -284,7 +284,9 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
         {/* Portrait */}
         <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
           <div className="relative h-52 bg-gradient-to-br from-[#1a1a26] via-[#12121e] to-[#0b0b0f] overflow-hidden">
-            <img src="/icons/character_portrait.png" alt="portrait"
+            <img
+              src={character.gender === 'female' ? '/icons/character_portrait_female.png' : '/icons/character_portrait.png'}
+              alt="portrait"
               className="absolute inset-0 w-full h-full object-cover object-top" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#111118] via-[#111118]/30 to-transparent" />
             {/* Level badge */}

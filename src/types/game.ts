@@ -111,6 +111,7 @@ export interface Character {
   injuredUntil?: number;
   statPoints: number;
   nicknameSet: boolean;
+  gender: 'male' | 'female';
   seasonPoints: number;
 }
 

@@ -200,6 +200,7 @@ function initSchema(db: Database.Database) {
   try { db.exec('ALTER TABLE runs ADD COLUMN pre_rolled_json TEXT'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN wallet_address TEXT'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN nickname_set INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
+  try { db.exec("ALTER TABLE characters ADD COLUMN gender TEXT NOT NULL DEFAULT 'male'"); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN banned INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN ban_reason TEXT'); } catch { /* already exists */ }
   try {
@@ -361,9 +362,9 @@ export function isNicknameTaken(nickname: string): boolean {
   return !!row;
 }
 
-export function setNickname(characterId: string, nickname: string): void {
+export function setNickname(characterId: string, nickname: string, gender: 'male' | 'female' = 'male'): void {
   const db = getDb();
-  db.prepare('UPDATE characters SET name = ?, nickname_set = 1 WHERE id = ?').run(nickname, characterId);
+  db.prepare('UPDATE characters SET name = ?, nickname_set = 1, gender = ? WHERE id = ?').run(nickname, gender, characterId);
 }
 
 export function updateCharacterStatus(id: string, status: string, injuredUntil?: number) {
@@ -463,6 +464,7 @@ function rowToCharacter(row: Record<string, unknown>) {
     status: row.status as import('@/types/game').CharacterStatus,
     injuredUntil: row.injured_until as number | undefined,
     nicknameSet: !!(row.nickname_set as number),
+    gender: ((row.gender as string) === 'female' ? 'female' : 'male') as 'male' | 'female',
     banned: !!(row.banned as number),
     banReason: (row.ban_reason as string | undefined) ?? undefined,
     seasonPoints: (row.season_points as number | undefined) ?? 0,

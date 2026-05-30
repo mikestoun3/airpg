@@ -7,8 +7,13 @@ export async function POST(req: NextRequest) {
   const wallet = getSessionWallet(req);
   if (!wallet) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
 
-  const { nickname } = await req.json() as { nickname?: string };
+  const { nickname, gender } = await req.json() as { nickname?: string; gender?: 'male' | 'female' };
   if (!nickname) return NextResponse.json({ ok: false, error: 'Missing nickname' }, { status: 400 });
+
+  const char = getOrCreateCharacter(wallet);
+  if (char.nicknameSet) {
+    return NextResponse.json({ ok: true }); // already set — close modal silently
+  }
 
   const validation = validateNickname(nickname);
   if (!validation.ok) return NextResponse.json({ ok: false, error: validation.error }, { status: 400 });
@@ -18,11 +23,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Никнейм уже занят' }, { status: 409 });
   }
 
-  const char = getOrCreateCharacter(wallet);
-  if (char.nicknameSet) {
-    return NextResponse.json({ ok: false, error: 'Nickname already set and cannot be changed' }, { status: 400 });
-  }
-  setNickname(char.id, trimmed);
+  setNickname(char.id, trimmed, gender === 'female' ? 'female' : 'male');
 
   return NextResponse.json({ ok: true });
 }
