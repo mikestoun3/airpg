@@ -166,6 +166,19 @@ export default function GamePage() {
     result: RunResult; leveled?: boolean; newLevel?: number;
   } | null>(null);
   const [hasCompletedRun, setHasCompletedRun] = useState(false);
+  const [mmAccount, setMmAccount] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.ethereum) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const eth = window.ethereum as any;
+    eth.request({ method: 'eth_accounts' })
+      .then((a: string[]) => setMmAccount(a[0]?.toLowerCase() ?? null))
+      .catch(() => {});
+    const handler = (a: string[]) => setMmAccount(a[0]?.toLowerCase() ?? null);
+    eth.on?.('accountsChanged', handler);
+    return () => eth.removeListener?.('accountsChanged', handler);
+  }, []);
 
   const fetchState = useCallback(async () => {
     const [mRes, gRes] = await Promise.all([fetch('/api/maintenance'), fetch('/api/game')]);
@@ -395,6 +408,16 @@ export default function GamePage() {
             <button onClick={handleLogout} className="md:hidden ml-1 text-[10px] text-[#404048] hover:text-[#78788a] px-1.5 py-1 rounded">out</button>
           </div>
         </header>
+
+        {/* MetaMask account mismatch banner */}
+        {state?.walletAddress && mmAccount && mmAccount !== state.walletAddress.toLowerCase() && (
+          <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2 bg-amber-950/30 border-b border-amber-700/20 text-amber-400 text-xs">
+            <span>MetaMask переключён на <span className="font-mono">{shortAddr(mmAccount)}</span> — не совпадает с вашей сессией.</span>
+            <button onClick={handleLogout} className="font-bold hover:text-white transition-colors whitespace-nowrap">
+              Re-login →
+            </button>
+          </div>
+        )}
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto md:overflow-hidden p-3 md:p-6">

@@ -92,6 +92,20 @@ export function MarketTab({ state, onRefresh }: Props) {
   const [maxPol, setMaxPol] = useState('');
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'rarity_desc' | 'rarity_asc'>('price_asc');
 
+  // MetaMask account tracking
+  const [mmAccount, setMmAccount] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.ethereum) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const eth = window.ethereum as any;
+    eth.request({ method: 'eth_accounts' })
+      .then((a: string[]) => setMmAccount(a[0]?.toLowerCase() ?? null))
+      .catch(() => {});
+    const handler = (a: string[]) => setMmAccount(a[0]?.toLowerCase() ?? null);
+    eth.on?.('accountsChanged', handler);
+    return () => eth.removeListener?.('accountsChanged', handler);
+  }, []);
+
   // Buy state
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -195,8 +209,17 @@ export function MarketTab({ state, onRefresh }: Props) {
         showToast(data.error ?? 'Server verification failed', false);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!msg.includes('user rejected') && !msg.includes('ACTION_REJECTED')) showToast(msg, false);
+      const raw = err instanceof Error ? err.message : String(err);
+      if (raw.includes('user rejected') || raw.includes('ACTION_REJECTED')) { setBuyingId(null); return; }
+      const rpcMsg = raw.match(/"message":\s*"([^"]+)"/)?.[1];
+      let msg = rpcMsg ?? raw;
+      if (msg.includes('internal accounts') || msg.includes('cannot include data'))
+        msg = 'Контракт маркета не задеплоен на Polygon. Обратитесь к администратору.';
+      else if (msg.includes('insufficient funds'))
+        msg = 'Недостаточно POL на балансе.';
+      else if (msg.length > 120)
+        msg = msg.slice(0, 120) + '…';
+      showToast(msg, false);
     } finally {
       setBuyingId(null);
     }
@@ -589,12 +612,24 @@ export function MarketTab({ state, onRefresh }: Props) {
                         <p className="text-amber-400 font-bold text-sm">{formatPol(l.priceWei)}</p>
                         <p className="text-[10px] text-[#44444e]">{shortAddr(l.sellerWallet)} · {MARKET_FEE_PCT}% fee</p>
                       </div>
-                      <button
-                        onClick={() => handleBuy(l)}
-                        disabled={isBuying || !state.walletAddress}
-                        className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-900/30 border border-amber-700/40 text-amber-400 hover:bg-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                        {isBuying ? '…' : 'Buy'}
-                      </button>
+                      {!window.ethereum ? (
+                        <a href="https://metamask.io" target="_blank" rel="noreferrer"
+                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#16161f] border border-[rgba(255,255,255,0.1)] text-[#78788a] hover:text-slate-300 transition-all whitespace-nowrap">
+                          Install MM
+                        </a>
+                      ) : mmAccount && state.walletAddress && mmAccount !== state.walletAddress.toLowerCase() ? (
+                        <span className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-950/30 border border-amber-700/30 text-amber-500 cursor-default whitespace-nowrap"
+                          title={`Switch MetaMask to ${shortAddr(state.walletAddress)}`}>
+                          Wrong wallet
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleBuy(l)}
+                          disabled={isBuying}
+                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-900/30 border border-amber-700/40 text-amber-400 hover:bg-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                          {isBuying ? '…' : 'Buy'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
