@@ -331,7 +331,7 @@ export default function GamePage() {
         <div className="px-3 py-3 border-t border-[rgba(255,255,255,0.06)] space-y-2">
           <div className="flex items-center gap-2 px-2 py-2 rounded-xl bg-[#16161f]">
             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-[rgba(255,255,255,0.1)]">
-                <img src="/icons/character_avatar.png" alt="avatar" className="w-full h-full object-cover object-top" />
+                <img src={state.character.gender === 'female' ? '/icons/character_portrait_female.png' : '/icons/character_avatar.png'} alt="avatar" className="w-full h-full object-cover object-top" />
               </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
