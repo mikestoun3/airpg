@@ -85,7 +85,7 @@ const DUNGEON_EVENTS: Record<string, string[][]> = {
 };
 
 const DUNGEON_IMG: Record<string, string> = {
-  goblin_warrens:    '/dungeons/goblin_warrens.png',
+  goblin_warrens:    '/dungeons/goblin_warrens.mp4',
   forgotten_cellar:  '/dungeons/forgotten_cellar.mp4',
   ruined_watchtower: '/dungeons/ruined_watchtower.png',
   collapsed_mine:    '/dungeons/collapsed_mine.png',
