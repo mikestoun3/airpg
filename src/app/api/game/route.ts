@@ -15,6 +15,7 @@ import {
   getFloorProgress,
   logIp,
   getCharacterSkills,
+  getAllCharacterSummaries,
 } from '@/lib/db';
 import { RESOURCES } from '@/lib/data/resources';
 import type { ResourceStack } from '@/types/game';
@@ -123,6 +124,8 @@ export async function GET(req: NextRequest) {
       return { resourceId: m.resource_id, name: def?.name ?? m.resource_id, icon: def?.icon ?? '?', quantity: m.quantity };
     });
 
+    const allCharacters = getAllCharacterSummaries(wallet);
+
     const state: GameState = {
       character: char,
       equipment,
@@ -135,6 +138,8 @@ export async function GET(req: NextRequest) {
       resources,
       walletAddress: wallet,
       savedFloors,
+      allCharacters,
+      activeCharacterId: char.id,
     };
 
     return NextResponse.json({ ok: true, state, hasCompletedRun: !!completedRun });

@@ -266,6 +266,15 @@ export default function GamePage() {
     await fetchState();
   };
 
+  const handleSelectCharacter = async (charClass: string) => {
+    if (state?.character.charClass === charClass) return;
+    await fetch('/api/character/select', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ charClass }),
+    });
+    await fetchState();
+  };
+
   if (loading) {
     return (
       <div className="h-[100dvh] flex items-center justify-center bg-[#0b0b0f]">
@@ -336,6 +345,52 @@ export default function GamePage() {
           <img src="/icons/logo.png" alt="Nexfall" className="h-7 w-auto max-w-full object-contain" />
         </div>
 
+        {/* ── Roster ── */}
+        {state.allCharacters.length > 0 && (
+          <div className="px-3 py-3 border-b border-[rgba(255,255,255,0.06)]">
+            <p className="text-[9px] text-[#44444e] uppercase tracking-widest mb-2 px-1">Ростер</p>
+            <div className="flex gap-1.5">
+              {state.allCharacters.map((c) => {
+                const isActive = c.id === state.activeCharacterId;
+                const portrait =
+                  c.charClass === 'assassin' ? '/icons/character_portrait_female.png' :
+                  c.charClass === 'mage' ? '/icons/character_portrait_mage.png' :
+                  '/icons/character_avatar.png';
+                const classColor =
+                  c.charClass === 'assassin' ? '#a855f7' :
+                  c.charClass === 'mage' ? '#06b6d4' : '#ef4444';
+                const statusColor =
+                  c.status === 'on_run' ? '#60a5fa' :
+                  c.status === 'injured' ? '#FC3154' : '#4ade80';
+                return (
+                  <button key={c.id} onClick={() => handleSelectCharacter(c.charClass)}
+                    title={`${c.name} · Lv.${c.level} ${c.charClass}`}
+                    className={`relative flex-1 rounded-xl overflow-hidden border-2 transition-all hover:opacity-90 ${
+                      isActive ? 'shadow-md' : 'opacity-55 hover:opacity-75 border-[rgba(255,255,255,0.08)]'
+                    }`}
+                    style={isActive ? { borderColor: classColor } : {}}>
+                    <img src={portrait} alt={c.charClass}
+                      className="w-full h-14 object-cover object-top" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-1 left-0 right-0 text-center">
+                      <span className="text-[8px] font-bold text-white/80 uppercase tracking-wider leading-none">
+                        {c.charClass === 'assassin' ? 'Sin' : c.charClass === 'warrior' ? 'War' : 'Mag'}
+                      </span>
+                    </div>
+                    {/* Status dot */}
+                    <div className="absolute top-1 right-1 w-2 h-2 rounded-full border border-[#0e0e14]"
+                      style={{ background: statusColor }} />
+                    {/* Level */}
+                    <div className="absolute top-1 left-1">
+                      <span className="text-[8px] font-bold text-white/70 leading-none">{c.level}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <nav className="flex-1 overflow-y-auto py-4 px-2">
           {NAV.map((item, idx) => {
             const isActive = activeTab === item.id;
@@ -393,7 +448,7 @@ export default function GamePage() {
                   {character.status === 'on_run' ? '● Away' : character.status === 'injured' ? '✖ Hurt' : '● Idle'}
                 </span>
               </div>
-              <p className="text-[#606068] text-[10px]">Lv.{character.level} {character.charClass === 'warrior' ? 'Warrior' : character.charClass === 'assassin' ? 'Assassin' : 'Mage'}</p>
+              <p className="text-[#606068] text-[10px]">Lv.{character.level} · {character.charClass === 'warrior' ? 'Warrior' : character.charClass === 'assassin' ? 'Assassin' : 'Mage'}</p>
             </div>
           </div>
           <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-[#0e0e14] border border-[rgba(255,255,255,0.05)]">
@@ -405,6 +460,43 @@ export default function GamePage() {
 
       {/* ── Main column ── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+
+        {/* Mobile roster strip */}
+        {state.allCharacters.length > 1 && (
+          <div className="md:hidden flex gap-1.5 px-3 py-2 bg-[#0e0e14] border-b border-[rgba(255,255,255,0.06)]">
+            {state.allCharacters.map((c) => {
+              const isActive = c.id === state.activeCharacterId;
+              const portrait =
+                c.charClass === 'assassin' ? '/icons/character_portrait_female.png' :
+                c.charClass === 'mage' ? '/icons/character_portrait_mage.png' :
+                '/icons/character_avatar.png';
+              const classColor =
+                c.charClass === 'assassin' ? '#a855f7' :
+                c.charClass === 'mage' ? '#06b6d4' : '#ef4444';
+              const statusColor =
+                c.status === 'on_run' ? '#60a5fa' :
+                c.status === 'injured' ? '#FC3154' : '#4ade80';
+              return (
+                <button key={c.id} onClick={() => handleSelectCharacter(c.charClass)}
+                  className={`relative flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all ${
+                    isActive
+                      ? 'bg-[#16161f]'
+                      : 'border-transparent opacity-50 hover:opacity-75'
+                  }`}
+                  style={isActive ? { borderColor: classColor + '88' } : {}}>
+                  <div className="relative w-6 h-6 rounded-full overflow-hidden shrink-0">
+                    <img src={portrait} alt={c.charClass} className="w-full h-full object-cover object-top" />
+                    <div className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-[#0e0e14]"
+                      style={{ background: statusColor }} />
+                  </div>
+                  <span className={`text-xs font-semibold ${isActive ? 'text-slate-200' : 'text-[#606068]'}`}>
+                    {c.charClass === 'warrior' ? 'War' : c.charClass === 'assassin' ? 'Sin' : 'Mag'} {c.level}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Top bar */}
         <header className="h-12 md:h-14 flex-shrink-0 bg-[#0e0e14] border-b border-[rgba(255,255,255,0.07)] flex items-center justify-between px-3 md:px-6 relative">

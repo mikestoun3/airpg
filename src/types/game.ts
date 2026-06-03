@@ -215,6 +215,15 @@ export interface CampUpgrade {
   requires?: string;
 }
 
+export interface CharacterSummary {
+  id: string;
+  charClass: CharacterClass;
+  name: string;
+  level: number;
+  status: CharacterStatus;
+  nicknameSet: boolean;
+}
+
 export interface GameState {
   character: Character;
   equipment: Equipment;
@@ -227,6 +236,8 @@ export interface GameState {
   resources: ResourceStack[];
   walletAddress: string | null;
   savedFloors: Record<string, number>;
+  allCharacters: CharacterSummary[];
+  activeCharacterId: string;
 }
 
 export const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];

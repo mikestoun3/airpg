@@ -272,6 +272,20 @@ function initSchema(db: Database.Database) {
     `);
   } catch { /* already exists */ }
 
+  // Multi-character support
+  try { db.exec("ALTER TABLE wallets ADD COLUMN active_class TEXT NOT NULL DEFAULT 'warrior'"); } catch { /* already exists */ }
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS wallet_characters (
+        wallet TEXT NOT NULL,
+        char_class TEXT NOT NULL,
+        character_id TEXT NOT NULL,
+        PRIMARY KEY (wallet, char_class),
+        FOREIGN KEY (character_id) REFERENCES characters(id)
+      );
+    `);
+  } catch { /* already exists */ }
+
   // Migrate wallets table to allow nullable character_id (for pre-auth nonce storage)
   try {
     const info = db.prepare("PRAGMA table_info(wallets)").all() as { name: string; notnull: number }[];
@@ -336,45 +350,124 @@ export function getCharacterIdByWallet(address: string): string | null {
 
 // ── Character ─────────────────────────────────────────────────────────────────
 
+const CLASS_DEFAULT_NAMES: Record<string, string> = {
+  warrior: 'Warrior',
+  assassin: 'Assassin',
+  mage: 'Mage',
+};
+
+function createCharacterForClass(db: import('better-sqlite3').Database, cls: string, addr: string): string {
+  const id = uuidv4();
+  db.prepare(`
+    INSERT INTO characters (id, name, class, level, xp, pwr, end_stat, lck, spd, ins, stat_points, skill_points, gold, nickname_set, wallet_address)
+    VALUES (?, ?, ?, 1, 0, 5, 5, 3, 3, 3, 0, 0, 50, 1, ?)
+  `).run(id, CLASS_DEFAULT_NAMES[cls] ?? cls, cls, addr);
+  db.prepare('INSERT INTO equipment (character_id) VALUES (?)').run(id);
+  db.prepare('INSERT INTO pity (character_id) VALUES (?)').run(id);
+  db.prepare('INSERT INTO wallet_characters (wallet, char_class, character_id) VALUES (?, ?, ?)').run(addr, cls, id);
+  return id;
+}
+
+// Ensures all 3 class characters exist for a wallet and returns the active one
 export function getOrCreateCharacter(walletAddress?: string) {
   const db = getDb();
 
   if (walletAddress) {
     const addr = walletAddress.toLowerCase();
-    const charId = getCharacterIdByWallet(addr);
-    if (charId) {
-      const row = db.prepare('SELECT * FROM characters WHERE id = ?').get(charId) as Record<string, unknown> | undefined;
+
+    // Migrate existing single-character wallets into wallet_characters
+    const walletRow = db.prepare('SELECT character_id, active_class FROM wallets WHERE address = ?').get(addr) as { character_id: string | null; active_class: string } | undefined;
+    if (walletRow?.character_id) {
+      const existingInRoster = db.prepare('SELECT 1 FROM wallet_characters WHERE wallet = ? AND character_id = ?').get(addr, walletRow.character_id);
+      if (!existingInRoster) {
+        // Migrate: add existing char to roster by its class
+        const charRow = db.prepare('SELECT class FROM characters WHERE id = ?').get(walletRow.character_id) as { class: string } | undefined;
+        const cls = charRow?.class ?? 'warrior';
+        db.prepare('INSERT OR IGNORE INTO wallet_characters (wallet, char_class, character_id) VALUES (?, ?, ?)').run(addr, cls, walletRow.character_id);
+        db.prepare('UPDATE wallets SET active_class = ? WHERE address = ?').run(cls, addr);
+      }
+    }
+
+    // Ensure all 3 class characters exist
+    db.transaction(() => {
+      for (const cls of ['warrior', 'assassin', 'mage']) {
+        const exists = db.prepare('SELECT 1 FROM wallet_characters WHERE wallet = ? AND char_class = ?').get(addr, cls);
+        if (!exists) {
+          // Make sure we don't create duplicate if wallet somehow linked to a char of this class
+          const existing = db.prepare('SELECT id FROM characters WHERE wallet_address = ? AND class = ?').get(addr, cls) as { id: string } | undefined;
+          if (existing) {
+            db.prepare('INSERT OR IGNORE INTO wallet_characters (wallet, char_class, character_id) VALUES (?, ?, ?)').run(addr, cls, existing.id);
+          } else {
+            createCharacterForClass(db, cls, addr);
+          }
+        }
+      }
+    })();
+
+    // Get active class character
+    const activeClass = (db.prepare('SELECT active_class FROM wallets WHERE address = ?').get(addr) as { active_class: string } | undefined)?.active_class ?? 'warrior';
+    const rosterRow = db.prepare('SELECT character_id FROM wallet_characters WHERE wallet = ? AND char_class = ?').get(addr, activeClass) as { character_id: string } | undefined;
+    const activeId = rosterRow?.character_id;
+    if (activeId) {
+      const row = db.prepare('SELECT * FROM characters WHERE id = ?').get(activeId) as Record<string, unknown> | undefined;
       if (row) return rowToCharacter(row);
     }
-    // Create new character for this wallet
-    const id = uuidv4();
-    db.prepare(`
-      INSERT INTO characters (id, name, level, xp, pwr, end_stat, lck, spd, ins, stat_points, gold, wallet_address)
-      VALUES (?, ?, 1, 0, 5, 5, 3, 3, 3, 0, 50, ?)
-    `).run(id, 'Wanderer', addr);
-    db.prepare('INSERT INTO equipment (character_id) VALUES (?)').run(id);
-    db.prepare('INSERT INTO pity (character_id) VALUES (?)').run(id);
-    // Link wallet → character (preserve existing nonce if row was pre-inserted for auth)
-    db.prepare(`
-      INSERT INTO wallets (address, character_id, nonce) VALUES (?, ?, '')
-      ON CONFLICT(address) DO UPDATE SET character_id = excluded.character_id
-    `).run(addr, id);
 
-    return rowToCharacter(db.prepare('SELECT * FROM characters WHERE id = ?').get(id) as Record<string, unknown>);
+    // Fallback: first in roster
+    const fallback = db.prepare('SELECT character_id FROM wallet_characters WHERE wallet = ? LIMIT 1').get(addr) as { character_id: string } | undefined;
+    if (fallback) {
+      const row = db.prepare('SELECT * FROM characters WHERE id = ?').get(fallback.character_id) as Record<string, unknown> | undefined;
+      if (row) return rowToCharacter(row);
+    }
+
+    // Should not reach here, but create a new wallet entry just in case
+    db.prepare(`
+      INSERT INTO wallets (address, character_id, nonce) VALUES (?, NULL, '')
+      ON CONFLICT(address) DO NOTHING
+    `).run(addr);
+    const newId = createCharacterForClass(db, 'warrior', addr);
+    return rowToCharacter(db.prepare('SELECT * FROM characters WHERE id = ?').get(newId) as Record<string, unknown>);
   }
 
-  // Legacy: no wallet, grab first character (backwards compat for dev)
+  // Legacy: no wallet, grab first character
   const existing = db.prepare('SELECT * FROM characters LIMIT 1').get() as Record<string, unknown> | undefined;
   if (existing) return rowToCharacter(existing);
 
   const id = uuidv4();
-  db.prepare(`
-    INSERT INTO characters (id, name, level, xp, pwr, end_stat, lck, spd, ins, stat_points, gold)
-    VALUES (?, ?, 1, 0, 5, 5, 3, 3, 3, 0, 50)
-  `).run(id, 'Wanderer');
+  db.prepare(`INSERT INTO characters (id, name, level, xp, pwr, end_stat, lck, spd, ins, stat_points, gold) VALUES (?, ?, 1, 0, 5, 5, 3, 3, 3, 0, 50)`).run(id, 'Wanderer');
   db.prepare('INSERT INTO equipment (character_id) VALUES (?)').run(id);
   db.prepare('INSERT INTO pity (character_id) VALUES (?)').run(id);
   return rowToCharacter(db.prepare('SELECT * FROM characters WHERE id = ?').get(id) as Record<string, unknown>);
+}
+
+export function getAllCharacterSummaries(walletAddress: string): import('@/types/game').CharacterSummary[] {
+  const db = getDb();
+  const addr = walletAddress.toLowerCase();
+  const rows = db.prepare(`
+    SELECT c.id, c.class, c.name, c.level, c.status, c.nickname_set
+    FROM wallet_characters wc
+    JOIN characters c ON c.id = wc.character_id
+    WHERE wc.wallet = ?
+    ORDER BY CASE wc.char_class WHEN 'warrior' THEN 1 WHEN 'assassin' THEN 2 WHEN 'mage' THEN 3 ELSE 4 END
+  `).all(addr) as { id: string; class: string; name: string; level: number; status: string; nickname_set: number }[];
+
+  return rows.map(r => ({
+    id: r.id,
+    charClass: r.class as import('@/types/game').CharacterClass,
+    name: r.name,
+    level: r.level,
+    status: r.status as import('@/types/game').CharacterStatus,
+    nicknameSet: !!r.nickname_set,
+  }));
+}
+
+export function setActiveClass(walletAddress: string, charClass: string): boolean {
+  const db = getDb();
+  const addr = walletAddress.toLowerCase();
+  const exists = db.prepare('SELECT 1 FROM wallet_characters WHERE wallet = ? AND char_class = ?').get(addr, charClass);
+  if (!exists) return false;
+  db.prepare('UPDATE wallets SET active_class = ? WHERE address = ?').run(charClass, addr);
+  return true;
 }
 
 export function isNicknameTaken(nickname: string): boolean {
