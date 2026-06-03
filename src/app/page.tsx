@@ -235,25 +235,58 @@ export default function GamePage() {
 
   useEffect(() => { fetchState(); }, [fetchState]);
 
+  // Auto-resolve when run timer ends
   useEffect(() => {
     if (!state?.activeRun) return;
     const now = Math.floor(Date.now() / 1000);
     const msLeft = Math.max(0, (state.activeRun.endTime - now) * 1000);
-    const t = setTimeout(fetchState, msLeft + 500);
+    const t = setTimeout(() => handleRunComplete(), msLeft + 800);
     return () => clearTimeout(t);
-  }, [state?.activeRun, fetchState]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.activeRun?.id]);
+
+  // Also auto-resolve immediately if run was completed while page was closed
+  useEffect(() => {
+    if (hasCompletedRun && !pendingResult) {
+      handleRunComplete();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCompletedRun]);
 
   const handleRunStart = (run: GameState['activeRun']) => {
-    setState(prev => prev ? { ...prev, activeRun: run, character: { ...prev.character, status: 'on_run' } } : prev);
+    setState(prev => {
+      if (!prev) return prev;
+      const updatedChars = prev.allCharacters.map(c =>
+        run?.partyIds?.includes(c.id) ? { ...c, status: 'on_run' as const } : c
+      );
+      return { ...prev, activeRun: run, character: { ...prev.character, status: 'on_run' }, allCharacters: updatedChars };
+    });
   };
 
   const handleRunComplete = async () => {
     const res = await fetch('/api/run/resolve', { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
+    const data = await res.json() as {
+      ok: boolean;
+      result?: import('@/types/game').RunResult;
+      leveled?: boolean;
+      newLevel?: number;
+      newRun?: GameState['activeRun'];
+    };
+    if (data.ok && data.result) {
       setPendingResult({ result: data.result, leveled: data.leveled, newLevel: data.newLevel });
       setHasCompletedRun(false);
-      await fetchState();
+      // If server auto-started next run, update state immediately without full fetch
+      if (data.newRun) {
+        setState(prev => {
+          if (!prev) return prev;
+          const updatedChars = prev.allCharacters.map(c =>
+            data.newRun?.partyIds?.includes(c.id) ? { ...c, status: 'on_run' as const } : { ...c, status: 'idle' as const }
+          );
+          return { ...prev, activeRun: data.newRun!, character: { ...prev.character, status: 'on_run' }, allCharacters: updatedChars };
+        });
+      } else {
+        await fetchState();
+      }
     }
   };
 
@@ -508,12 +541,7 @@ export default function GamePage() {
             </h1>
           </div>
 
-          {hasCompletedRun && !pendingResult && (
-            <button onClick={handleRunComplete}
-              className="absolute left-1/2 -translate-x-1/2 px-3 md:px-4 py-1 md:py-1.5 bg-emerald-900/40 border border-emerald-600/40 rounded-full text-emerald-400 text-[11px] md:text-xs font-medium hover:bg-emerald-900/60 transition-colors whitespace-nowrap">
-              ⚔ Loot ready →
-            </button>
-          )}
+          {/* Auto-resolves — no manual loot button needed */}
 
           <div className="flex items-center gap-1">
             <div className="flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 bg-[#16161f] rounded-xl border border-[rgba(255,255,255,0.07)]">

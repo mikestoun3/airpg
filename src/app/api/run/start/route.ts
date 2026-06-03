@@ -12,6 +12,7 @@ import {
   getCharacterSkillBonus,
   validatePartyForWallet,
   getCharacterById,
+  saveAutoRunConfig,
 } from '@/lib/db';
 import { computeCombatStats, computePartyCombatStats } from '@/lib/engine/combat-engine';
 import { getDungeon, DUNGEONS } from '@/lib/data/dungeons';
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
 
     const floorRunData = preRollFloors(dungeon, startFloor, floorsToAttempt, combatStats, effective.lck, table);
 
+    saveAutoRunConfig(wallet, { dungeonId, floors: floorsToAttempt, partyIds });
     const run = createRun(char.id, dungeonId, 'normal', duration, JSON.stringify(floorRunData), partyIds);
     const dungeonMeta = DUNGEONS.find((d) => d.id === dungeonId)!;
 

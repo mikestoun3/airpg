@@ -7,7 +7,6 @@ import {
   addResources,
   addXpAndLevel,
   addItemToInventory,
-  updateCharacterStatus,
   getPity,
   updatePity,
   recordClear,
@@ -19,9 +18,15 @@ import {
   addSeasonPoints,
   getRunPartyIds,
   setPartyStatus,
+  getAutoRunConfig,
+  validatePartyForWallet,
+  getCharacterById,
+  getCharacterSkillBonus,
+  createRun,
 } from '@/lib/db';
 import type { FloorRunData } from '@/lib/engine/loot-roller';
-import { getDungeon } from '@/lib/data/dungeons';
+import { getDungeon, DUNGEONS } from '@/lib/data/dungeons';
+import { getLootTable } from '@/lib/data/loot-tables';
 import { resolveFloorRun } from '@/lib/engine/run-engine';
 
 export async function POST(req: NextRequest) {
@@ -99,18 +104,11 @@ export async function POST(req: NextRequest) {
     const partyIds = getRunPartyIds(runId);
     const partyMembers = partyIds.filter(id => id !== char.id);
     for (const pid of partyMembers) {
-      addXpAndLevel(pid, Math.round(result.xpGained * 0.7)); // 70% XP for party members
+      addXpAndLevel(pid, Math.round(result.xpGained * 0.7));
     }
 
-    // Update status for all party members
-    if (result.injured && result.injuryDurationMinutes) {
-      const injuredUntil = Math.floor(Date.now() / 1000) + result.injuryDurationMinutes * 60;
-      updateCharacterStatus(char.id, 'injured', injuredUntil);
-      // Non-lead members just go idle (only lead risks injury for now)
-      if (partyMembers.length > 0) setPartyStatus(partyMembers, 'idle');
-    } else {
-      setPartyStatus(partyIds, 'idle');
-    }
+    // Always return to idle — no injuries
+    setPartyStatus(partyIds, 'idle');
 
     // Update pity counters (loot quality pity only, not combat pity)
     const pity = getPity(char.id);
@@ -126,11 +124,63 @@ export async function POST(req: NextRequest) {
       recordClear(char.id, result.dungeonId, dungeon.tier);
     }
 
+    // Auto-restart: use saved config to immediately send party on next run
+    let newRun: Record<string, unknown> | null = null;
+    try {
+      const autoConfig = getAutoRunConfig(wallet);
+      if (autoConfig && autoConfig.dungeonId) {
+        const nextDungeon = getDungeon(autoConfig.dungeonId);
+        const nextTable = nextDungeon ? getLootTable(autoConfig.dungeonId) : null;
+        const validParty = validatePartyForWallet(wallet, autoConfig.partyIds);
+
+        if (nextDungeon && nextTable && validParty.ok && autoConfig.partyIds.length > 0) {
+          const { preRollFloors } = require('@/lib/engine/loot-roller') as typeof import('@/lib/engine/loot-roller');
+          const { computeCombatStats, computePartyCombatStats } = require('@/lib/engine/combat-engine') as typeof import('@/lib/engine/combat-engine');
+
+          const memberStats = autoConfig.partyIds.map((pid: string) => {
+            const pChar = pid === char.id ? char : (getCharacterById(pid) ?? char);
+            const eff = getEffectiveStats(pid);
+            const withGear = { ...pChar, ...eff };
+            const sb = getCharacterSkillBonus(pid);
+            return computeCombatStats(withGear, withGear.charClass, sb);
+          });
+          const combinedStats = computePartyCombatStats(memberStats);
+
+          const nextSavedFloors = getFloorProgress(char.id);
+          const nextSavedFloor = nextSavedFloors[autoConfig.dungeonId] ?? 0;
+          const nextStartFloor = nextSavedFloor + 1;
+          const nextEff = getEffectiveStats(char.id);
+          const spdReduction = Math.min(nextEff.spd * 0.02, 0.4);
+          const duration = Math.max(1, Math.round(autoConfig.floors * 2 * (1 - spdReduction)));
+
+          const floorData = preRollFloors(nextDungeon, nextStartFloor, autoConfig.floors, combinedStats, nextEff.lck, nextTable);
+          const nextRun = createRun(char.id, autoConfig.dungeonId, 'normal', duration, JSON.stringify(floorData), autoConfig.partyIds);
+          const dungeonMeta = DUNGEONS.find(d => d.id === autoConfig.dungeonId);
+
+          newRun = {
+            id: nextRun.id,
+            dungeonId: autoConfig.dungeonId,
+            dungeonName: dungeonMeta?.name ?? '',
+            difficulty: 'normal',
+            startTime: nextRun.startTime,
+            endTime: nextRun.endTime,
+            previewEvents: floorData.previewEvents,
+            startFloor: nextStartFloor,
+            floorsAttempted: autoConfig.floors,
+            partyIds: autoConfig.partyIds,
+          };
+        }
+      }
+    } catch (e) {
+      console.error('Auto-restart failed:', e);
+    }
+
     return NextResponse.json({
       ok: true,
       result,
       leveled: levelResult.leveled,
       newLevel: levelResult.newLevel,
+      newRun,
     });
   } catch (err) {
     console.error('POST /api/run/resolve error:', err);

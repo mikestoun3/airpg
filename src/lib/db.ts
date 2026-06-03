@@ -275,6 +275,9 @@ function initSchema(db: Database.Database) {
 
   // Multi-character support
   try { db.exec("ALTER TABLE wallets ADD COLUMN active_class TEXT NOT NULL DEFAULT 'warrior'"); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE wallets ADD COLUMN auto_dungeon_id TEXT'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE wallets ADD COLUMN auto_floors INTEGER NOT NULL DEFAULT 3'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE wallets ADD COLUMN auto_party_json TEXT'); } catch { /* already exists */ }
   try {
     db.exec(`
       CREATE TABLE IF NOT EXISTS wallet_characters (
@@ -462,6 +465,29 @@ export function getAllCharacterSummaries(walletAddress: string): import('@/types
     gearScore: r.gear_score,
     combatRating: Math.floor(r.pwr * 1.5 + r.end_stat),
   }));
+}
+
+export interface AutoRunConfig {
+  dungeonId: string;
+  floors: number;
+  partyIds: string[];
+}
+
+export function saveAutoRunConfig(walletAddress: string, config: AutoRunConfig): void {
+  const db = getDb();
+  db.prepare(`
+    UPDATE wallets SET auto_dungeon_id = ?, auto_floors = ?, auto_party_json = ? WHERE address = ?
+  `).run(config.dungeonId, config.floors, JSON.stringify(config.partyIds), walletAddress.toLowerCase());
+}
+
+export function getAutoRunConfig(walletAddress: string): AutoRunConfig | null {
+  const db = getDb();
+  const row = db.prepare('SELECT auto_dungeon_id, auto_floors, auto_party_json FROM wallets WHERE address = ?')
+    .get(walletAddress.toLowerCase()) as { auto_dungeon_id: string | null; auto_floors: number; auto_party_json: string | null } | undefined;
+  if (!row?.auto_dungeon_id) return null;
+  let partyIds: string[] = [];
+  try { partyIds = row.auto_party_json ? JSON.parse(row.auto_party_json) : []; } catch { /* ignore */ }
+  return { dungeonId: row.auto_dungeon_id, floors: row.auto_floors ?? 3, partyIds };
 }
 
 export function setActiveClass(walletAddress: string, charClass: string): boolean {
