@@ -17,6 +17,8 @@ import {
   incrementEquippedAttunement,
   getFloorProgress,
   addSeasonPoints,
+  getRunPartyIds,
+  setPartyStatus,
 } from '@/lib/db';
 import type { FloorRunData } from '@/lib/engine/loot-roller';
 import { getDungeon } from '@/lib/data/dungeons';
@@ -92,15 +94,22 @@ export async function POST(req: NextRequest) {
     }
     result.seasonPoints = seasonPointsEarned;
 
-    // Add XP
+    // Add XP to lead char; award partial XP to other party members
     const levelResult = addXpAndLevel(char.id, result.xpGained);
+    const partyIds = getRunPartyIds(runId);
+    const partyMembers = partyIds.filter(id => id !== char.id);
+    for (const pid of partyMembers) {
+      addXpAndLevel(pid, Math.round(result.xpGained * 0.7)); // 70% XP for party members
+    }
 
-    // Update character status
+    // Update status for all party members
     if (result.injured && result.injuryDurationMinutes) {
       const injuredUntil = Math.floor(Date.now() / 1000) + result.injuryDurationMinutes * 60;
       updateCharacterStatus(char.id, 'injured', injuredUntil);
+      // Non-lead members just go idle (only lead risks injury for now)
+      if (partyMembers.length > 0) setPartyStatus(partyMembers, 'idle');
     } else {
-      updateCharacterStatus(char.id, 'idle');
+      setPartyStatus(partyIds, 'idle');
     }
 
     // Update pity counters (loot quality pity only, not combat pity)

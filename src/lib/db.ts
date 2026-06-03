@@ -249,6 +249,7 @@ function initSchema(db: Database.Database) {
     `);
   } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN season_points INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE runs ADD COLUMN party_json TEXT'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN gear_score INTEGER DEFAULT 0'); } catch { /* already exists */ }
   try { db.exec("ALTER TABLE characters ADD COLUMN class TEXT NOT NULL DEFAULT 'warrior'"); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN skill_points INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
@@ -444,12 +445,12 @@ export function getAllCharacterSummaries(walletAddress: string): import('@/types
   const db = getDb();
   const addr = walletAddress.toLowerCase();
   const rows = db.prepare(`
-    SELECT c.id, c.class, c.name, c.level, c.status, c.nickname_set
+    SELECT c.id, c.class, c.name, c.level, c.status, c.nickname_set, COALESCE(c.gear_score, 0) as gear_score, c.pwr, c.end_stat
     FROM wallet_characters wc
     JOIN characters c ON c.id = wc.character_id
     WHERE wc.wallet = ?
     ORDER BY CASE wc.char_class WHEN 'warrior' THEN 1 WHEN 'assassin' THEN 2 WHEN 'mage' THEN 3 ELSE 4 END
-  `).all(addr) as { id: string; class: string; name: string; level: number; status: string; nickname_set: number }[];
+  `).all(addr) as { id: string; class: string; name: string; level: number; status: string; nickname_set: number; gear_score: number; pwr: number; end_stat: number }[];
 
   return rows.map(r => ({
     id: r.id,
@@ -458,6 +459,8 @@ export function getAllCharacterSummaries(walletAddress: string): import('@/types
     level: r.level,
     status: r.status as import('@/types/game').CharacterStatus,
     nicknameSet: !!r.nickname_set,
+    gearScore: r.gear_score,
+    combatRating: Math.floor(r.pwr * 1.5 + r.end_stat),
   }));
 }
 
@@ -782,27 +785,35 @@ export function createRun(
   dungeonId: string,
   difficulty: string,
   durationMinutes: number,
-  preRolledJson?: string
+  preRolledJson?: string,
+  partyIds?: string[]
 ) {
   const db = getDb();
   const id = uuidv4();
   const now = Math.floor(Date.now() / 1000);
   const endTime = now + durationMinutes * 60;
+  const allIds = partyIds && partyIds.length > 0 ? partyIds : [characterId];
+  const partyJson = JSON.stringify(allIds);
 
   db.prepare(`
-    INSERT INTO runs (id, character_id, dungeon_id, difficulty, start_time, end_time, pre_rolled_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, characterId, dungeonId, difficulty, now, endTime, preRolledJson ?? null);
+    INSERT INTO runs (id, character_id, dungeon_id, difficulty, start_time, end_time, pre_rolled_json, party_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, characterId, dungeonId, difficulty, now, endTime, preRolledJson ?? null, partyJson);
 
-  updateCharacterStatus(characterId, 'on_run');
+  // Set all party members on_run
+  const updateStmt = db.prepare('UPDATE characters SET status = ? WHERE id = ?');
+  for (const pid of allIds) updateStmt.run('on_run', pid);
+
   return { id, startTime: now, endTime };
 }
 
 export function getActiveRun(characterId: string) {
   const db = getDb();
   return db.prepare(`
-    SELECT * FROM runs WHERE character_id = ? AND resolved = 0 ORDER BY created_at DESC LIMIT 1
-  `).get(characterId) as Record<string, unknown> | undefined;
+    SELECT * FROM runs
+    WHERE resolved = 0 AND (character_id = ? OR (party_json IS NOT NULL AND party_json LIKE ?))
+    ORDER BY created_at DESC LIMIT 1
+  `).get(characterId, `%${characterId}%`) as Record<string, unknown> | undefined;
 }
 
 export function resolveRunInDb(runId: string, outcome: string, resultJson: string) {
@@ -1562,6 +1573,42 @@ export function redeemPromoCode(code: string, characterId: string): RedeemResult
   });
 
   return grant();
+}
+
+// ── Party helpers ─────────────────────────────────────────────────────────────
+
+export function getCharacterById(id: string) {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM characters WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+  return row ? rowToCharacter(row) : null;
+}
+
+export function validatePartyForWallet(wallet: string, partyIds: string[]): { ok: boolean; error?: string } {
+  const db = getDb();
+  const addr = wallet.toLowerCase();
+  for (const id of partyIds) {
+    const row = db.prepare('SELECT char_class FROM wallet_characters WHERE wallet = ? AND character_id = ?').get(addr, id);
+    if (!row) return { ok: false, error: `Character ${id} does not belong to this wallet` };
+    const status = (db.prepare('SELECT status FROM characters WHERE id = ?').get(id) as { status: string } | undefined)?.status;
+    if (status !== 'idle') return { ok: false, error: 'All party members must be idle' };
+  }
+  return { ok: true };
+}
+
+export function setPartyStatus(charIds: string[], status: string, injuredUntil?: number): void {
+  const db = getDb();
+  const stmt = db.prepare('UPDATE characters SET status = ?, injured_until = ? WHERE id = ?');
+  for (const id of charIds) stmt.run(status, injuredUntil ?? null, id);
+}
+
+export function getRunPartyIds(runId: string): string[] {
+  const db = getDb();
+  const row = db.prepare('SELECT party_json, character_id FROM runs WHERE id = ?').get(runId) as { party_json: string | null; character_id: string } | undefined;
+  if (!row) return [];
+  if (row.party_json) {
+    try { return JSON.parse(row.party_json) as string[]; } catch { /* ignore */ }
+  }
+  return [row.character_id];
 }
 
 // ── Skills ────────────────────────────────────────────────────────────────────

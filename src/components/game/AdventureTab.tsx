@@ -65,20 +65,46 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
   const [floorsToAttempt, setFloorsToAttempt] = useState(3);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [partyIds, setPartyIds] = useState<string[]>(() =>
+    state.allCharacters.filter(c => c.status === 'idle').map(c => c.id)
+  );
 
   const { character, equipment, activeRun, unlockedDungeons, savedFloors } = state;
-  const isIdle = character.status === 'idle';
-  const isInjured = character.status === 'injured';
 
-  if (activeRun) return <RunTimer run={activeRun} onComplete={onRunComplete} />;
+  // If ANY roster member is on a run, show timer
+  const onRun = activeRun ?? null;
+  if (onRun) return <RunTimer run={onRun} onComplete={onRunComplete} />;
+
+  // Party can only include idle characters
+  const idleChars = state.allCharacters.filter(c => c.status === 'idle');
+  const effectiveParty = partyIds.filter(id => idleChars.some(c => c.id === id));
+  if (effectiveParty.length === 0 && idleChars.length > 0) {
+    // Auto-select all idle
+  }
+  const activeParty = effectiveParty.length > 0 ? effectiveParty : idleChars.map(c => c.id);
+
+  const allInjured = state.allCharacters.every(c => c.status === 'injured');
+  const isIdle = idleChars.length > 0;
+  const isInjured = !isIdle;
+
+  const toggleMember = (id: string) => {
+    setPartyIds(prev => {
+      if (prev.includes(id)) {
+        // Must keep at least 1
+        if (prev.length <= 1) return prev;
+        return prev.filter(p => p !== id);
+      }
+      return [...prev, id];
+    });
+  };
 
   const handleSend = async () => {
-    if (!selectedDungeon) return;
+    if (!selectedDungeon || activeParty.length === 0) return;
     setLoading(true); setError(null);
     const res = await fetch('/api/run/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dungeonId: selectedDungeon, floorsToAttempt }),
+      body: JSON.stringify({ dungeonId: selectedDungeon, floorsToAttempt, partyIds: activeParty }),
     });
     const data = await res.json();
     if (data.ok) onRunStart(data.run);
@@ -90,6 +116,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
   const lockedDungeons = DUNGEONS.filter(d => !unlockedDungeons.includes(d.id));
   const selected = selectedDungeon ? DUNGEONS.find(d => d.id === selectedDungeon) : null;
   const cr = character.combatRating;
+  const partyLabel = `Send Party (${activeParty.length})`;
 
   const savedFloor = selected ? (savedFloors?.[selected.id] ?? 0) : 0;
   const startFloor = savedFloor + 1;
@@ -149,7 +176,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
           {error && <p className="text-[#FC3154] text-xs mb-2">{error}</p>}
           <button onClick={handleSend} disabled={!isIdle || loading}
             className="w-full py-2.5 bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] disabled:from-[#1a1a26] disabled:to-[#1a1a26] disabled:text-[#505058] text-white font-bold rounded-xl text-sm tracking-widest uppercase transition-all">
-            {loading ? 'Sending...' : `Send Hero → ${floorsToAttempt} floor${floorsToAttempt > 1 ? 's' : ''}`}
+            {loading ? 'Sending...' : `${partyLabel} → ${floorsToAttempt} floor${floorsToAttempt > 1 ? 's' : ''}`}
           </button>
         </div>
       )}
@@ -161,10 +188,10 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
           Available Dungeons
         </p>
 
-        {isInjured && character.injuredUntil ? (
+        {allInjured && character.injuredUntil ? (
           <div className="bg-[#16161f] border border-red-900/40 rounded-xl p-6 text-center">
             <span className="text-3xl">🩹</span>
-            <p className="text-[#FC3154] font-semibold mt-3">Hero is Injured</p>
+            <p className="text-[#FC3154] font-semibold mt-3">Party is Injured</p>
             <p className="text-[#FC3154]/50 text-sm mt-1">
               Recovering — ~{Math.ceil(Math.max(0, character.injuredUntil - Math.floor(Date.now() / 1000)) / 60)} min left
             </p>
@@ -281,116 +308,69 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
         )}
       </div>
 
-      {/* ── RIGHT: character panel (desktop only) ── */}
+      {/* ── RIGHT: party + dungeon detail (desktop only) ── */}
       <div className="hidden md:flex w-full md:w-72 md:flex-shrink-0 flex-col gap-2.5 md:overflow-y-auto md:pb-2">
 
-        {/* Portrait */}
-        <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
-          <div className="relative h-52 bg-gradient-to-br from-[#1a1a26] via-[#12121e] to-[#0b0b0f] overflow-hidden">
-            <img
-              src={character.charClass === 'assassin' ? '/icons/character_portrait_female.png' : character.charClass === 'mage' ? '/icons/character_portrait_mage.png' : '/icons/character_portrait.png'}
-              alt="portrait"
-              className="absolute inset-0 w-full h-full object-cover object-top" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#111118] via-[#111118]/30 to-transparent" />
-            {/* Level badge */}
-            <div className="absolute top-2.5 right-2.5 bg-[#0b0b0f]/80 border border-[rgba(200,80,80,0.3)] rounded-lg px-2 py-1 backdrop-blur-sm">
-              <span className="text-[10px] text-[#78788a] uppercase tracking-wide">Lv.</span>
-              <span className="text-slate-100 font-black text-sm ml-1">{character.level}</span>
-            </div>
-            {/* Name overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-3">
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-slate-100 font-black text-lg leading-tight tracking-wide">{character.name}</p>
-                  <p className="text-[11px] text-[#78788a] mt-0.5">Wanderer</p>
-                </div>
-                <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${
-                  character.status === 'on_run'
-                    ? 'text-blue-400 border-blue-800/40 bg-blue-950/40'
-                    : character.status === 'injured'
-                    ? 'text-[#FC3154] border-red-800/40 bg-red-950/40'
-                    : 'text-emerald-400 border-emerald-800/40 bg-emerald-950/40'
-                }`}>
-                  {character.status === 'on_run' ? '● Away' :
-                   character.status === 'injured' ? '✖ Hurt' : '● Idle'}
-                </span>
-              </div>
-            </div>
+        {/* Party selector */}
+        <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] overflow-hidden">
+          <div className="px-3 pt-3 pb-2 flex items-center justify-between">
+            <p className="text-[10px] text-[#505058] uppercase tracking-widest font-bold">Party</p>
+            <p className="text-[10px] text-[#404048]">{activeParty.length} / {state.allCharacters.length} selected</p>
           </div>
-
-          {/* CR + GS */}
-          <div className="grid grid-cols-2 divide-x divide-[rgba(255,255,255,0.06)] bg-[#111118] border-t border-[rgba(255,255,255,0.07)]">
-            {([['Combat Rating', cr], ['Gear Score', character.gearScore]] as [string, number][]).map(([label, value]) => (
-              <div key={label} className="px-3 py-2.5 text-center">
-                <p className="text-[9px] text-[#505058] uppercase tracking-widest">{label}</p>
-                <p className="text-slate-100 font-black text-lg leading-tight mt-0.5">{value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-5 divide-x divide-[rgba(255,255,255,0.04)] bg-[#110808] border-t border-[rgba(255,255,255,0.05)]">
-            {(['pwr', 'end', 'lck', 'spd', 'ins'] as const).map(stat => (
-              <div key={stat} className="py-2 text-center">
-                <p className="text-[9px] text-[#404048] uppercase tracking-wide">{STAT_LABEL[stat]}</p>
-                <p className="text-slate-300 font-bold text-sm mt-0.5">{character[stat]}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Equipment — hidden when dungeon selected */}
-        <div className={`rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0e0e14] p-3 ${selected ? 'hidden' : ''}`}>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-[#d4294a] font-bold uppercase tracking-widest">Equipment</p>
-            <p className="text-[9px] text-[#404048] uppercase tracking-widest">Set Bonus</p>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {SLOTS.map(slot => {
-              const item = equipment[slot];
-              const attRuns = item?.attunementRuns ?? 0;
-              const attNeeded = item?.gearTier && item.gearTier < 4 ? [5,10,15][item.gearTier - 1] : 3;
-              const dots = 3;
-              const filledDots = item ? Math.min(dots, Math.floor((attRuns / attNeeded) * dots)) : 0;
+          <div className="flex gap-2 px-3 pb-3">
+            {state.allCharacters.map((c) => {
+              const inParty = partyIds.includes(c.id) || (effectiveParty.length === 0);
+              const isUnavailable = c.status !== 'idle';
+              const classColor = c.charClass === 'assassin' ? '#a855f7' : c.charClass === 'mage' ? '#06b6d4' : '#ef4444';
+              const portrait = c.charClass === 'assassin' ? '/icons/character_portrait_female.png'
+                : c.charClass === 'mage' ? '/icons/character_portrait_mage.png'
+                : '/icons/character_portrait.png';
+              const statusDot = c.status === 'on_run' ? '#60a5fa' : c.status === 'injured' ? '#FC3154' : '#4ade80';
               return (
-                <div key={slot}
-                  className={`relative h-24 rounded-lg flex flex-col items-center justify-center overflow-hidden ${
-                    item ? 'bg-[#1a1a26]' : 'bg-[#130808]'
-                  }`}>
-                  {/* Corner brackets */}
-                  <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#d4294a]/60 rounded-tl" />
-                  <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#d4294a]/60 rounded-tr" />
-                  <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#d4294a]/60 rounded-bl" />
-                  <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#d4294a]/60 rounded-br" />
-                  {/* Slot label */}
-                  <span className="absolute top-1.5 left-2 text-[8px] text-[#4e4e58] uppercase tracking-wide font-semibold leading-none">
-                    {SLOT_LABEL[slot]}
-                  </span>
-                  {/* Item or ghost */}
-                  {item ? (
-                    <img src={`/icons/items/item_${slot}_${item.rarity}.png`} alt={item.name}
-                      className="absolute inset-0 w-full h-full object-cover scale-95" />
-                  ) : (
-                    <img src={`/icons/items/slot_${slot}.png`} alt={slot}
-                      className="w-9 h-9 object-contain opacity-10" />
-                  )}
-                  {/* Attunement / progress dots */}
-                  <div className="absolute bottom-1.5 flex gap-1">
-                    {Array.from({ length: dots }).map((_, i) => (
-                      <span key={i} className={`w-1 h-1 rounded-full ${
-                        i < filledDots ? 'bg-[#FC3154]' : 'bg-[#1e1e28]'
-                      }`} />
-                    ))}
+                <button key={c.id} onClick={() => !isUnavailable && toggleMember(c.id)}
+                  disabled={isUnavailable}
+                  title={`${c.name} · Lv.${c.level} · ${c.status}`}
+                  className={`relative flex-1 rounded-xl overflow-hidden border-2 transition-all ${
+                    isUnavailable ? 'opacity-30 cursor-not-allowed' :
+                    (partyIds.includes(c.id) || effectiveParty.length === 0 && idleChars.includes(c))
+                      ? 'shadow-md' : 'opacity-45 hover:opacity-65 border-[rgba(255,255,255,0.1)]'
+                  }`}
+                  style={(partyIds.includes(c.id) || effectiveParty.length === 0 && idleChars.includes(c)) && !isUnavailable
+                    ? { borderColor: classColor } : {}}>
+                  <img src={portrait} alt={c.charClass} className="w-full h-20 object-cover object-top" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
+                  <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full border border-black/50"
+                    style={{ background: statusDot }} />
+                  <div className="absolute bottom-1 left-0 right-0 text-center">
+                    <p className="text-[9px] font-bold uppercase tracking-wider"
+                      style={{ color: classColor }}>{c.charClass === 'warrior' ? 'War' : c.charClass === 'assassin' ? 'Sin' : 'Mag'}</p>
+                    <p className="text-[8px] text-white/60 leading-none">Lv.{c.level}</p>
                   </div>
-                </div>
+                  {/* Check mark */}
+                  {(partyIds.includes(c.id) || effectiveParty.length === 0 && idleChars.includes(c)) && !isUnavailable && (
+                    <div className="absolute top-1 left-1 w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ background: classColor }}>
+                      <span className="text-white text-[8px] font-black">✓</span>
+                    </div>
+                  )}
+                </button>
               );
             })}
           </div>
-          <button
-            onClick={() => onNavigate?.('inventory')}
-            className="w-full mt-3 py-2.5 rounded-lg bg-red-900/30 border border-red-800/40 hover:bg-red-900/50 hover:border-[#d4294a]/60 text-[#FC3154] hover:text-red-200 text-xs font-bold uppercase tracking-widest transition-all">
-            View Inventory
-          </button>
+          <div className="grid grid-cols-2 divide-x divide-[rgba(255,255,255,0.06)] border-t border-[rgba(255,255,255,0.06)]">
+            <div className="px-3 py-2 text-center">
+              <p className="text-[9px] text-[#505058] uppercase tracking-widest">Party GS</p>
+              <p className="text-slate-100 font-black text-base mt-0.5">
+                {state.allCharacters.filter(c => activeParty.includes(c.id)).reduce((s, c) => s + c.gearScore, 0)}
+              </p>
+            </div>
+            <div className="px-3 py-2 text-center">
+              <p className="text-[9px] text-[#505058] uppercase tracking-widest">Party CR</p>
+              <p className="text-slate-100 font-black text-base mt-0.5">
+                {state.allCharacters.filter(c => activeParty.includes(c.id)).reduce((s, c) => s + c.combatRating, 0)}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Floor picker + SEND */}
@@ -500,9 +480,9 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
               <p className="text-[#FC3154] text-xs bg-red-950/30 border border-red-900/30 rounded-lg px-3 py-2">{error}</p>
             )}
 
-            <button onClick={handleSend} disabled={!isIdle || loading}
+            <button onClick={handleSend} disabled={!isIdle || loading || activeParty.length === 0}
               className="w-full py-3 bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] hover:to-[#e02a49] disabled:from-[#1a1a26] disabled:to-[#1a1a26] disabled:text-[#505058] text-white font-bold rounded-xl transition-all text-sm tracking-widest uppercase shadow-lg shadow-[#1a0510]/40">
-              {loading ? 'Sending...' : 'Send Hero →'}
+              {loading ? 'Sending...' : `${partyLabel} →`}
             </button>
           </div>
         ) : !isInjured ? (

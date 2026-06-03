@@ -99,3 +99,18 @@ export function battleToOutcome(result: BattleResult): 'success' | 'partial' | '
 export function powerRating(stats: CombatStats): number {
   return Math.round(stats.atk + stats.hp / 8 + stats.def * 2 + stats.eva + stats.crit * 1.5 + stats.aspd * 10);
 }
+
+// Combine stats from multiple party members
+export function computePartyCombatStats(memberStats: CombatStats[]): CombatStats {
+  if (memberStats.length === 0) return { hp: 0, atk: 0, def: 0, eva: 0, aspd: 0, crit: 0 };
+  if (memberStats.length === 1) return memberStats[0];
+  const n = memberStats.length;
+  return {
+    hp:   memberStats.reduce((s, c) => s + c.hp, 0),
+    atk:  memberStats.reduce((s, c) => s + c.atk, 0),
+    def:  Math.round(memberStats.reduce((s, c) => s + c.def, 0) / n),
+    eva:  Math.round(memberStats.reduce((s, c) => s + c.eva, 0) / n),
+    aspd: +memberStats.reduce((s, c) => s + c.aspd, 0).toFixed(2),
+    crit: Math.round(memberStats.reduce((s, c) => s + c.crit, 0) / n),
+  };
+}

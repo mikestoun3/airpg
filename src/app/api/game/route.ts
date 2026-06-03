@@ -87,6 +87,9 @@ export async function GET(req: NextRequest) {
       ? (() => {
           const preRolledRaw = activeRunRow.pre_rolled_json as string | null;
           const preRolledData = preRolledRaw ? JSON.parse(preRolledRaw) as { previewEvents?: import('@/types/game').RunPreviewEvent[]; startFloor?: number; floorsAttempted?: number } : null;
+          const partyJson = activeRunRow.party_json as string | null;
+          let partyIds: string[] | undefined;
+          try { partyIds = partyJson ? JSON.parse(partyJson) : undefined; } catch { /* ignore */ }
           return {
             id: activeRunRow.id as string,
             dungeonId: activeRunRow.dungeon_id as string,
@@ -97,6 +100,7 @@ export async function GET(req: NextRequest) {
             previewEvents: preRolledData?.previewEvents ?? [],
             startFloor: preRolledData?.startFloor,
             floorsAttempted: preRolledData?.floorsAttempted,
+            partyIds,
           };
         })()
       : null;

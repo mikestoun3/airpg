@@ -10,8 +10,10 @@ import {
   getEffectiveStats,
   getFloorProgress,
   getCharacterSkillBonus,
+  validatePartyForWallet,
+  getCharacterById,
 } from '@/lib/db';
-import { computeCombatStats } from '@/lib/engine/combat-engine';
+import { computeCombatStats, computePartyCombatStats } from '@/lib/engine/combat-engine';
 import { getDungeon, DUNGEONS } from '@/lib/data/dungeons';
 import { getLootTable } from '@/lib/data/loot-tables';
 import { preRollFloors } from '@/lib/engine/loot-roller';
@@ -21,6 +23,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as {
       dungeonId: string;
       floorsToAttempt?: number;
+      partyIds?: string[];
     };
     const { dungeonId } = body;
     const floorsToAttempt = Math.min(10, Math.max(1, body.floorsToAttempt ?? 3));
@@ -30,16 +33,25 @@ export async function POST(req: NextRequest) {
     const char = getOrCreateCharacter(wallet);
     if (char.banned) return NextResponse.json({ ok: false, error: 'Account suspended' }, { status: 403 });
 
-    if (char.status !== 'idle') {
-      return NextResponse.json({ ok: false, error: 'Character is not available.' }, { status: 400 });
+    // Party: default to active char only
+    const rawPartyIds = body.partyIds && body.partyIds.length > 0 ? body.partyIds : [char.id];
+    const partyIds = [...new Set(rawPartyIds)].slice(0, 3);
+
+    // Validate all party members belong to this wallet and are idle
+    const partyCheck = validatePartyForWallet(wallet, partyIds);
+    if (!partyCheck.ok) return NextResponse.json({ ok: false, error: partyCheck.error }, { status: 400 });
+
+    // Check for active run on any party member
+    for (const pid of partyIds) {
+      if (getActiveRun(pid)) {
+        return NextResponse.json({ ok: false, error: 'A party member is already on a run.' }, { status: 400 });
+      }
     }
 
     const dungeon = getDungeon(dungeonId);
-    if (!dungeon) {
-      return NextResponse.json({ ok: false, error: 'Unknown dungeon.' }, { status: 400 });
-    }
+    if (!dungeon) return NextResponse.json({ ok: false, error: 'Unknown dungeon.' }, { status: 400 });
 
-    // Check unlock conditions
+    // Use lead char for unlock checks + floor progress
     const gearScore = getGearScore(char.id);
     const tier1Clears = getTier1Clears(char.id);
     const c = dungeon.unlockCondition;
@@ -50,46 +62,33 @@ export async function POST(req: NextRequest) {
     if (c.minGearScore && gearScore < c.minGearScore)
       return NextResponse.json({ ok: false, error: `Requires Gear Score ${c.minGearScore}.` }, { status: 400 });
 
-    const existing = getActiveRun(char.id);
-    if (existing) {
-      return NextResponse.json({ ok: false, error: 'Already on a run.' }, { status: 400 });
-    }
+    // Compute combined combat stats for all party members
+    const memberStats = partyIds.map(pid => {
+      const pChar = pid === char.id ? char : (getCharacterById(pid) ?? char);
+      const effective = getEffectiveStats(pid);
+      const charWithGear = { ...pChar, ...effective };
+      const skillBonus = getCharacterSkillBonus(pid);
+      return computeCombatStats(charWithGear, charWithGear.charClass, skillBonus);
+    });
+    const combatStats = computePartyCombatStats(memberStats);
 
-    // Use effective stats (base + gear) for combat and SPD
-    const effective = getEffectiveStats(char.id);
-    const charWithGear = { ...char, ...effective };
-    const skillBonus = getCharacterSkillBonus(char.id);
-    const combatStats = computeCombatStats(charWithGear, charWithGear.charClass, skillBonus);
-
+    // Duration based on lead char's SPD
     const built = getBuiltUpgrades(char.id);
     const shrineBonus = built.includes('the_shrine') ? 0.9 : 1;
+    const effective = getEffectiveStats(char.id);
+    const spdReduction = Math.min((effective.spd) * 0.02, 0.4);
+    const duration = Math.max(1, Math.round(floorsToAttempt * 2 * (1 - spdReduction) * shrineBonus));
 
-    // Floor-based duration: 2 min per floor, then apply SPD reduction and shrine bonus
-    const spdReduction = Math.min(charWithGear.spd * 0.02, 0.4);
-    const rawDuration = floorsToAttempt * 2;
-    const duration = Math.max(1, Math.round(rawDuration * (1 - spdReduction) * shrineBonus));
-
-    // Get saved floor progress to determine startFloor
     const savedFloors = getFloorProgress(char.id);
     const savedFloor = savedFloors[dungeonId] ?? 0;
     const startFloor = savedFloor + 1;
 
-    // Pre-roll floors
     const table = getLootTable(dungeonId);
-    if (!table) {
-      return NextResponse.json({ ok: false, error: 'No loot table for dungeon.' }, { status: 400 });
-    }
+    if (!table) return NextResponse.json({ ok: false, error: 'No loot table for dungeon.' }, { status: 400 });
 
-    const floorRunData = preRollFloors(
-      dungeon,
-      startFloor,
-      floorsToAttempt,
-      combatStats,
-      charWithGear.lck,
-      table
-    );
+    const floorRunData = preRollFloors(dungeon, startFloor, floorsToAttempt, combatStats, effective.lck, table);
 
-    const run = createRun(char.id, dungeonId, 'normal', duration, JSON.stringify(floorRunData));
+    const run = createRun(char.id, dungeonId, 'normal', duration, JSON.stringify(floorRunData), partyIds);
     const dungeonMeta = DUNGEONS.find((d) => d.id === dungeonId)!;
 
     return NextResponse.json({
@@ -104,6 +103,7 @@ export async function POST(req: NextRequest) {
         previewEvents: floorRunData.previewEvents,
         startFloor,
         floorsAttempted: floorsToAttempt,
+        partyIds,
       },
     });
   } catch (err) {

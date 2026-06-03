@@ -172,6 +172,7 @@ export interface ActiveRun {
   consumableUsed?: string;
   startFloor?: number;
   floorsAttempted?: number;
+  partyIds?: string[];
 }
 
 export interface RunResult {
@@ -222,6 +223,8 @@ export interface CharacterSummary {
   level: number;
   status: CharacterStatus;
   nicknameSet: boolean;
+  gearScore: number;
+  combatRating: number;
 }
 
 export interface GameState {
