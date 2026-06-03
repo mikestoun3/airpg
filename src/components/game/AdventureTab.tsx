@@ -288,7 +288,7 @@ export function AdventureTab({ state, onRunStart, onRunComplete, onNavigate }: P
         <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
           <div className="relative h-52 bg-gradient-to-br from-[#1a1a26] via-[#12121e] to-[#0b0b0f] overflow-hidden">
             <img
-              src={character.charClass === 'assassin' ? '/icons/character_portrait_female.png' : character.charClass === 'mage' ? '/icons/character_portrait_mage.svg' : '/icons/character_portrait.png'}
+              src={character.charClass === 'assassin' ? '/icons/character_portrait_female.png' : character.charClass === 'mage' ? '/icons/character_portrait_mage.png' : '/icons/character_portrait.png'}
               alt="portrait"
               className="absolute inset-0 w-full h-full object-cover object-top" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#111118] via-[#111118]/30 to-transparent" />

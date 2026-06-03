@@ -63,7 +63,7 @@ const CLASS_OPTIONS = [
     id: 'mage' as const,
     label: 'Mage',
     desc: 'Урон и крит-шанс',
-    portrait: '/icons/character_portrait_mage.svg',
+    portrait: '/icons/character_portrait_mage.png',
     color: '#06b6d4',
   },
 ] as const;
@@ -434,7 +434,7 @@ export default function GamePage() {
             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-[rgba(255,255,255,0.1)]">
                 <img src={
                   state.character.charClass === 'assassin' ? '/icons/character_portrait_female.png' :
-                  state.character.charClass === 'mage' ? '/icons/character_portrait_mage.svg' :
+                  state.character.charClass === 'mage' ? '/icons/character_portrait_mage.png' :
                   '/icons/character_avatar.png'
                 } alt="avatar" className="w-full h-full object-cover object-top" />
               </div>
