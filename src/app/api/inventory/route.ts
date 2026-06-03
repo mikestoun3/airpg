@@ -10,6 +10,7 @@ import {
   unequipItem,
   getGearScore,
   spendStatPoint,
+  spendSkillPoint,
   getActiveRun,
 } from '@/lib/db';
 import type { EquipmentSlot, ItemInstance, Rarity, StatKey } from '@/types/game';
@@ -17,11 +18,12 @@ import type { EquipmentSlot, ItemInstance, Rarity, StatKey } from '@/types/game'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as {
-      action: 'equip' | 'salvage' | 'salvage_rarity' | 'unequip' | 'spend_stat';
+      action: 'equip' | 'salvage' | 'salvage_rarity' | 'unequip' | 'spend_stat' | 'spend_skill';
       itemId?: string;
       slot?: EquipmentSlot;
       stat?: StatKey;
       rarity?: Rarity;
+      skillId?: string;
     };
 
     const wallet = getSessionWallet(req);
@@ -70,6 +72,12 @@ export async function POST(req: NextRequest) {
     if (body.action === 'spend_stat' && body.stat) {
       const success = spendStatPoint(char.id, body.stat);
       if (!success) return NextResponse.json({ ok: false, error: 'No stat points available.' }, { status: 400 });
+      return NextResponse.json({ ok: true });
+    }
+
+    if (body.action === 'spend_skill' && body.skillId) {
+      const result = spendSkillPoint(char.id, body.skillId);
+      if (!result.ok) return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
       return NextResponse.json({ ok: true });
     }
 

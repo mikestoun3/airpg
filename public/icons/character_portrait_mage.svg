@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#080814"/>
+      <stop offset="100%" style="stop-color:#100828"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="38%" r="45%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:0.35"/>
+      <stop offset="100%" style="stop-color:#080814;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="orbglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#c4b5fd;stop-opacity:1"/>
+      <stop offset="60%" style="stop-color:#7c3aed;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#4c1d95;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="blur2">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+    <filter id="blur5">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect width="300" height="400" fill="url(#glow)"/>
+
+  <!-- Ambient particles -->
+  <circle cx="60" cy="80" r="1.5" fill="#7c3aed" opacity="0.6"/>
+  <circle cx="240" cy="120" r="1" fill="#06b6d4" opacity="0.5"/>
+  <circle cx="50" cy="200" r="1" fill="#a78bfa" opacity="0.4"/>
+  <circle cx="255" cy="260" r="2" fill="#7c3aed" opacity="0.4"/>
+  <circle cx="80" cy="310" r="1.5" fill="#06b6d4" opacity="0.35"/>
+  <circle cx="220" cy="350" r="1" fill="#a78bfa" opacity="0.5"/>
+  <circle cx="30" cy="150" r="1" fill="#7c3aed" opacity="0.3"/>
+  <circle cx="270" cy="180" r="1.5" fill="#06b6d4" opacity="0.3"/>
+
+  <!-- Staff -->
+  <line x1="215" y1="90" x2="195" y2="390" stroke="#2e1a5e" stroke-width="5" stroke-linecap="round"/>
+  <line x1="215" y1="90" x2="195" y2="390" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Orb glow (blurred) -->
+  <circle cx="215" cy="85" r="28" fill="#7c3aed" opacity="0.25" filter="url(#blur5)"/>
+  <!-- Orb -->
+  <circle cx="215" cy="85" r="16" fill="url(#orbglow)"/>
+  <circle cx="215" cy="85" r="10" fill="#c4b5fd" opacity="0.7"/>
+  <circle cx="210" cy="80" r="4" fill="white" opacity="0.5"/>
+
+  <!-- Cloak body -->
+  <path d="M 90 200 Q 60 290 70 395 L 230 395 Q 240 290 210 200 Z" fill="#0e0820"/>
+  <path d="M 90 200 Q 60 290 70 395 L 230 395 Q 240 290 210 200 Z" fill="#1a0e3a" opacity="0.5"/>
+
+  <!-- Robe inner detail -->
+  <path d="M 135 195 Q 150 210 165 195 L 158 395 L 142 395 Z" fill="#1e1245" opacity="0.7"/>
+
+  <!-- Shoulder pauldrons -->
+  <ellipse cx="98" cy="205" rx="28" ry="16" fill="#150d30"/>
+  <ellipse cx="202" cy="205" rx="28" ry="16" fill="#150d30"/>
+  <ellipse cx="98" cy="203" rx="22" ry="11" fill="#1e1245"/>
+  <ellipse cx="202" cy="203" rx="22" ry="11" fill="#1e1245"/>
+
+  <!-- Chest rune -->
+  <path d="M 140 230 L 150 218 L 160 230 L 150 242 Z" fill="none" stroke="#6d28d9" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="150" cy="230" r="3" fill="#a78bfa" opacity="0.6"/>
+
+  <!-- Neck -->
+  <rect x="140" y="165" width="20" height="22" rx="6" fill="#0a0818"/>
+
+  <!-- Head / hood -->
+  <ellipse cx="150" cy="145" rx="50" ry="52" fill="#0e0820"/>
+  <ellipse cx="150" cy="148" rx="44" ry="46" fill="#12092a"/>
+
+  <!-- Hood shadow inner -->
+  <ellipse cx="150" cy="158" rx="30" ry="30" fill="#080814"/>
+
+  <!-- Face (barely visible) -->
+  <ellipse cx="150" cy="162" rx="22" ry="22" fill="#0c0a1e" opacity="0.8"/>
+
+  <!-- Glowing eyes -->
+  <ellipse cx="140" cy="158" r="7" fill="#7c3aed" opacity="0.3" filter="url(#blur2)"/>
+  <ellipse cx="160" cy="158" r="7" fill="#7c3aed" opacity="0.3" filter="url(#blur2)"/>
+  <ellipse cx="140" cy="158" rx="5" ry="3.5" fill="#a78bfa" opacity="0.9"/>
+  <ellipse cx="160" cy="158" rx="5" ry="3.5" fill="#a78bfa" opacity="0.9"/>
+  <ellipse cx="140" cy="158" rx="2.5" ry="1.5" fill="#e9d5ff" opacity="1"/>
+  <ellipse cx="160" cy="158" rx="2.5" ry="1.5" fill="#e9d5ff" opacity="1"/>
+
+  <!-- Hood rim -->
+  <path d="M 103 128 Q 150 90 197 128" fill="none" stroke="#1e1245" stroke-width="3"/>
+  <path d="M 105 130 Q 150 94 195 130" fill="none" stroke="#2e1a5e" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Floating runes -->
+  <text x="68" y="175" fill="#6d28d9" font-size="10" opacity="0.5" font-family="monospace">✦</text>
+  <text x="222" y="240" fill="#06b6d4" font-size="8" opacity="0.45" font-family="monospace">◈</text>
+  <text x="55" y="270" fill="#7c3aed" font-size="9" opacity="0.4" font-family="monospace">◆</text>
+
+  <!-- Bottom fade -->
+  <rect x="0" y="330" width="300" height="70" fill="url(#bg)" opacity="0.85"/>
+</svg>

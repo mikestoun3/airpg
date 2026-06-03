@@ -1,5 +1,7 @@
 export type StatKey = 'pwr' | 'end' | 'lck' | 'spd' | 'ins';
 
+export type CharacterClass = 'warrior' | 'assassin' | 'mage';
+
 export type EquipmentSlot = 'weapon' | 'helmet' | 'chest' | 'boots' | 'ring' | 'trinket';
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
@@ -91,6 +93,11 @@ export interface DungeonConfig {
   bossTitle: string;
 }
 
+export interface CharacterSkill {
+  skillId: string;
+  ranks: number;
+}
+
 export interface Character {
   id: string;
   name: string;
@@ -110,8 +117,10 @@ export interface Character {
   status: CharacterStatus;
   injuredUntil?: number;
   statPoints: number;
+  skillPoints: number;
+  skills: CharacterSkill[];
   nicknameSet: boolean;
-  gender: 'male' | 'female';
+  charClass: CharacterClass;
   seasonPoints: number;
 }
 
@@ -242,6 +251,12 @@ export const STAT_LABELS: Record<StatKey, string> = {
   lck: 'Luck',
   spd: 'Speed',
   ins: 'Insight',
+};
+
+export const CLASS_LABELS: Record<CharacterClass, string> = {
+  warrior: 'Warrior',
+  assassin: 'Assassin',
+  mage: 'Mage',
 };
 
 export const SLOT_LABELS: Record<EquipmentSlot, string> = {

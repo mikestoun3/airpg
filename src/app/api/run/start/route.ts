@@ -9,7 +9,9 @@ import {
   getBuiltUpgrades,
   getEffectiveStats,
   getFloorProgress,
+  getCharacterSkillBonus,
 } from '@/lib/db';
+import { computeCombatStats } from '@/lib/engine/combat-engine';
 import { getDungeon, DUNGEONS } from '@/lib/data/dungeons';
 import { getLootTable } from '@/lib/data/loot-tables';
 import { preRollFloors } from '@/lib/engine/loot-roller';
@@ -56,6 +58,8 @@ export async function POST(req: NextRequest) {
     // Use effective stats (base + gear) for combat and SPD
     const effective = getEffectiveStats(char.id);
     const charWithGear = { ...char, ...effective };
+    const skillBonus = getCharacterSkillBonus(char.id);
+    const combatStats = computeCombatStats(charWithGear, charWithGear.charClass, skillBonus);
 
     const built = getBuiltUpgrades(char.id);
     const shrineBonus = built.includes('the_shrine') ? 0.9 : 1;
@@ -80,7 +84,7 @@ export async function POST(req: NextRequest) {
       dungeon,
       startFloor,
       floorsToAttempt,
-      charWithGear.combatRating,
+      combatStats,
       charWithGear.lck,
       table
     );

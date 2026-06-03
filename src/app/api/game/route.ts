@@ -14,6 +14,7 @@ import {
   getMaterials,
   getFloorProgress,
   logIp,
+  getCharacterSkills,
 } from '@/lib/db';
 import { RESOURCES } from '@/lib/data/resources';
 import type { ResourceStack } from '@/types/game';
@@ -53,6 +54,9 @@ export async function GET(req: NextRequest) {
         char.injuredUntil = undefined;
       }
     }
+
+    // Load skills
+    (char as import('@/types/game').Character).skills = getCharacterSkills(char.id);
 
     // Compute gear score + effective stats (base + equipment bonuses)
     const gearScore = getGearScore(char.id);

@@ -6,6 +6,9 @@ import type { EquipmentSlot } from '@/types/game';
 import type { DungeonLootTable, LootTableEntry, RarityWeights } from '@/lib/data/loot-tables';
 import { DUNGEON_RESOURCE_DROPS, getResource } from '@/lib/data/resources';
 import type { ResourceStack } from '@/types/game';
+import type { CombatStats } from '@/lib/engine/combat-engine';
+import { simulateBattle, battleToOutcome } from '@/lib/engine/combat-engine';
+import { pickMobForFloor } from '@/lib/data/mob-templates';
 
 // Minimal dungeon info needed for floor pre-rolling (avoids circular import)
 export interface FloorDungeonInfo {
@@ -268,32 +271,50 @@ export function preRollFloors(
   dungeon: FloorDungeonInfo,
   startFloor: number,
   floorsToAttempt: number,
-  combatRating: number,
+  combatStats: CombatStats | number,
   luck: number,
   table: DungeonLootTable
 ): FloorRunData {
   const floors: FloorResult[] = [];
   const previewEvents: RunPreviewEvent[] = [];
+  const usingNewCombat = typeof combatStats === 'object';
+  const legacyCR = typeof combatStats === 'number' ? combatStats : combatStats.atk;
 
   for (let fi = 0; fi < floorsToAttempt; fi++) {
     const floor = startFloor + fi;
     const isBoss = floor % 10 === 0;
     const monsterTier = Math.min(Math.floor((floor - 1) / 5), dungeon.monsters.length - 1);
     const monsterName = isBoss ? dungeon.bossTitle : dungeon.monsters[monsterTier];
-    const dc = Math.round(dungeon.baseDC + (floor - 1) * dungeon.floorDCStep);
-    const roll = Math.floor(Math.random() * 100) + 1;
-    const effective = roll + combatRating;
-    const successAt = dc + 51;
 
     let outcome: 'success' | 'partial' | 'failure';
-    if (effective >= successAt + 30) {
-      outcome = 'success'; // critical maps to success for simplicity
-    } else if (effective >= successAt) {
-      outcome = 'success';
-    } else if (effective >= successAt - 20) {
-      outcome = 'partial';
+    let effective: number;
+    let dc: number;
+    let roll: number;
+
+    if (usingNewCombat) {
+      const mob = pickMobForFloor(dungeon.id, fi, isBoss);
+      const seed = Math.floor(Math.random() * 0x7fffffff);
+      if (mob) {
+        const result = simulateBattle(combatStats as CombatStats, mob, floor, seed);
+        outcome = battleToOutcome(result);
+        // Map to legacy fields for ResultModal display
+        dc = Math.round(dungeon.baseDC + (floor - 1) * dungeon.floorDCStep);
+        roll = Math.round(result.hpPercent * 100);
+        effective = roll + legacyCR;
+      } else {
+        // Fallback if no mob template found
+        dc = Math.round(dungeon.baseDC + (floor - 1) * dungeon.floorDCStep);
+        roll = Math.floor(Math.random() * 100) + 1;
+        effective = roll + legacyCR;
+        const successAt = dc + 51;
+        outcome = effective >= successAt ? 'success' : effective >= successAt - 20 ? 'partial' : 'failure';
+      }
     } else {
-      outcome = 'failure';
+      dc = Math.round(dungeon.baseDC + (floor - 1) * dungeon.floorDCStep);
+      roll = Math.floor(Math.random() * 100) + 1;
+      effective = roll + legacyCR;
+      const successAt = dc + 51;
+      outcome = effective >= successAt + 30 ? 'success' : effective >= successAt ? 'success' : effective >= successAt - 20 ? 'partial' : 'failure';
     }
 
     // Loot per floor (scale by floor tier)
@@ -389,7 +410,7 @@ export function preRollFloors(
   return {
     startFloor,
     floorsAttempted: floorsToAttempt,
-    combatRating,
+    combatRating: legacyCR,
     floors,
     previewEvents,
   };

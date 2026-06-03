@@ -44,9 +44,33 @@ function shortAddr(addr: string) {
   return addr.slice(0, 6) + '…' + addr.slice(-4);
 }
 
+const CLASS_OPTIONS = [
+  {
+    id: 'warrior' as const,
+    label: 'Warrior',
+    desc: 'Высокий HP и защита',
+    portrait: '/icons/character_portrait.png',
+    color: '#ef4444',
+  },
+  {
+    id: 'assassin' as const,
+    label: 'Assassin',
+    desc: 'Уклонение и скорость',
+    portrait: '/icons/character_portrait_female.png',
+    color: '#a855f7',
+  },
+  {
+    id: 'mage' as const,
+    label: 'Mage',
+    desc: 'Урон и крит-шанс',
+    portrait: '/icons/character_portrait_mage.svg',
+    color: '#06b6d4',
+  },
+] as const;
+
 function NicknameModal({ onDone }: { onDone: () => void }) {
   const [value, setValue] = useState('');
-  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [charClass, setCharClass] = useState<'warrior' | 'assassin' | 'mage'>('warrior');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,7 +96,7 @@ function NicknameModal({ onDone }: { onDone: () => void }) {
     setLoading(true);
     const res = await fetch('/api/nickname', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname: value, gender }),
+      body: JSON.stringify({ nickname: value, charClass }),
     });
     const data = await res.json() as { ok: boolean; error?: string };
     setLoading(false);
@@ -80,44 +104,52 @@ function NicknameModal({ onDone }: { onDone: () => void }) {
     else { setError(data.error ?? 'Ошибка'); }
   };
 
+  const selected = CLASS_OPTIONS.find(c => c.id === charClass)!;
+
   return (
     <div className="fixed inset-0 z-50 bg-[#0b0b0f]/95 backdrop-blur-sm flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-[#16161f] border border-[rgba(200,70,70,0.25)] rounded-2xl overflow-hidden shadow-2xl">
+      <div className="w-full max-w-md bg-[#16161f] border border-[rgba(200,70,70,0.25)] rounded-2xl overflow-hidden shadow-2xl">
         <div className="px-6 pt-6 pb-6 flex flex-col gap-5">
 
           {/* Header */}
           <div className="text-center">
             <img src="/icons/logo.png" alt="Nexfall" className="h-8 w-auto object-contain mx-auto mb-3" />
-            <p className="text-[#606068] text-sm">Выберите персонажа и никнейм</p>
+            <p className="text-[#606068] text-sm">Выберите класс и никнейм</p>
           </div>
 
-          {/* Gender picker */}
-          <div className="grid grid-cols-2 gap-3">
-            {(['male', 'female'] as const).map((g) => (
-              <button key={g} onClick={() => setGender(g)}
+          {/* Class picker */}
+          <div className="grid grid-cols-3 gap-2">
+            {CLASS_OPTIONS.map((cls) => (
+              <button key={cls.id} onClick={() => setCharClass(cls.id)}
                 className={`relative rounded-xl overflow-hidden border-2 transition-all ${
-                  gender === g
-                    ? 'border-[#FC3154] shadow-[0_0_12px_rgba(252,49,84,0.35)]'
-                    : 'border-[rgba(255,255,255,0.07)] opacity-60 hover:opacity-80'
-                }`}>
-                <img
-                  src={g === 'male' ? '/icons/character_portrait.png' : '/icons/character_portrait_female.png'}
-                  alt={g}
-                  className="w-full h-32 object-cover object-top"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0f]/80 to-transparent" />
-                <div className={`absolute bottom-2 left-0 right-0 text-center text-xs font-bold uppercase tracking-widest ${
-                  gender === g ? 'text-[#FC3154]' : 'text-[#78788a]'
-                }`}>
-                  {g === 'male' ? 'Муж.' : 'Жен.'}
+                  charClass === cls.id
+                    ? 'shadow-[0_0_14px_rgba(0,0,0,0.4)]'
+                    : 'border-[rgba(255,255,255,0.07)] opacity-55 hover:opacity-75'
+                }`}
+                style={charClass === cls.id ? { borderColor: cls.color } : {}}>
+                <img src={cls.portrait} alt={cls.label} className="w-full h-28 object-cover object-top" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0f]/85 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 pb-2 px-1 text-center">
+                  <div className={`text-[11px] font-bold uppercase tracking-wider ${charClass === cls.id ? '' : 'text-[#78788a]'}`}
+                    style={charClass === cls.id ? { color: cls.color } : {}}>
+                    {cls.label}
+                  </div>
+                  <div className="text-[9px] text-[#505058] leading-tight mt-0.5">{cls.desc}</div>
                 </div>
-                {gender === g && (
-                  <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#FC3154] flex items-center justify-center">
-                    <span className="text-white text-[9px] font-black">✓</span>
+                {charClass === cls.id && (
+                  <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
+                    style={{ background: cls.color }}>
+                    <span className="text-white text-[8px] font-black">✓</span>
                   </div>
                 )}
               </button>
             ))}
+          </div>
+
+          {/* Selected class description */}
+          <div className="text-[11px] text-[#505058] text-center -mt-2">
+            <span style={{ color: selected.color }} className="font-semibold">{selected.label}</span>
+            {' · '}{selected.desc}
           </div>
 
           {/* Nickname input */}
@@ -146,7 +178,8 @@ function NicknameModal({ onDone }: { onDone: () => void }) {
           </div>
 
           <button onClick={submit} disabled={loading || value.length < 3 || !!error}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d4294a] to-[#d4294a] hover:from-[#FC3154] hover:to-[#e02a49] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm transition-all">
+            className="w-full py-3 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm transition-all"
+            style={{ background: `linear-gradient(135deg, ${selected.color}cc, ${selected.color})` }}>
             {loading ? 'Проверяем…' : 'Начать игру →'}
           </button>
         </div>
@@ -344,7 +377,11 @@ export default function GamePage() {
         <div className="px-3 py-3 border-t border-[rgba(255,255,255,0.06)] space-y-2">
           <div className="flex items-center gap-2 px-2 py-2 rounded-xl bg-[#16161f]">
             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-[rgba(255,255,255,0.1)]">
-                <img src={state.character.gender === 'female' ? '/icons/character_portrait_female.png' : '/icons/character_avatar.png'} alt="avatar" className="w-full h-full object-cover object-top" />
+                <img src={
+                  state.character.charClass === 'assassin' ? '/icons/character_portrait_female.png' :
+                  state.character.charClass === 'mage' ? '/icons/character_portrait_mage.svg' :
+                  '/icons/character_avatar.png'
+                } alt="avatar" className="w-full h-full object-cover object-top" />
               </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
@@ -356,7 +393,7 @@ export default function GamePage() {
                   {character.status === 'on_run' ? '● Away' : character.status === 'injured' ? '✖ Hurt' : '● Idle'}
                 </span>
               </div>
-              <p className="text-[#606068] text-[10px]">Lv.{character.level} Wanderer</p>
+              <p className="text-[#606068] text-[10px]">Lv.{character.level} {character.charClass === 'warrior' ? 'Warrior' : character.charClass === 'assassin' ? 'Assassin' : 'Mage'}</p>
             </div>
           </div>
           <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-[#0e0e14] border border-[rgba(255,255,255,0.05)]">

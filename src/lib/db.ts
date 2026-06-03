@@ -250,6 +250,27 @@ function initSchema(db: Database.Database) {
   } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN season_points INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
   try { db.exec('ALTER TABLE characters ADD COLUMN gear_score INTEGER DEFAULT 0'); } catch { /* already exists */ }
+  try { db.exec("ALTER TABLE characters ADD COLUMN class TEXT NOT NULL DEFAULT 'warrior'"); } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE characters ADD COLUMN skill_points INTEGER NOT NULL DEFAULT 0'); } catch { /* already exists */ }
+  // Migrate gender → class (male→warrior, female→assassin) for existing characters
+  try {
+    db.exec(`UPDATE characters SET class = CASE WHEN gender = 'female' THEN 'assassin' ELSE 'warrior' END WHERE class = 'warrior' AND gender IS NOT NULL`);
+  } catch { /* ignore */ }
+  // Retroactively give existing characters skill_points = max(0, level - 1)
+  try {
+    db.exec(`UPDATE characters SET skill_points = MAX(0, level - 1) WHERE skill_points = 0 AND level > 1`);
+  } catch { /* ignore */ }
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS character_skills (
+        character_id TEXT NOT NULL,
+        skill_id TEXT NOT NULL,
+        ranks INTEGER NOT NULL DEFAULT 1,
+        PRIMARY KEY (character_id, skill_id),
+        FOREIGN KEY (character_id) REFERENCES characters(id)
+      );
+    `);
+  } catch { /* already exists */ }
 
   // Migrate wallets table to allow nullable character_id (for pre-auth nonce storage)
   try {
@@ -362,9 +383,9 @@ export function isNicknameTaken(nickname: string): boolean {
   return !!row;
 }
 
-export function setNickname(characterId: string, nickname: string, gender: 'male' | 'female' = 'male'): void {
+export function setNickname(characterId: string, nickname: string, charClass: import('@/types/game').CharacterClass = 'warrior'): void {
   const db = getDb();
-  db.prepare('UPDATE characters SET name = ?, nickname_set = 1, gender = ? WHERE id = ?').run(nickname, gender, characterId);
+  db.prepare('UPDATE characters SET name = ?, nickname_set = 1, class = ? WHERE id = ?').run(nickname, charClass, characterId);
 }
 
 export function updateCharacterStatus(id: string, status: string, injuredUntil?: number) {
@@ -409,7 +430,7 @@ export function addXpAndLevel(id: string, xpGained: number) {
   let { level, xp } = char;
   xp += xpGained;
   let leveled = false;
-  let statPointsGained = 0;
+  let levelsGained = 0;
 
   while (level < 30) {
     const needed = xpToNextLevel(level);
@@ -417,14 +438,14 @@ export function addXpAndLevel(id: string, xpGained: number) {
       xp -= needed;
       level++;
       leveled = true;
-      statPointsGained++;
+      levelsGained++;
     } else break;
   }
 
-  db.prepare('UPDATE characters SET level = ?, xp = ?, stat_points = stat_points + ? WHERE id = ?')
-    .run(level, xp, statPointsGained, id);
+  db.prepare('UPDATE characters SET level = ?, xp = ?, stat_points = stat_points + ?, skill_points = skill_points + ? WHERE id = ?')
+    .run(level, xp, levelsGained, levelsGained, id);
 
-  return { leveled, newLevel: level, statPointsGained };
+  return { leveled, newLevel: level, statPointsGained: levelsGained };
 }
 
 export function spendStatPoint(characterId: string, stat: string): boolean {
@@ -444,6 +465,7 @@ export function spendStatPoint(characterId: string, stat: string): boolean {
 function rowToCharacter(row: Record<string, unknown>) {
   const pwr = row.pwr as number;
   const end = row.end_stat as number;
+  const charClass = (row.class as string ?? 'warrior') as import('@/types/game').CharacterClass;
   return {
     id: row.id as string,
     name: row.name as string,
@@ -456,15 +478,17 @@ function rowToCharacter(row: Record<string, unknown>) {
     spd: row.spd as number,
     ins: row.ins as number,
     statPoints: row.stat_points as number,
+    skillPoints: (row.skill_points as number | undefined) ?? 0,
+    skills: [], // loaded separately via getCharacterSkills
     gold: row.gold as number,
     essence: row.essence as number,
     relics: row.relics as number,
-    gearScore: 0, // computed after loading equipment
+    gearScore: 0,
     combatRating: Math.floor(pwr * 1.5 + end),
     status: row.status as import('@/types/game').CharacterStatus,
     injuredUntil: row.injured_until as number | undefined,
     nicknameSet: !!(row.nickname_set as number),
-    gender: ((row.gender as string) === 'female' ? 'female' : 'male') as 'male' | 'female',
+    charClass,
     banned: !!(row.banned as number),
     banReason: (row.ban_reason as string | undefined) ?? undefined,
     seasonPoints: (row.season_points as number | undefined) ?? 0,
@@ -574,14 +598,11 @@ export function getEffectiveStats(characterId: string) {
 
   const pwr = char.pwr + bonus.pwr;
   const end = char.end + bonus.end;
-  return {
-    pwr,
-    end,
-    lck: char.lck + bonus.lck,
-    spd: char.spd + bonus.spd,
-    ins: char.ins + bonus.ins,
-    combatRating: Math.floor(pwr * 1.5 + end),
-  };
+  const lck = char.lck + bonus.lck;
+  const spd = char.spd + bonus.spd;
+  const ins = char.ins + bonus.ins;
+  const combatRating = Math.floor(pwr * 1.5 + end);
+  return { pwr, end, lck, spd, ins, combatRating, charClass: char.charClass };
 }
 
 // ── Inventory ─────────────────────────────────────────────────────────────────
@@ -1448,6 +1469,55 @@ export function redeemPromoCode(code: string, characterId: string): RedeemResult
   });
 
   return grant();
+}
+
+// ── Skills ────────────────────────────────────────────────────────────────────
+
+export function getCharacterSkills(characterId: string): import('@/types/game').CharacterSkill[] {
+  const db = getDb();
+  const rows = db.prepare('SELECT skill_id, ranks FROM character_skills WHERE character_id = ?').all(characterId) as { skill_id: string; ranks: number }[];
+  return rows.map(r => ({ skillId: r.skill_id, ranks: r.ranks }));
+}
+
+export function getCharacterSkillBonus(characterId: string): import('@/lib/engine/combat-engine').SkillBonus {
+  const { getSkill } = require('@/lib/data/skills') as typeof import('@/lib/data/skills');
+  const skills = getCharacterSkills(characterId);
+  const bonus: import('@/lib/engine/combat-engine').SkillBonus = {};
+  for (const s of skills) {
+    const def = getSkill(s.skillId);
+    if (!def) continue;
+    const stat = def.effectStat as keyof import('@/lib/engine/combat-engine').SkillBonus;
+    bonus[stat] = (bonus[stat] ?? 0) + def.effectPerRank * s.ranks;
+  }
+  return bonus;
+}
+
+export function spendSkillPoint(characterId: string, skillId: string): { ok: boolean; error?: string } {
+  const db = getDb();
+  const { getSkill } = require('@/lib/data/skills') as typeof import('@/lib/data/skills');
+  const char = db.prepare('SELECT skill_points, level, class FROM characters WHERE id = ?').get(characterId) as { skill_points: number; level: number; class: string } | undefined;
+  if (!char) return { ok: false, error: 'Character not found' };
+  if (char.skill_points <= 0) return { ok: false, error: 'No skill points available' };
+
+  const def = getSkill(skillId);
+  if (!def) return { ok: false, error: 'Unknown skill' };
+  if (def.forClass !== char.class) return { ok: false, error: 'Wrong class for this skill' };
+  if (char.level < def.requiredLevel) return { ok: false, error: `Requires level ${def.requiredLevel}` };
+
+  const existing = db.prepare('SELECT ranks FROM character_skills WHERE character_id = ? AND skill_id = ?').get(characterId, skillId) as { ranks: number } | undefined;
+  const currentRanks = existing?.ranks ?? 0;
+  if (currentRanks >= def.maxRanks) return { ok: false, error: 'Skill is already at max rank' };
+
+  db.transaction(() => {
+    db.prepare('UPDATE characters SET skill_points = skill_points - 1 WHERE id = ?').run(characterId);
+    if (existing) {
+      db.prepare('UPDATE character_skills SET ranks = ranks + 1 WHERE character_id = ? AND skill_id = ?').run(characterId, skillId);
+    } else {
+      db.prepare('INSERT INTO character_skills (character_id, skill_id, ranks) VALUES (?, ?, 1)').run(characterId, skillId);
+    }
+  })();
+
+  return { ok: true };
 }
 
 // ── Season Points & Leaderboard ───────────────────────────────────────────────
